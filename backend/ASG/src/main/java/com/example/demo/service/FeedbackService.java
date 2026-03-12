@@ -17,6 +17,8 @@ import java.util.stream.Collectors;
 public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
+    
+    private final OpenAiService openAiService; // 추가
 
     public List<FeedbackResponseDto> getAllFeedbacks() {
         return feedbackRepository.findAll().stream()
@@ -92,8 +94,10 @@ public class FeedbackService {
         CustomerFeedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 리뷰/댓글이 존재하지 않습니다. ID: " + feedbackId));
 
-        // TODO: 나중에 이 부분을 진짜 LLM API 호출 로직으로 교체하면 됩니다.
-        String generatedReply = mockAiGeneration(feedback);
+        // TODO 교체
+        String authorName = feedback.getSource().getAuthorName();
+        String reviewText = feedback.getSource().getOriginalText();
+        String generatedReply = openAiService.generateReply(authorName, reviewText);
 
         // 엔티티 업데이트 (JPA 더티 체킹으로 인해 save()를 안 해도 DB에 자동 반영됨)
         feedback.updateAiReply(generatedReply);
@@ -102,7 +106,7 @@ public class FeedbackService {
         return convertToDto(feedback);
     }
 
-    // 임시 AI 답변 생성기 (프론트엔드에 있던 로직을 백엔드로 가져옴)
+    /* 임시 AI 답변 생성기 (프론트엔드에 있던 로직을 백엔드로 가져옴)
     private String mockAiGeneration(CustomerFeedback feedback) {
         String author = feedback.getSource().getAuthorName();
         String text = feedback.getSource().getOriginalText().toLowerCase();
@@ -116,5 +120,5 @@ public class FeedbackService {
         } else {
             return author + "님, 소중한 리뷰 고맙다요";
         }
-    }
+    }*/
 }

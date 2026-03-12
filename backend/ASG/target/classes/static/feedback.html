@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>소셜다모아 — 리뷰/댓글 AI 답변 관리</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet" />
+  <style>
+    /* CSS는 기존과 100% 동일하게 유지했습니다 */
+    :root {
+      --teal: #14B8A6;
+      --teal-light: #CCFBF1;
+      --teal-dark: #0F766E;
+      --indigo: #6366F1;
+      --indigo-light: #EEF2FF;
+      --indigo-dark: #4338CA;
+      --slate: #F8FAFC;
+      --slate2: #F1F5F9;
+      --slate3: #E2E8F0;
+      --text: #0F172A;
+      --text2: #475569;
+      --text3: #94A3B8;
+      --white: #FFFFFF;
+      --border: #E2E8F0;
+      --border2: #CBD5E1;
+      --green: #22C55E;
+      --green-light: #DCFCE7;
+      --green-dark: #15803D;
+      --red: #EF4444;
+      --red-light: #FEE2E2;
+      --yellow: #F59E0B;
+      --yellow-light: #FEF3C7;
+      --blue: #3B82F6;
+      --blue-light: #DBEAFE;
+      --orange: #F97316;
+      --orange-light: #FFEDD5;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --radius-xs: 6px;
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, .07), 0 1px 2px rgba(15, 23, 42, .04);
+      --shadow: 0 6px 18px rgba(15, 23, 42, .08), 0 2px 8px rgba(15, 23, 42, .05);
+      --shadow-lg: 0 12px 32px rgba(15, 23, 42, .14), 0 6px 16px rgba(15, 23, 42, .08);
+    }
+
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--slate);
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .top-stripe {
+      height: 4px;
+      background: linear-gradient(90deg, var(--teal) 0%, var(--indigo) 55%, #7DD3FC 100%);
+    }
+
+    header {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .logo-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, var(--teal), var(--indigo));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 15px;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, .24);
+    }
+
+    .logo-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .logo-sub {
+      font-size: 11px;
+      color: var(--text3);
+    }
+
+    .nav-pills {
+      display: flex;
+      gap: 4px;
+    }
+
+    .nav-pill {
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text2);
+      text-decoration: none;
+      border: 1.5px solid transparent;
+      transition: all .18s;
+      background: transparent;
+    }
+
+    .nav-pill:hover {
+      background: var(--slate2);
+    }
+
+    .nav-pill.active {
+      background: var(--indigo-light);
+      border-color: #C7D2FE;
+      color: var(--indigo-dark);
+      font-weight: 700;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--teal-light);
+      border: 1px solid #99F6E4;
+      color: var(--teal-dark);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--teal);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1)
+      }
+
+      50% {
+        opacity: .55;
+        transform: scale(.8)
+      }
+    }
+
+    .page {
+      max-width: 1520px;
+      margin: 0 auto;
+      padding: 28px 40px 80px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, var(--white), rgba(238, 242, 255, .65));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 22px;
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      background: linear-gradient(135deg, var(--teal), var(--indigo));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      margin-top: 5px;
+      font-size: 12px;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+
+    .hero-kpis {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .kpi {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 16px;
+      min-width: 98px;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .kpi-n {
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .kpi-n.teal {
+      color: var(--teal-dark);
+    }
+
+    .kpi-n.red {
+      color: var(--red);
+    }
+
+    .kpi-n.indigo {
+      color: var(--indigo-dark);
+    }
+
+    .kpi-n.green {
+      color: var(--green-dark);
+    }
+
+    .kpi-l {
+      font-size: 10px;
+      color: var(--text3);
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
+    .sent-banner {
+      display: none;
+      background: linear-gradient(135deg, var(--teal-light), var(--green-light));
+      border: 1.5px solid #5EEAD4;
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .sent-banner.show {
+      display: block;
+    }
+
+    .sent-banner strong {
+      font-size: 15px;
+      color: var(--teal-dark);
+    }
+
+    .sent-banner p {
+      font-size: 12px;
+      color: var(--text2);
+      margin-top: 4px;
+    }
+
+    .progress-wrap {
+      display: none;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 16px 20px;
+      margin-bottom: 18px;
+    }
+
+    .progress-wrap.visible {
+      display: block;
+    }
+
+    .progress-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .progress-top span {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--indigo-dark);
+    }
+
+    .progress-bar {
+      height: 7px;
+      background: var(--slate3);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--teal), var(--indigo));
+      transition: width .35s ease;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .toolbar-left {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+      min-width: 320px;
+    }
+
+    .toolbar-right {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 999px;
+      padding: 7px 14px;
+      width: max-content;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .search-box:focus-within {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(20, 184, 166, .1);
+    }
+
+    .search-box input {
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 12px;
+      color: var(--text);
+      width: 240px;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    .btn-main,
+    .btn-send {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      transition: all .18s;
+      white-space: nowrap;
+    }
+
+    .btn-main {
+      background: linear-gradient(135deg, var(--indigo), var(--teal-dark));
+      box-shadow: 0 4px 12px rgba(99, 102, 241, .28);
+    }
+
+    .btn-send {
+      background: linear-gradient(135deg, var(--teal-dark), var(--green-dark));
+      box-shadow: 0 4px 12px rgba(20, 184, 166, .24);
+    }
+
+    .btn-main:hover,
+    .btn-send:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-main:disabled,
+    .btn-send:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .filter-menu {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 20;
+    }
+
+    .filter-dropdown {
+      position: relative;
+    }
+
+    .filter-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--white);
+      color: var(--text2);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: all .16s;
+      min-width: 132px;
+      justify-content: space-between;
+    }
+
+    .filter-trigger:hover,
+    .filter-dropdown:hover .filter-trigger {
+      border-color: #C7D2FE;
+      background: var(--indigo-light);
+      color: var(--indigo-dark);
+    }
+
+    .filter-trigger.active {
+      border-color: #99F6E4;
+      background: linear-gradient(135deg, var(--teal-light), #F0FDFA);
+      color: var(--teal-dark);
+    }
+
+    .filter-panel {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      min-width: 230px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow-lg);
+      padding: 8px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(8px);
+      transition: all .18s ease;
+    }
+
+    .filter-dropdown:hover .filter-panel {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .filter-panel-title {
+      padding: 8px 10px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text3);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .filter-option {
+      width: 100%;
+      border: none;
+      background: transparent;
+      text-align: left;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text2);
+      cursor: pointer;
+      transition: all .14s;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    .filter-option:hover {
+      background: var(--slate2);
+      color: var(--text);
+    }
+
+    .filter-option.active {
+      background: var(--teal-light);
+      color: var(--teal-dark);
+    }
+
+    .table-wrap {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .table-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 13px 18px;
+      background: var(--slate2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table-head h3 {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .badge.indigo {
+      background: var(--indigo-light);
+      color: var(--indigo-dark);
+    }
+
+    .badge.teal {
+      background: var(--teal-light);
+      color: var(--teal-dark);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead tr {
+      background: var(--slate2);
+      border-bottom: 1.5px solid var(--border);
+    }
+
+    thead th {
+      padding: 11px 12px;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    thead th.center {
+      text-align: center;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .14s;
+    }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: var(--slate);
+    }
+
+    tbody td {
+      padding: 12px 12px;
+      font-size: 13px;
+      color: var(--text2);
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    tbody td.center {
+      text-align: center;
+    }
+
+    .cb {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--indigo);
+      cursor: pointer;
+    }
+
+    .plat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .plat-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .plat-nv .plat-dot {
+      background: #03C75A;
+    }
+
+    .plat-nv {
+      background: #ECFDF5;
+      color: #065F46;
+    }
+
+    .plat-kk .plat-dot {
+      background: #F59E0B;
+    }
+
+    .plat-kk {
+      background: #FFFBEB;
+      color: #92400E;
+    }
+
+    .plat-gm .plat-dot {
+      background: #EA4335;
+    }
+
+    .plat-gm {
+      background: #FEF2F2;
+      color: #991B1B;
+    }
+
+    .plat-ig .plat-dot {
+      background: #E1306C;
+    }
+
+    .plat-ig {
+      background: #FDF2F8;
+      color: #9D174D;
+    }
+
+    .plat-fb .plat-dot {
+      background: #1877F2;
+    }
+
+    .plat-fb {
+      background: #EFF6FF;
+      color: #1D4ED8;
+    }
+
+    .stag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .stag.unresolved {
+      background: var(--red-light);
+      color: #B91C1C;
+    }
+
+    .stag.checked {
+      background: var(--blue-light);
+      color: #1D4ED8;
+    }
+
+    .stag.unchecked {
+      background: var(--yellow-light);
+      color: #92400E;
+    }
+
+    .stag.generated {
+      background: var(--indigo-light);
+      color: var(--indigo-dark);
+    }
+
+    .stag.completed {
+      background: var(--green-light);
+      color: var(--green-dark);
+    }
+
+    .stag.sending {
+      background: var(--orange-light);
+      color: #C2410C;
+    }
+
+    .review-cell {
+      max-width: 280px;
+      color: var(--text);
+      line-height: 1.65;
+      word-break: keep-all;
+      white-space: pre-wrap;
+    }
+
+    .reply-full {
+      min-width: 270px;
+      max-width: 420px;
+      white-space: pre-wrap;
+      line-height: 1.65;
+      color: var(--teal-dark);
+      font-size: 12px;
+      word-break: keep-all;
+    }
+
+    .reply-empty {
+      font-size: 12px;
+      color: var(--text3);
+      font-style: italic;
+    }
+
+    .reply-edit {
+      display: none;
+      width: 100%;
+      min-height: 82px;
+      background: var(--slate);
+      border: 1.5px solid var(--teal);
+      border-radius: var(--radius-xs);
+      padding: 8px 10px;
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.65;
+      font-family: 'Noto Sans KR', sans-serif;
+      resize: vertical;
+      outline: none;
+    }
+
+    .reply-edit:focus {
+      box-shadow: 0 0 0 3px rgba(20, 184, 166, .1);
+    }
+
+    .btn-row-ai,
+    .btn-row-regen,
+    .btn-row-send,
+    .btn-row-copy {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 10px;
+      border-radius: var(--radius-xs);
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      transition: all .16s;
+      white-space: nowrap;
+    }
+
+    .btn-row-ai,
+    .btn-row-regen {
+      border: 1.5px solid var(--indigo);
+      background: var(--indigo-light);
+      color: var(--indigo-dark);
+    }
+
+    .btn-row-ai:hover,
+    .btn-row-regen:hover {
+      background: var(--indigo);
+      color: #fff;
+    }
+
+    .btn-row-send {
+      border: none;
+      background: linear-gradient(135deg, var(--teal-dark), var(--green-dark));
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(20, 184, 166, .24);
+    }
+
+    .btn-row-send:hover,
+    .btn-row-copy:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-row-copy {
+      border: none;
+      background: linear-gradient(135deg, #475569, #334155);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(51, 65, 85, .2);
+    }
+
+    .btn-row-ai:disabled,
+    .btn-row-regen:disabled,
+    .btn-row-send:disabled,
+    .btn-row-copy:disabled {
+      opacity: .42;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .spin {
+      width: 11px;
+      height: 11px;
+      border: 2px solid rgba(99, 102, 241, .26);
+      border-top-color: currentColor;
+      border-radius: 50%;
+      display: none;
+      animation: rot .7s linear infinite;
+    }
+
+    @keyframes rot {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .my-reply-row td {
+      background: linear-gradient(135deg, rgba(204, 251, 241, .35), rgba(220, 252, 231, .48));
+      border-top: 1px dashed #99F6E4;
+    }
+
+    .my-reply-box {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .my-reply-label {
+      flex-shrink: 0;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--teal-dark);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      margin-top: 2px;
+    }
+
+    .my-reply-text {
+      white-space: pre-wrap;
+      line-height: 1.7;
+      color: var(--text);
+      font-size: 13px;
+      word-break: keep-all;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 46px 20px;
+      color: var(--text3);
+      font-size: 13px;
+    }
+
+    .empty span {
+      display: block;
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+
+    .toast {
+      position: fixed;
+      right: 28px;
+      bottom: 28px;
+      z-index: 9999;
+      background: var(--text);
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: var(--shadow-lg);
+      transform: translateY(70px);
+      opacity: 0;
+      transition: all .28s;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success {
+      background: var(--teal-dark);
+    }
+
+    .toast.error {
+      background: var(--red);
+    }
+
+    @media(max-width:960px) {
+      .page {
+        padding: 16px 14px 60px;
+      }
+
+      header {
+        padding: 0 14px;
+      }
+
+      .search-box input {
+        width: 160px;
+      }
+
+      .review-cell,
+      .reply-full {
+        max-width: 220px;
+        min-width: auto;
+      }
+
+      thead th,
+      tbody td {
+        padding: 9px 9px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="top-stripe"></div>
+
+  <header>
+    <div class="logo">
+      <div class="logo-mark">S</div>
+      <span class="logo-name">소셜다모아</span>
+      <span class="logo-sub">All Social Gather</span>
+    </div>
+    <nav class="nav-pills">
+      <a href="#" class="nav-pill">✏️ 콘텐츠 생성</a>
+      <a href="#" class="nav-pill active">💬 고객 관리</a>
+      <a href="#" class="nav-pill">📊 성과 분석</a>
+    </nav>
+    <div class="status-pill"><span class="status-dot"></span>DB 연결됨</div>
+  </header>
+
+  <div class="page">
+    <div class="hero">
+      <div>
+        <h1>리뷰와 댓글을 <em>호버 필터</em>로 분류하고 AI 답변을 관리하세요</h1>
+        <p>리뷰 목록과 답글 자동화 안에서 전체/세부 플랫폼 기준으로 나눠서 바로 볼 수 있는 구조입니다.</p>
+      </div>
+      <div class="hero-kpis">
+        <div class="kpi">
+          <div class="kpi-n teal" id="kpiTotal">0</div>
+          <div class="kpi-l">전체 항목</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-n red" id="kpiNeed">0</div>
+          <div class="kpi-l">답변 필요</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-n indigo" id="kpiReady">0</div>
+          <div class="kpi-l">답변 완료</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-n green" id="kpiCompleted">0</div>
+          <div class="kpi-l">전송 완료</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sent-banner" id="sentBanner">
+      <strong>✅ 전송이 완료되었습니다.</strong>
+      <p id="sentBannerDesc"></p>
+    </div>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-top">
+        <span>✦ AI 답변 생성 중... <span id="progressLabel">0 / 0</span></span>
+        <span id="progressPct" style="font-size:11px;color:var(--text3);">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="filter-menu">
+          <div class="filter-dropdown">
+            <button class="filter-trigger" id="filter-review">
+              리뷰 목록 <span>▾</span>
+            </button>
+            <div class="filter-panel">
+              <div class="filter-panel-title">리뷰 목록</div>
+              <button class="filter-option" id="opt-review_all" onclick="setFilter('review_group','review_all')">리뷰 전체</button>
+              <button class="filter-option" id="opt-naver_review" onclick="setFilter('review_group','naver_review')">네이버 지도 리뷰</button>
+              <button class="filter-option" id="opt-kakao_review" onclick="setFilter('review_group','kakao_review')">카카오맵 리뷰</button>
+              <button class="filter-option" id="opt-google_review" onclick="setFilter('review_group','google_review')">구글 리뷰</button>
+            </div>
+          </div>
+
+          <div class="filter-dropdown">
+            <button class="filter-trigger" id="filter-comment">
+              답글 자동화 <span>▾</span>
+            </button>
+            <div class="filter-panel">
+              <div class="filter-panel-title">답글 자동화</div>
+              <button class="filter-option" id="opt-comment_all" onclick="setFilter('comment_group','comment_all')">댓글 전체</button>
+              <button class="filter-option" id="opt-instagram_comment" onclick="setFilter('comment_group','instagram_comment')">인스타그램 댓글</button>
+              <button class="filter-option" id="opt-facebook_comment" onclick="setFilter('comment_group','facebook_comment')">페이스북 댓글</button>
+            </div>
+          </div>
+
+          <div class="filter-dropdown">
+            <button class="filter-trigger" id="filter-status">
+              처리 상태 <span>▾</span>
+            </button>
+            <div class="filter-panel">
+              <div class="filter-panel-title">처리 상태</div>
+              <button class="filter-option" id="opt-done" onclick="setFilter('status_group','answer_done')">답변 완료</button>
+              <button class="filter-option" id="opt-need" onclick="setFilter('status_group','answer_needed')">답변 필요</button>
+            </div>
+          </div>
+
+          <div class="filter-dropdown">
+            <button class="filter-trigger active" id="filter-all" onclick="resetFilters()">
+              전체 <span></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="search-box">
+          <span style="font-size:13px;color:var(--text3);">🔍</span>
+          <input id="searchInput" placeholder="이름, 내용, 플랫폼, AI 답변 검색..." oninput="applyFilter()">
+        </div>
+      </div>
+
+      <div class="toolbar-right">
+        <button class="btn-main" id="btnAIAll" onclick="generateAllAI()">
+          <span class="spin" id="spinAll"></span>
+          ✦ 선택 항목 AI 답변 생성
+        </button>
+        <button class="btn-send" id="btnSendAll" onclick="sendAllComments()">
+          📤 댓글 전체 전송
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-head">
+        <h3>
+          수집된 리뷰 / 댓글
+          <span class="badge indigo" id="countBadge">0</span>
+          <span class="badge teal" id="selectBadge">0개 선택</span>
+        </h3>
+        <label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="checkbox" id="selectAll" class="cb" onchange="toggleSelectAll(this)"> 전체 선택
+        </label>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th class="center" style="width:36px;"></th>
+              <th>고객명</th>
+              <th>플랫폼</th>
+              <th>유형</th>
+              <th>원문</th>
+              <th>AI 생성 답변</th>
+              <th class="center">상태</th>
+              <th class="center">AI 생성</th>
+              <th class="center">복사/전송</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // 💡 변경된 부분: 하드코딩된 RAW_ITEMS 제거하고 빈 배열로 시작
+    let items = [];
+    let filteredItems = [];
+    let selectedIds = new Set();
+    let activeFilterGroup = 'all';
+    let activeFilterValue = null;
+
+    // 💡 추가된 부분: 백엔드 API에서 데이터를 가져오는 함수
+    async function fetchFeedbackData() {
+      try {
+        // 같은 Spring Boot 서버 내에서 실행되므로 상대 경로 사용
+        const response = await fetch('/api/feedbacks');
+        if (!response.ok) throw new Error('데이터를 불러오는데 실패했습니다.');
+        
+        const data = await response.json();
+        items = data.map(v => ({...v}));
+        
+        // 데이터 로딩 완료 후 필터 및 테이블 초기 렌더링
+        resetFilters(); 
+      } catch (error) {
+        console.error(error);
+        showToast('DB에서 데이터를 불러오는데 실패했습니다.', 'error');
+      }
+    }
+
+    function getDisplayStatus(item) {
+      if (item.status === 'completed') return 'completed';
+      if (item.aiStatus === 'done' && item.aiReply && item.aiReply.trim()) return 'generated';
+      if (item.status === 'checked') return 'checked';
+      if (item.status === 'unchecked') return 'unchecked';
+      return 'unresolved';
+    }
+
+    function isAnswerDone(item) {
+      const displayStatus = getDisplayStatus(item);
+      return displayStatus === 'generated' || displayStatus === 'completed';
+    }
+
+    function isAnswerNeeded(item) {
+      const displayStatus = getDisplayStatus(item);
+      return ['unresolved', 'checked', 'unchecked'].includes(displayStatus);
+    }
+
+    function getStatusLabel(status) {
+      return {
+        unresolved: '미답변',
+        checked: '확인',
+        unchecked: '미확인',
+        generated: 'AI 답변 생성됨',
+        completed: '전송 완료',
+        sending: '전송중'
+      } [status] || status;
+    }
+
+    function clearFilterActives() {
+      document.querySelectorAll('.filter-trigger').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.filter-option').forEach(el => el.classList.remove('active'));
+    }
+
+    function setFilter(group, value) {
+      activeFilterGroup = group;
+      activeFilterValue = value;
+      clearFilterActives();
+      if (group === 'review_group') {
+        document.getElementById('filter-review').classList.add('active');
+      } else if (group === 'comment_group') {
+        document.getElementById('filter-comment').classList.add('active');
+      } else if (group === 'status_group') {
+        document.getElementById('filter-status').classList.add('active');
+      }
+      const optionIdMap = {
+        review_all: 'opt-review_all',
+        naver_review: 'opt-naver_review',
+        kakao_review: 'opt-kakao_review',
+        google_review: 'opt-google_review',
+        comment_all: 'opt-comment_all',
+        instagram_comment: 'opt-instagram_comment',
+        facebook_comment: 'opt-facebook_comment',
+        answer_done: 'opt-done',
+        answer_needed: 'opt-need'
+      };
+      const optionId = optionIdMap[value];
+      if (optionId) document.getElementById(optionId)?.classList.add('active');
+      applyFilter();
+    }
+
+    function resetFilters() {
+      activeFilterGroup = 'all';
+      activeFilterValue = null;
+      clearFilterActives();
+      document.getElementById('filter-all').classList.add('active');
+      applyFilter();
+    }
+
+    function platHtml(item) {
+      return `<span class="plat-badge ${item.platClass}"><span class="plat-dot"></span>${item.platformLabel}</span>`;
+    }
+
+    function typeLabel(item) {
+      return item.type === 'review' ?
+        `<span style="font-size:11px;font-weight:800;color:var(--text2);background:var(--slate2);border:1px solid var(--border);padding:4px 9px;border-radius:999px;">리뷰</span>` :
+        `<span style="font-size:11px;font-weight:800;color:var(--indigo-dark);background:var(--indigo-light);border:1px solid #C7D2FE;padding:4px 9px;border-radius:999px;">댓글</span>`;
+    }
+
+    function applyFilter() {
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      filteredItems = items.filter(it => {
+        let filterMatch = true;
+        if (activeFilterGroup === 'review_group') {
+          if (activeFilterValue === 'review_all') {
+            filterMatch = it.type === 'review';
+          } else {
+            filterMatch = it.type === 'review' && it.platform === activeFilterValue;
+          }
+        } else if (activeFilterGroup === 'comment_group') {
+          if (activeFilterValue === 'comment_all') {
+            filterMatch = it.type === 'comment';
+          } else {
+            filterMatch = it.type === 'comment' && it.platform === activeFilterValue;
+          }
+        } else if (activeFilterGroup === 'status_group') {
+          if (activeFilterValue === 'answer_done') {
+            filterMatch = isAnswerDone(it);
+          } else if (activeFilterValue === 'answer_needed') {
+            filterMatch = isAnswerNeeded(it);
+          }
+        }
+        const queryMatch = !q ||
+          it.name.toLowerCase().includes(q) ||
+          it.platformLabel.toLowerCase().includes(q) ||
+          it.text.toLowerCase().includes(q) ||
+          (it.aiReply || '').toLowerCase().includes(q);
+        return filterMatch && queryMatch;
+      });
+      selectedIds = new Set(filteredItems.filter(it => selectedIds.has(it.id)).map(it => it.id));
+      renderTable();
+      updateKPIs();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('tbody');
+      document.getElementById('countBadge').textContent = filteredItems.length;
+      updateSelectCount();
+      if (!filteredItems.length) {
+        tbody.innerHTML = `<tr><td colspan="10"><div class="empty"><span>🔎</span>조건에 맞는 항목이 없습니다.</div></td></tr>`;
+        return;
+      }
+      let html = '';
+      filteredItems.forEach(it => {
+        const displayStatus = getDisplayStatus(it);
+        const hasReply = !!(it.aiReply && it.aiReply.trim());
+        const isSent = it.status === 'completed';
+        const isSending = it.status === 'sending';
+        const isReview = it.type === 'review';
+        const isComment = it.type === 'comment';
+        html += `
+        <tr style="${isSent ? 'opacity:.82;' : ''}">
+          <td class="center">
+            <input type="checkbox" class="cb"
+              ${selectedIds.has(it.id) ? 'checked' : ''}
+              onchange="toggleSelect(${it.id}, this)"
+              ${isSent ? 'disabled' : ''}>
+          </td>
+
+          <td>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:30px;height:30px;border-radius:50%;background:${it.avatarColor};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;">${it.avatar}</div>
+              <span style="font-weight:700;color:var(--text);font-size:13px;">${it.name}</span>
+            </div>
+          </td>
+
+          <td>${platHtml(it)}</td>
+
+          <td>${typeLabel(it)}</td>
+
+          <td><div class="review-cell">${it.text}</div></td>
+
+          <td>
+            <div id="replyDisp-${it.id}" class="${hasReply ? 'reply-full' : 'reply-empty'}"
+                 onclick="startEdit(${it.id})"
+                 style="cursor:${isSent || !hasReply ? 'default' : 'pointer'};">
+              ${hasReply ? it.aiReply : '아직 생성된 AI 답변이 없습니다.'}
+            </div>
+            <textarea class="reply-edit" id="replyEdit-${it.id}"
+              onblur="saveEdit(${it.id})"
+              onkeydown="if(event.key==='Escape') cancelEdit(${it.id})">${it.aiReply || ''}</textarea>
+            ${!isSent && hasReply ? `<div style="font-size:10px;color:var(--text3);margin-top:4px;">✎ 클릭하여 수정</div>` : ``}
+          </td>
+
+          <td class="center">
+            ${isSending
+              ? `<span class="stag sending">전송중</span>`
+              : `<span class="stag ${displayStatus}">${getStatusLabel(displayStatus)}</span>`
+            }
+          </td>
+
+          <td class="center">
+            <button class="btn-row-ai" id="rowAiBtn-${it.id}" onclick="generateSingleAI(${it.id})" ${isSent ? 'disabled' : ''}>
+              <span class="spin" id="rowSpin-${it.id}"></span>
+              ${hasReply ? 'AI 재생성' : 'AI 생성'}
+            </button>
+          </td>
+
+          <td class="center">
+            ${
+              isReview
+                ? (
+                    hasReply
+                      ? `<button class="btn-row-copy" onclick="copyReply(${it.id})">📋 복사</button>`
+                      : `<span style="font-size:11px;color:var(--text3);">—</span>`
+                  )
+                : isComment
+                  ? (
+                      isSent
+                        ? `<span class="stag completed">전송 완료</span>`
+                        : hasReply
+                          ? `<button class="btn-row-send" id="sendBtn-${it.id}" onclick="sendSingle(${it.id})">
+                              <span class="spin" id="sendSpin-${it.id}"></span>전송
+                            </button>`
+                          : `<span style="font-size:11px;color:var(--text3);">—</span>`
+                    )
+                  : `<span style="font-size:11px;color:var(--text3);">—</span>`
+            }
+          </td>
+        </tr>
+      `;
+        if (isSent && it.sentReply) {
+          html += `
+          <tr class="my-reply-row">
+            <td></td>
+            <td colspan="9">
+              <div class="my-reply-box">
+                <div class="my-reply-label">내 답글</div>
+                <div class="my-reply-text">${it.sentReply}</div>
+              </div>
+            </td>
+          </tr>
+        `;
+        }
+      });
+      tbody.innerHTML = html;
+      const eligible = filteredItems.filter(it => it.status !== 'completed');
+      document.getElementById('selectAll').checked =
+        eligible.length > 0 && eligible.every(it => selectedIds.has(it.id));
+    }
+
+    function updateSelectCount() {
+      document.getElementById('selectBadge').textContent = `${selectedIds.size}개 선택`;
+    }
+
+    function toggleSelect(id, cb) {
+      if (cb.checked) selectedIds.add(id);
+      else selectedIds.delete(id);
+      updateSelectCount();
+      updateSelectAll();
+    }
+
+    function toggleSelectAll(cb) {
+      filteredItems.forEach(it => {
+        if (it.status !== 'completed') {
+          if (cb.checked) selectedIds.add(it.id);
+          else selectedIds.delete(it.id);
+        }
+      });
+      renderTable();
+    }
+
+    function updateSelectAll() {
+      const eligible = filteredItems.filter(it => it.status !== 'completed');
+      document.getElementById('selectAll').checked =
+        eligible.length > 0 && eligible.every(it => selectedIds.has(it.id));
+    }
+
+    function updateKPIs() {
+      document.getElementById('kpiTotal').textContent = items.length;
+      document.getElementById('kpiNeed').textContent = items.filter(isAnswerNeeded).length;
+      document.getElementById('kpiReady').textContent = items.filter(isAnswerDone).length;
+      document.getElementById('kpiCompleted').textContent = items.filter(v => v.status === 'completed').length;
+    }
+
+
+    async function generateSingleAI(id) {
+      const item = items.find(v => v.id === id);
+      if (!item) return;
+      //const btn = document.getElementById(`rowAiBtn-${id}`);
+      const spin = document.getElementById(`rowSpin-${id}`);
+      //if (btn) btn.disabled = true;
+      if (spin) spin.style.display = 'inline-block';
+      try {
+    	// 백엔드 API 호출 (PUT 요청)
+          const response = await fetch(`/api/feedbacks/${id}/ai-reply`, {
+            method: 'PUT'
+          });
+          
+          if (!response.ok) throw new Error('API 호출 실패');
+          
+          // 백엔드에서 업데이트하고 DTO로 보내준 최신 데이터를 로컬 변수에 덮어쓰기
+          const updatedData = await response.json();
+          Object.assign(item, updatedData);
+          
+          showToast(`${item.name}님 AI 답변 생성 완료`, 'success');
+        } catch (e) {
+          console.error(e);
+          showToast('AI 생성 중 오류가 발생했습니다.', 'error');
+        } finally {
+          //if (btn) btn.disabled = false;
+          if (spin) spin.style.display = 'none';
+          renderTable();
+          updateKPIs();
+        }
+      }
+/*
+    async function regenSingle(id) {
+      const item = items.find(v => v.id === id);
+      if (!item || !item.aiReply.trim()) return;
+      
+      //const btn = document.getElementById(`regenBtn-${id}`);
+      const spin = document.getElementById(`regenSpin-${id}`);
+      
+      //if (btn) btn.disabled = true;
+      if (spin) spin.style.display = 'inline-block';
+      try {
+    	  const response = await fetch(`/api/feedbacks/${id}/ai-reply`, {
+              method: 'PUT'
+            });
+            
+            if (!response.ok) throw new Error('API 호출 실패');
+            
+            const updatedData = await response.json();
+            Object.assign(item, updatedData);
+            
+        showToast('답변이 재생성되었습니다.', 'success');
+      } catch (e) {
+        showToast('재생성 실패', 'error');
+      } finally {
+        if (btn) btn.disabled = false;
+        if (spin) spin.style.display = 'none';
+      }
+      renderTable();
+      updateKPIs();
+    }
+    */
+
+    async function generateAllAI() {
+      const targets = filteredItems.filter(it => selectedIds.has(it.id) && it.status !== 'completed');
+      if (!targets.length) {
+        showToast('AI 생성할 항목을 선택해 주세요.', 'error');
+        return;
+      }
+      //const btn = document.getElementById('btnAIAll');
+      const spin = document.getElementById('spinAll');
+      //btn.disabled = true;
+      spin.style.display = 'inline-block';
+      const wrap = document.getElementById('progressWrap');
+      const fill = document.getElementById('progressFill');
+      const lbl = document.getElementById('progressLabel');
+      const pct = document.getElementById('progressPct');
+      wrap.classList.add('visible');
+      fill.style.width = '0%';
+      lbl.textContent = `0 / ${targets.length}`;
+      pct.textContent = '0%';
+      let done = 0;
+      
+      for (const item of targets) {
+        try {
+        	const response = await fetch(`/api/feedbacks/${item.id}/ai-reply`, {
+                method: 'PUT'
+              });
+        	if (response.ok) {
+                const updatedData = await response.json();
+                Object.assign(item, updatedData);
+              }
+        } catch (e) {
+        console.error(`ID ${item.id} 생성 실패`, e);
+      }
+      done++;
+      const progress = Math.round((done / targets.length) * 100);
+      fill.style.width = progress + '%';
+      lbl.textContent = `${done} / ${targets.length}`;
+      pct.textContent = progress + '%';
+      
+      renderTable();
+      updateKPIs();
+    }
+      
+      
+      spin.style.display = 'none';
+      setTimeout(() => wrap.classList.remove('visible'), 1200);
+      showToast(`AI 답변 ${done}건 생성 완료`, 'success');
+    }
+
+    function startEdit(id) {
+      const item = items.find(v => v.id === id);
+      if (!item || item.status === 'completed' || !item.aiReply.trim()) return;
+      const disp = document.getElementById(`replyDisp-${id}`);
+      const edit = document.getElementById(`replyEdit-${id}`);
+      if (!disp || !edit) return;
+      disp.style.display = 'none';
+      edit.style.display = 'block';
+      edit.focus();
+      edit.selectionStart = edit.value.length;
+    }
+
+    function saveEdit(id) {
+      const item = items.find(v => v.id === id);
+      const disp = document.getElementById(`replyDisp-${id}`);
+      const edit = document.getElementById(`replyEdit-${id}`);
+      if (!item || !disp || !edit) return;
+      item.aiReply = edit.value.trim();
+      item.aiStatus = item.aiReply ? 'done' : 'idle';
+      disp.textContent = item.aiReply || '아직 생성된 AI 답변이 없습니다.';
+      disp.className = item.aiReply ? 'reply-full' : 'reply-empty';
+      disp.style.display = '';
+      edit.style.display = 'none';
+      renderTable();
+      updateKPIs();
+    }
+
+    function cancelEdit(id) {
+      const disp = document.getElementById(`replyDisp-${id}`);
+      const edit = document.getElementById(`replyEdit-${id}`);
+      if (disp) disp.style.display = '';
+      if (edit) edit.style.display = 'none';
+    }
+
+    async function copyReply(id) {
+      const item = items.find(v => v.id === id);
+      if (!item || !item.aiReply.trim()) {
+        showToast('복사할 답변이 없습니다.', 'error');
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(item.aiReply);
+        showToast(`${item.name}님의 AI 답변을 복사했습니다.`, 'success');
+      } catch (e) {
+        showToast('복사에 실패했습니다.', 'error');
+      }
+    }
+
+    async function sendSingle(id) {
+      const item = items.find(v => v.id === id);
+      if (!item || item.type !== 'comment' || !item.aiReply.trim()) {
+        showToast('전송할 댓글 답변이 없습니다.', 'error');
+        return;
+      }
+      const btn = document.getElementById(`sendBtn-${id}`);
+      const spin = document.getElementById(`sendSpin-${id}`);
+      if (btn) btn.disabled = true;
+      if (spin) spin.style.display = 'inline-block';
+      item.status = 'sending';
+      renderTable();
+      updateKPIs();
+      await new Promise(r => setTimeout(r, 850));
+      item.status = 'completed';
+      item.sentReply = item.aiReply;
+      renderTable();
+      updateKPIs();
+      const banner = document.getElementById('sentBanner');
+      const desc = document.getElementById('sentBannerDesc');
+      desc.textContent = `${item.name}님의 댓글 답변이 전송되었고, 원문 아래에 "내 답글"로 표시됩니다.`;
+      banner.classList.add('show');
+      showToast(`${item.name}님 댓글 답변 전송 완료`, 'success');
+    }
+
+    async function sendAllComments() {
+      const toSend = items.filter(v =>
+        v.type === 'comment' &&
+        v.aiStatus === 'done' &&
+        v.status !== 'completed' &&
+        v.aiReply.trim()
+      );
+      if (!toSend.length) {
+        showToast('전송할 댓글 답변이 없습니다.', 'error');
+        return;
+      }
+      toSend.forEach(v => v.status = 'sending');
+      renderTable();
+      updateKPIs();
+      await new Promise(r => setTimeout(r, 950));
+      toSend.forEach(v => {
+        v.status = 'completed';
+        v.sentReply = v.aiReply;
+      });
+      renderTable();
+      updateKPIs();
+      const banner = document.getElementById('sentBanner');
+      const desc = document.getElementById('sentBannerDesc');
+      desc.textContent = `총 ${toSend.length}건의 댓글 답변이 전송되었고, 각 항목 아래에 "내 답글"로 표시됩니다.`;
+      banner.classList.add('show');
+      showToast(`${toSend.length}건 댓글 답변 전송 완료`, 'success');
+    }
+
+    function showToast(msg, type = '') {
+      const toast = document.getElementById('toast');
+      toast.textContent = type === 'success' ? `✅ ${msg}` : type === 'error' ? `❌ ${msg}` : msg;
+      toast.className = `toast show ${type}`;
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // 💡 변경된 부분: 초기화 함수에서 fetchFeedbackData를 호출
+    function init() {
+      fetchFeedbackData(); 
+    }
+    
+    init();
+  </script>
+</body>
+
+</html>
