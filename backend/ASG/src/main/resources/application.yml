@@ -1,4 +1,6 @@
 spring:
+  profiles:
+    include: secret
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/gather?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
@@ -17,5 +19,3 @@ spring:
   sql:
     init:
       mode: always # 앱 실행 시 data.sql을 항상 실행하여 더미 데이터 세팅
-ai:
-  api-key: AIzaSyDB8h2aNcR1_0gwh0WYw4a93lFj-Ffziks
