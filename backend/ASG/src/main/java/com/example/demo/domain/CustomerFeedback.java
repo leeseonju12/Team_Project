@@ -70,4 +70,14 @@ public class CustomerFeedback {
         this.aiReply = aiReply;
         this.aiStatus = AiStatus.DONE;
     }
+    
+ // 💡 전송 완료 처리용 메서드
+    public void sendReply() {
+        if (this.aiReply == null || this.aiReply.trim().isEmpty()) {
+            throw new IllegalStateException("전송할 답변이 없습니다.");
+        }
+        this.sentReply = this.aiReply; // AI 답변을 최종 전송 답변으로 확정
+        this.status = FeedbackStatus.COMPLETED; // 상태를 '전송 완료'로 변경
+    }
+    
 }

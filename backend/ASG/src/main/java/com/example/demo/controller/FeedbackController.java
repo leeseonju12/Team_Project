@@ -28,4 +28,10 @@ public class FeedbackController {
     public FeedbackResponseDto generateAiReply(@PathVariable Long id) {
         return feedbackService.generateAiReply(id);
     }
+    
+    //개별 답변 전송 API
+    @PutMapping("/{id}/send")
+    public FeedbackResponseDto sendReply(@PathVariable Long id) {
+        return feedbackService.sendReply(id);
+    }
 }
