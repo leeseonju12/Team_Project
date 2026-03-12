@@ -1,0 +1,21 @@
+spring:
+  profiles:
+    include: secret
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/gather?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: root
+    password:
+  
+  jpa:
+    hibernate:
+      # update: Entity 클래스를 보고 없는 테이블(customer_feedback)을 자동으로 만들어줌
+      ddl-auto: update 
+    show-sql: true # 콘솔에서 쿼리 확인
+    properties:
+      hibernate:
+        format_sql: true
+        
+  sql:
+    init:
+      mode: always # 앱 실행 시 data.sql을 항상 실행하여 더미 데이터 세팅
