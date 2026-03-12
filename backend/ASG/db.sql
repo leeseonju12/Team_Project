@@ -5,7 +5,16 @@ USE gather;
 DROP TABLE IF EXISTS customer_feedback;
 DROP TABLE IF EXISTS feedback_source;
 
--- 3. customer_feedback 테이블 생성
+-- 3-1. feedback_source 테이블 생성
+CREATE TABLE feedback_source (
+    source_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    author_name VARCHAR(100) NOT NULL,
+    platform VARCHAR(30) NOT NULL COMMENT 'NAVER, KAKAO, GOOGLE, INSTAGRAM, FACEBOOK',
+    original_text TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3-2. customer_feedback 테이블 생성
 CREATE TABLE customer_feedback (
     feedback_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     source_id BIGINT NOT NULL,
@@ -16,14 +25,6 @@ CREATE TABLE customer_feedback (
     sent_reply TEXT,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (source_id) REFERENCES feedback_source(source_id) ON DELETE CASCADE
-);
-
-CREATE TABLE feedback_source (
-    source_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    author_name VARCHAR(100) NOT NULL,
-    platform VARCHAR(30) NOT NULL COMMENT 'NAVER, KAKAO, GOOGLE, INSTAGRAM, FACEBOOK',
-    original_text TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 ##=============
