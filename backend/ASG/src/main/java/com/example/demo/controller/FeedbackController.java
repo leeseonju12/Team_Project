@@ -4,6 +4,8 @@ import com.example.demo.dto.FeedbackResponseDto;
 import com.example.demo.service.FeedbackService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,5 +22,10 @@ public class FeedbackController {
     @GetMapping
     public List<FeedbackResponseDto> getFeedbacks() {
         return feedbackService.getAllFeedbacks();
+    }
+    
+    @PutMapping("/{id}/ai-reply")
+    public FeedbackResponseDto generateAiReply(@PathVariable Long id) {
+        return feedbackService.generateAiReply(id);
     }
 }

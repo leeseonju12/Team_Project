@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 import com.example.demo.domain.enums.AiStatus;
 import com.example.demo.domain.enums.FeedbackStatus;
 import com.example.demo.domain.enums.FeedbackType;
-import com.example.demo.domain.enums.PlatformCode;
 
 @Entity
 @Table(name = "customer_feedback")
@@ -65,4 +64,10 @@ public class CustomerFeedback {
 	    if (this.status == null) this.status = FeedbackStatus.UNRESOLVED;
 	    if (this.aiStatus == null) this.aiStatus = AiStatus.IDLE;
 	}
+	
+	// 💡 AI 답변 업데이트용 비즈니스 메서드
+    public void updateAiReply(String aiReply) {
+        this.aiReply = aiReply;
+        this.aiStatus = AiStatus.DONE;
+    }
 }

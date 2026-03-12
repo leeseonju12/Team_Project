@@ -1382,65 +1382,57 @@
       document.getElementById('kpiCompleted').textContent = items.filter(v => v.status === 'completed').length;
     }
 
-    // 💡 참고: 현재 AI 생성은 프론트엔드에서 하드코딩된 배열로 임시 작동합니다.
-    // 추후 백엔드 API 연동 시 이 부분을 수정하게 됩니다.
-    async function callAI(item) {
-      const positiveReplies = [
-        `${item.name}님, 소중한 후기 정말 감사합니다. 만족스러운 경험이 되셨다니 기쁘며 다음 방문에도 더 좋은 서비스로 보답드리겠습니다.`,
-        `${item.name}님, 좋은 말씀 남겨주셔서 감사합니다. 편하게 이용하셨다니 정말 다행이며 앞으로도 더 만족스러운 경험을 드릴 수 있도록 노력하겠습니다.`,
-        `${item.name}님, 정성스러운 리뷰 감사드립니다. 남겨주신 응원이 큰 힘이 되며 다음에도 기분 좋은 경험으로 찾아뵙겠습니다.`
-      ];
-      const negativeReplies = [
-        `${item.name}님, 이용에 불편을 드려 죄송합니다. 말씀해주신 부분은 내부적으로 다시 점검하여 더 나은 안내와 서비스로 개선하겠습니다.`,
-        `${item.name}님, 아쉬운 경험을 드리게 되어 죄송합니다. 남겨주신 의견을 바탕으로 운영 과정을 보완하고 같은 불편이 반복되지 않도록 하겠습니다.`,
-        `${item.name}님, 불편을 느끼게 해드려 죄송합니다. 소중한 의견 감사드리며 응대와 안내 품질을 더욱 세심하게 보완하겠습니다.`
-      ];
-      const inquiryReplies = [
-        `${item.name}님, 문의 주셔서 감사합니다. 요청하신 내용은 확인 후 빠르게 안내드리겠으며 자세한 사항은 공식 채널을 통해서도 확인 가능합니다.`,
-        `${item.name}님, 관심 가져주셔서 감사합니다. 문의하신 내용은 운영 일정에 맞춰 안내드릴 예정이며 필요하시면 별도 문의 채널로도 도와드리겠습니다.`,
-        `${item.name}님, 문의 남겨주셔서 감사합니다. 관련 내용은 준비되는 대로 안내드리겠으며 자세한 확인은 공식 문의 채널에서도 가능합니다.`
-      ];
-      await new Promise(r => setTimeout(r, 550 + Math.random() * 750));
-      const lower = item.text.toLowerCase();
-      const isInquiry = lower.includes('언제') || lower.includes('예약') || lower.includes('문의') || lower.includes('가능') || lower.includes('운영시간');
-      const isNegative = lower.includes('아쉬웠') || lower.includes('불편') || lower.includes('조금') || lower.includes('대기') || lower.includes('기대보다');
-      let pool = positiveReplies;
-      if (isInquiry) pool = inquiryReplies;
-      else if (isNegative) pool = negativeReplies;
-      return pool[Math.floor(Math.random() * pool.length)];
-    }
 
     async function generateSingleAI(id) {
       const item = items.find(v => v.id === id);
       if (!item) return;
-      const btn = document.getElementById(`rowAiBtn-${id}`);
+      //const btn = document.getElementById(`rowAiBtn-${id}`);
       const spin = document.getElementById(`rowSpin-${id}`);
-      if (btn) btn.disabled = true;
+      //if (btn) btn.disabled = true;
       if (spin) spin.style.display = 'inline-block';
       try {
-        item.aiReply = await callAI(item);
-        item.aiStatus = 'done';
-        showToast(`${item.name}님 AI 답변 생성 완료`, 'success');
-      } catch (e) {
-        showToast('AI 생성 중 오류가 발생했습니다.', 'error');
-      } finally {
-        if (btn) btn.disabled = false;
-        if (spin) spin.style.display = 'none';
+    	// 백엔드 API 호출 (PUT 요청)
+          const response = await fetch(`/api/feedbacks/${id}/ai-reply`, {
+            method: 'PUT'
+          });
+          
+          if (!response.ok) throw new Error('API 호출 실패');
+          
+          // 백엔드에서 업데이트하고 DTO로 보내준 최신 데이터를 로컬 변수에 덮어쓰기
+          const updatedData = await response.json();
+          Object.assign(item, updatedData);
+          
+          showToast(`${item.name}님 AI 답변 생성 완료`, 'success');
+        } catch (e) {
+          console.error(e);
+          showToast('AI 생성 중 오류가 발생했습니다.', 'error');
+        } finally {
+          //if (btn) btn.disabled = false;
+          if (spin) spin.style.display = 'none';
+          renderTable();
+          updateKPIs();
+        }
       }
-      renderTable();
-      updateKPIs();
-    }
-
+/*
     async function regenSingle(id) {
       const item = items.find(v => v.id === id);
       if (!item || !item.aiReply.trim()) return;
-      const btn = document.getElementById(`regenBtn-${id}`);
+      
+      //const btn = document.getElementById(`regenBtn-${id}`);
       const spin = document.getElementById(`regenSpin-${id}`);
-      if (btn) btn.disabled = true;
+      
+      //if (btn) btn.disabled = true;
       if (spin) spin.style.display = 'inline-block';
       try {
-        item.aiReply = await callAI(item);
-        item.aiStatus = 'done';
+    	  const response = await fetch(`/api/feedbacks/${id}/ai-reply`, {
+              method: 'PUT'
+            });
+            
+            if (!response.ok) throw new Error('API 호출 실패');
+            
+            const updatedData = await response.json();
+            Object.assign(item, updatedData);
+            
         showToast('답변이 재생성되었습니다.', 'success');
       } catch (e) {
         showToast('재생성 실패', 'error');
@@ -1451,6 +1443,7 @@
       renderTable();
       updateKPIs();
     }
+    */
 
     async function generateAllAI() {
       const targets = filteredItems.filter(it => selectedIds.has(it.id) && it.status !== 'completed');
@@ -1458,9 +1451,9 @@
         showToast('AI 생성할 항목을 선택해 주세요.', 'error');
         return;
       }
-      const btn = document.getElementById('btnAIAll');
+      //const btn = document.getElementById('btnAIAll');
       const spin = document.getElementById('spinAll');
-      btn.disabled = true;
+      //btn.disabled = true;
       spin.style.display = 'inline-block';
       const wrap = document.getElementById('progressWrap');
       const fill = document.getElementById('progressFill');
@@ -1471,20 +1464,30 @@
       lbl.textContent = `0 / ${targets.length}`;
       pct.textContent = '0%';
       let done = 0;
+      
       for (const item of targets) {
         try {
-          item.aiReply = await callAI(item);
-          item.aiStatus = 'done';
-        } catch (e) {}
-        done++;
-        const progress = Math.round((done / targets.length) * 100);
-        fill.style.width = progress + '%';
-        lbl.textContent = `${done} / ${targets.length}`;
-        pct.textContent = progress + '%';
-        renderTable();
-        updateKPIs();
+        	const response = await fetch(`/api/feedbacks/${item.id}/ai-reply`, {
+                method: 'PUT'
+              });
+        	if (response.ok) {
+                const updatedData = await response.json();
+                Object.assign(item, updatedData);
+              }
+        } catch (e) {
+        console.error(`ID ${item.id} 생성 실패`, e);
       }
-      btn.disabled = false;
+      done++;
+      const progress = Math.round((done / targets.length) * 100);
+      fill.style.width = progress + '%';
+      lbl.textContent = `${done} / ${targets.length}`;
+      pct.textContent = progress + '%';
+      
+      renderTable();
+      updateKPIs();
+    }
+      
+      
       spin.style.display = 'none';
       setTimeout(() => wrap.classList.remove('visible'), 1200);
       showToast(`AI 답변 ${done}건 생성 완료`, 'success');

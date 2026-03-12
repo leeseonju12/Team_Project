@@ -85,4 +85,36 @@ public class FeedbackService {
                 .sentReply(feedback.getSentReply() != null ? feedback.getSentReply() : "")
                 .build();
     }
+    
+ // 💡 단건 AI 답변 생성 로직
+    @Transactional // DB 값을 변경(Update)하므로 꼭 필요합니다!
+    public FeedbackResponseDto generateAiReply(Long feedbackId) {
+        CustomerFeedback feedback = feedbackRepository.findById(feedbackId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 리뷰/댓글이 존재하지 않습니다. ID: " + feedbackId));
+
+        // TODO: 나중에 이 부분을 진짜 LLM API 호출 로직으로 교체하면 됩니다.
+        String generatedReply = mockAiGeneration(feedback);
+
+        // 엔티티 업데이트 (JPA 더티 체킹으로 인해 save()를 안 해도 DB에 자동 반영됨)
+        feedback.updateAiReply(generatedReply);
+
+        // 변경된 최신 상태를 다시 DTO로 변환해서 프론트로 반환
+        return convertToDto(feedback);
+    }
+
+    // 임시 AI 답변 생성기 (프론트엔드에 있던 로직을 백엔드로 가져옴)
+    private String mockAiGeneration(CustomerFeedback feedback) {
+        String author = feedback.getSource().getAuthorName();
+        String text = feedback.getSource().getOriginalText().toLowerCase();
+        
+        if (text.contains("언제") || text.contains("예약") || text.contains("문의")) {
+            //return author + "님, 문의 주셔서 감사합니다. 요청하신 내용은 확인 후 빠르게 안내해 드리겠습니다!";
+        	return author + "님, 문의 받았다요 문의 답변이다요";
+        } else if (text.contains("아쉽") || text.contains("불편") || text.contains("조금")) {
+            //return author + "님, 이용에 불편을 드려 죄송합니다. 말씀해주신 부분은 내부적으로 꼭 점검하여 개선하겠습니다.";
+            return author + "님 불편사항 암튼 대충 AI 답변";
+        } else {
+            return author + "님, 소중한 리뷰 고맙다요";
+        }
+    }
 }
