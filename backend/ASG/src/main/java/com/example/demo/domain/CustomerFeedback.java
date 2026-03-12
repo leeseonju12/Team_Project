@@ -16,6 +16,7 @@ import com.example.demo.domain.enums.PlatformCode;
 public class CustomerFeedback {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "feedback_id")
     private Long id;
 
     /*
@@ -24,19 +25,15 @@ public class CustomerFeedback {
     @JoinColumn(name = "brand_platform_id")
     private BrandPlatform brandPlatform; 
     */
-    @Enumerated(EnumType.STRING)
-    @Column(length = 30)
-    private PlatformCode platform; // NAVER_REVIEW, INSTAGRAM_COMMENT 등
-
-    @Column(length = 100)
-    private String authorName; // 작성자 (예: 김민지)
+    
+    // 원본 데이터(Source)와 1:1 연결
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "source_id")
+    private FeedbackSource source;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private FeedbackType type; // REVIEW, COMMENT
-
-    @Column(columnDefinition = "TEXT")
-    private String originalText; // 원문
 
     @Enumerated(EnumType.STRING)
     @Column(length = 30)
@@ -55,4 +52,17 @@ public class CustomerFeedback {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+
+	@PrePersist
+	public void prePersist() {
+	    // Source의 플랫폼 정보를 보고 Type을 알아서 채워 넣음!
+	    if (this.source != null && this.source.getPlatform() != null) {
+	        this.type = this.source.getPlatform().getAutoType();
+	    }
+	    
+	    // 기본값 세팅
+	    if (this.status == null) this.status = FeedbackStatus.UNRESOLVED;
+	    if (this.aiStatus == null) this.aiStatus = AiStatus.IDLE;
+	}
 }

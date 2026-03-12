@@ -3,141 +3,77 @@ USE gather;
 
 -- 2. 기존 테이블이 있다면 삭제 (초기화)
 DROP TABLE IF EXISTS customer_feedback;
+DROP TABLE IF EXISTS feedback_source;
 
 -- 3. customer_feedback 테이블 생성
 CREATE TABLE customer_feedback (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    author_name VARCHAR(100) NOT NULL COMMENT '작성자',
-    TYPE VARCHAR(20) NOT NULL COMMENT 'REVIEW, COMMENT',
-    platform VARCHAR(30) NOT NULL COMMENT 'NAVER_REVIEW, INSTAGRAM_COMMENT 등',
-    original_text TEXT COMMENT '원문',
-    STATUS VARCHAR(30) NOT NULL COMMENT 'UNRESOLVED, CHECKED, UNCHECKED, SENDING, COMPLETED',
-    ai_reply TEXT COMMENT '생성된 AI 답변',
-    ai_status VARCHAR(20) NOT NULL DEFAULT 'IDLE' COMMENT 'IDLE, DONE',
-    sent_reply TEXT COMMENT '최종 전송 답글',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '생성일시',
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시'
+    feedback_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    source_id BIGINT NOT NULL,
+    TYPE VARCHAR(20) NOT NULL COMMENT 'REVIEW, COMMENT (백엔드에서 자동 입력)',
+    STATUS VARCHAR(30) DEFAULT 'UNRESOLVED',
+    ai_reply TEXT,
+    ai_status VARCHAR(20) DEFAULT 'IDLE',
+    sent_reply TEXT,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (source_id) REFERENCES feedback_source(source_id) ON DELETE CASCADE
 );
 
--- 4. Codepen 프론트엔드와 동일한 더미 데이터 10건 삽입
-INSERT INTO customer_feedback 
-(author_name, TYPE, platform, original_text, STATUS, ai_reply, ai_status, sent_reply) 
-VALUES
-('김민지', 'REVIEW', 'NAVER_REVIEW', '지도 보고 방문했는데 매장 분위기가 깔끔하고 응대도 빨라서 좋았어요. 다음에 또 방문할 의향 있습니다.', 'UNRESOLVED', '', 'IDLE', ''),
-('박준서', 'REVIEW', 'KAKAO_REVIEW', '음식은 괜찮았는데 대기 안내가 조금 아쉬웠습니다. 주말에는 안내 문구가 더 명확하면 좋겠어요.', 'UNRESOLVED', '', 'IDLE', ''),
-('이수현', 'REVIEW', 'GOOGLE_REVIEW', '전체적으로 만족스러웠고 직원들도 친절했습니다. 외국인 친구와 방문했는데 접근성이 좋았어요.', 'CHECKED', '', 'IDLE', ''),
-('최다은', 'COMMENT', 'INSTAGRAM_COMMENT', '여기 신메뉴 언제부터 판매하나요? 사진 보고 너무 기대돼요!', 'UNCHECKED', '', 'IDLE', ''),
-('정현우', 'COMMENT', 'FACEBOOK_COMMENT', '예약은 댓글로 가능한가요, 아니면 별도 채널로 문의해야 하나요?', 'CHECKED', '', 'IDLE', ''),
-('한지원', 'REVIEW', 'NAVER_REVIEW', '응대 과정에서 불편함이 있었습니다. 방문 경험이 기대보다 아쉬웠어요.', 'UNRESOLVED', '', 'IDLE', ''),
-('오민준', 'COMMENT', 'INSTAGRAM_COMMENT', '인스타그램 댓글 기반 자동 답글 후보입니다. 자주 묻는 예약 문의 유형으로 분류되었습니다.', 'UNRESOLVED', '', 'IDLE', ''),
-('윤서연', 'COMMENT', 'FACEBOOK_COMMENT', '페이스북 댓글 기반 자동 응답 큐입니다. 운영시간 문의로 분류되어 자동 응답이 가능합니다.', 'UNRESOLVED', '', 'IDLE', ''),
-('강태양', 'REVIEW', 'GOOGLE_REVIEW', '구글 리뷰 중 긍정 피드백 항목으로 자동 답글 대상에 포함되었습니다.', 'CHECKED', '', 'IDLE', ''),
-('임하늘', 'REVIEW', 'KAKAO_REVIEW', '주차 안내가 조금 더 자세하면 좋을 것 같아요. 위치 찾는 데 시간이 걸렸습니다.', 'UNCHECKED', '', 'IDLE', '');
+CREATE TABLE feedback_source (
+    source_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    author_name VARCHAR(100) NOT NULL,
+    platform VARCHAR(30) NOT NULL COMMENT 'NAVER, KAKAO, GOOGLE, INSTAGRAM, FACEBOOK',
+    original_text TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 
+##=============
 
-## 데이터 초기화용
-## TRUNCATE TABLE customer_feedback;
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE customer_feedback;
+TRUNCATE TABLE feedback_source;
+SET FOREIGN_KEY_CHECKS = 1;
 
-INSERT INTO customer_feedback 
-(author_name, TYPE, platform, original_text, STATUS, ai_reply, ai_status, sent_reply) 
-VALUES
-('김민지', 'REVIEW', 'NAVER_REVIEW', '지도 보고 방문했는데 매장 분위기가 깔끔하고 응대도 빨라서 좋았어요. 다음에 또 방문할 의향 있습니다.', 'UNRESOLVED', '', 'IDLE', ''),
-('박준서', 'REVIEW', 'KAKAO_REVIEW', '음식은 괜찮았는데 대기 안내가 조금 아쉬웠습니다. 주말에는 안내 문구가 더 명확하면 좋겠어요.', 'UNRESOLVED', '', 'IDLE', ''),
-('이수현', 'REVIEW', 'GOOGLE_REVIEW', '전체적으로 만족스러웠고 직원들도 친절했습니다. 외국인 친구와 방문했는데 접근성이 좋았어요.', 'CHECKED', '', 'IDLE', ''),
-('최다은', 'COMMENT', 'INSTAGRAM_COMMENT', '여기 신메뉴 언제부터 판매하나요? 사진 보고 너무 기대돼요!', 'UNCHECKED', '', 'IDLE', ''),
-('정현우', 'COMMENT', 'FACEBOOK_COMMENT', '예약은 댓글로 가능한가요, 아니면 별도 채널로 문의해야 하나요?', 'CHECKED', '', 'IDLE', ''),
-('한지원', 'REVIEW', 'NAVER_REVIEW', '응대 과정에서 불편함이 있었습니다. 방문 경험이 기대보다 아쉬웠어요.', 'UNRESOLVED', '', 'IDLE', ''),
-('오민준', 'COMMENT', 'INSTAGRAM_COMMENT', '인스타그램 댓글 기반 자동 답글 후보입니다. 자주 묻는 예약 문의 유형으로 분류되었습니다.', 'UNRESOLVED', '', 'IDLE', ''),
-('윤서연', 'COMMENT', 'FACEBOOK_COMMENT', '페이스북 댓글 기반 자동 응답 큐입니다. 운영시간 문의로 분류되어 자동 응답이 가능합니다.', 'UNRESOLVED', '', 'IDLE', ''),
-('강태양', 'REVIEW', 'GOOGLE_REVIEW', '구글 리뷰 중 긍정 피드백 항목으로 자동 답글 대상에 포함되었습니다.', 'CHECKED', '', 'IDLE', ''),
-('임하늘', 'REVIEW', 'KAKAO_REVIEW', '주차 안내가 조금 더 자세하면 좋을 것 같아요. 위치 찾는 데 시간이 걸렸습니다.', 'UNCHECKED', '', 'IDLE', ''),
-('이지훈', 'REVIEW', 'NAVER_REVIEW', '커피 맛집 인정합니다! 원두 향이 너무 좋고 산미도 적당해서 제 입맛에 딱 맞아요.', 'UNRESOLVED', '', 'IDLE', ''),
-('박서연', 'REVIEW', 'KAKAO_REVIEW', '매장은 넓고 예쁜데 화장실 청소 상태가 조금 아쉬웠습니다. 휴지통이 꽉 차 있었어요.', 'CHECKED', '', 'IDLE', ''),
-('최민호', 'REVIEW', 'GOOGLE_REVIEW', '노트북 들고 와서 코딩하기 딱 좋은 카페네요. 와이파이도 빵빵하고 콘센트도 많아서 쾌적하게 작업하다 갑니다.', 'UNRESOLVED', '', 'IDLE', ''),
-('정유진', 'COMMENT', 'INSTAGRAM_COMMENT', '헐 이번 주말에 무조건 가야겠다 @김철수 여기 어때??', 'UNCHECKED', '', 'IDLE', ''),
-('강동원', 'COMMENT', 'FACEBOOK_COMMENT', '단체석 예약하려고 하는데 15명도 수용 가능한가요? 이번 주 금요일 저녁입니다.', 'UNRESOLVED', '', 'IDLE', ''),
-('조아라', 'REVIEW', 'NAVER_REVIEW', '치킨 겉바속촉 미쳤어요ㅠㅠ 야구 이긴 날 치맥하러 왔는데 최고네요! 한화 이글스 화이팅! 🦅', 'UNRESOLVED', '', 'IDLE', ''),
-('윤태진', 'REVIEW', 'KAKAO_REVIEW', '배달 기사님이 길을 못 찾으셔서 치킨이 다 식어서 왔어요. 매장 잘못은 아니지만 속상하네요.', 'CHECKED', '', 'IDLE', ''),
-('장원영', 'REVIEW', 'GOOGLE_REVIEW', '외국인 친구 데려갔는데 영어 메뉴판이 있어서 주문하기 수월했습니다. 친절한 응대 감사합니다.', 'UNRESOLVED', '', 'IDLE', ''),
-('임시완', 'COMMENT', 'INSTAGRAM_COMMENT', '이벤트 참여완료!! 딸기라떼 너무 먹어보고 싶어요 🍓', 'UNRESOLVED', '', 'IDLE', ''),
-('한소희', 'COMMENT', 'FACEBOOK_COMMENT', '포장하면 할인되나요? 퇴근길에 들러서 가져가려고요.', 'UNCHECKED', '', 'IDLE', ''),
-('송민호', 'REVIEW', 'NAVER_REVIEW', '인테리어가 감성 넘쳐서 사진 찍기 진짜 좋아요. 디저트도 예쁘게 나옵니다.', 'CHECKED', '', 'IDLE', ''),
-('유재석', 'REVIEW', 'KAKAO_REVIEW', '음악 소리가 너무 커서 대화하기가 힘들었어요. 볼륨 조금만 줄여주시면 완벽할 것 같습니다.', 'UNRESOLVED', '', 'IDLE', ''),
-('황정민', 'REVIEW', 'GOOGLE_REVIEW', '동네에 이런 퀄리티의 치킨집이 생기다니 감동입니다. 양념이 딱 제 스타일이에요.', 'UNRESOLVED', '', 'IDLE', ''),
-('안효섭', 'COMMENT', 'INSTAGRAM_COMMENT', '오픈 시간 언제인가요? 아침 일찍 방문해도 되나요?', 'CHECKED', '', 'IDLE', ''),
-('권지용', 'COMMENT', 'FACEBOOK_COMMENT', '오늘 주문량 많나요? 지금 시키면 대략 몇 분 정도 걸릴까요?', 'UNRESOLVED', '', 'IDLE', ''),
-('김태리', 'REVIEW', 'NAVER_REVIEW', '양도 많고 가성비 최고입니다. 대학생들한테 인기 많은 이유가 있네요.', 'UNRESOLVED', '', 'IDLE', ''),
-('이광수', 'REVIEW', 'KAKAO_REVIEW', '주차장 입구를 찾기가 너무 힘들었어요. 안내 표지판이 더 컸으면 좋겠습니다.', 'UNCHECKED', '', 'IDLE', ''),
-('박보검', 'REVIEW', 'GOOGLE_REVIEW', '매번 친절하게 웃으며 맞이해주시는 알바생분 덕분에 기분 좋게 다녀갑니다!', 'CHECKED', '', 'IDLE', ''),
-('최우식', 'COMMENT', 'INSTAGRAM_COMMENT', '반려동물 동반 가능한가요? 강아지랑 같이 테라스에 앉고 싶어요 🐶', 'UNRESOLVED', '', 'IDLE', ''),
-('정해인', 'COMMENT', 'FACEBOOK_COMMENT', '저번 이벤트 당첨자 발표 언제 나오나요~? 현기증 나요', 'UNRESOLVED', '', 'IDLE', ''),
-('강호동', 'REVIEW', 'NAVER_REVIEW', '치킨 한 마리 시켰는데 혼자 다 먹었네요 ㅋㅋㅋ 튀김옷이 얇아서 덜 느끼해요.', 'UNRESOLVED', '', 'IDLE', ''),
-('조세호', 'REVIEW', 'KAKAO_REVIEW', '치킨무를 빼달라고 요청사항에 적었는데 그대로 왔어요. 다음엔 꼭 확인 부탁드려요!', 'UNCHECKED', '', 'IDLE', ''),
-('윤여정', 'REVIEW', 'GOOGLE_REVIEW', '커피 맛을 잘 모르지만 여기서 먹어보고 드립커피에 입문하게 되었습니다. 훌륭합니다.', 'UNRESOLVED', '', 'IDLE', ''),
-('장도연', 'COMMENT', 'INSTAGRAM_COMMENT', '비주얼 도랏... 당장 내 입으로 직행시켜', 'CHECKED', '', 'IDLE', ''),
-('임영웅', 'COMMENT', 'FACEBOOK_COMMENT', '배달앱 안 쓰고 직접 전화 주문해도 쿠폰 주시나요?', 'UNRESOLVED', '', 'IDLE', ''),
-('한지민', 'REVIEW', 'NAVER_REVIEW', '여기 신메뉴 치즈볼 진짜 맛있어요!! 치킨보다 치즈볼 먹으러 더 자주 올 듯요 ㅎㅎ', 'UNRESOLVED', '', 'IDLE', ''),
-('송지효', 'REVIEW', 'KAKAO_REVIEW', '평일 점심시간에는 사람이 너무 많아서 음료 나오는데 20분이나 걸렸습니다.', 'CHECKED', '', 'IDLE', ''),
-('유해진', 'REVIEW', 'GOOGLE_REVIEW', '가족들이랑 외식하기 딱 좋습니다. 아이들 먹기 좋은 안 매운 메뉴도 있어서 만족해요.', 'UNRESOLVED', '', 'IDLE', ''),
-('황민현', 'COMMENT', 'INSTAGRAM_COMMENT', '이거 칼로리 정보 알 수 있을까요? 다이어트 중인데 너무 먹고 싶어서요 ㅠㅠ', 'UNRESOLVED', '', 'IDLE', ''),
-('안보현', 'COMMENT', 'FACEBOOK_COMMENT', '혹시 지역화폐 카드 결제 되나요?', 'UNCHECKED', '', 'IDLE', ''),
-('김수현', 'REVIEW', 'NAVER_REVIEW', '의자가 푹신해서 오래 앉아있어도 허리가 안 아프네요. 단골 예약입니다.', 'UNRESOLVED', '', 'IDLE', ''),
-('이동욱', 'REVIEW', 'KAKAO_REVIEW', '새로 알바 오신 분 같은데 주문을 두 번이나 잘못 받으셨어요. 교육이 필요해 보입니다.', 'CHECKED', '', 'IDLE', ''),
-('박서준', 'REVIEW', 'GOOGLE_REVIEW', '이 집 양념치킨 소스 비법이 뭔가요... 밥 비벼 먹고 싶은 맛입니다. 최고!', 'UNRESOLVED', '', 'IDLE', ''),
-('최수영', 'COMMENT', 'INSTAGRAM_COMMENT', '와 폼 미쳤다 🔥 이번 주 회식은 무조건 여기로 밀어붙인다', 'UNRESOLVED', '', 'IDLE', ''),
-('정경호', 'COMMENT', 'FACEBOOK_COMMENT', '저희 동네는 배달 불가 지역으로 뜨는데, 배달 범위 확대 계획은 없으신가요?', 'CHECKED', '', 'IDLE', ''),
-('강하늘', 'REVIEW', 'NAVER_REVIEW', '생맥주 기계 관리 진짜 잘하시는듯. 맥주에서 쇠맛 안 나고 엄청 청량해요.', 'UNRESOLVED', '', 'IDLE', ''),
-('조인성', 'REVIEW', 'KAKAO_REVIEW', '닭강정 포장했는데 튀김옷이 너무 딱딱해서 입천장 다 까졌어요...', 'UNCHECKED', '', 'IDLE', ''),
-('윤박', 'REVIEW', 'GOOGLE_REVIEW', '비건 옵션이 있어서 너무 좋습니다. 우유 대신 귀리우유 변경 무료인 것도 최고!', 'UNRESOLVED', '', 'IDLE', ''),
-('장기용', 'COMMENT', 'INSTAGRAM_COMMENT', '@이재욱 우리 내일 퇴근하고 여기 갈래??', 'UNRESOLVED', '', 'IDLE', ''),
-('임수정', 'COMMENT', 'FACEBOOK_COMMENT', '단체 주문 시 며칠 전에 연락드려야 하나요? 학교 행사 때문에요.', 'UNRESOLVED', '', 'IDLE', ''),
-('한효주', 'REVIEW', 'NAVER_REVIEW', '매장 앞 도로가 예뻐서 창가 자리 앉으면 힐링 제대로 됩니다.', 'UNRESOLVED', '', 'IDLE', ''),
-('송강호', 'REVIEW', 'KAKAO_REVIEW', '치킨에서 약간 누린내가 났어요. 평소엔 안 그랬는데 오늘만 그런 건지 아쉽네요.', 'CHECKED', '', 'IDLE', ''),
-('유연석', 'REVIEW', 'GOOGLE_REVIEW', '근처 직장인입니다. 점심 세트 메뉴 구성이 아주 알차서 자주 이용하고 있어요.', 'UNRESOLVED', '', 'IDLE', ''),
-('황정음', 'COMMENT', 'INSTAGRAM_COMMENT', '인스타 감성 낭낭하네요 ✨ 사진 찍으러 이번 주말에 출동합니다!', 'UNCHECKED', '', 'IDLE', ''),
-('안소희', 'COMMENT', 'FACEBOOK_COMMENT', '리뷰 이벤트 감자튀김으로 변경도 가능할까요?', 'UNRESOLVED', '', 'IDLE', ''),
-('김유정', 'REVIEW', 'NAVER_REVIEW', '사장님이 너무 친절하셔요!! 비 오는 날 우산도 빌려주시고 감동받았습니다.', 'UNRESOLVED', '', 'IDLE', ''),
-('이선균', 'REVIEW', 'KAKAO_REVIEW', '에어컨 바람이 너무 직빵이라 추웠어요. 온도 조절 조금만 신경 써주세요.', 'UNRESOLVED', '', 'IDLE', ''),
-('박보영', 'REVIEW', 'GOOGLE_REVIEW', '테이크아웃 포장이 너무 깔끔하고 귀여워요! 선물용으로도 좋을 것 같아요.', 'CHECKED', '', 'IDLE', ''),
-('최현욱', 'COMMENT', 'INSTAGRAM_COMMENT', '콜키지 차지 있나요?? 와인 한 병 들고 가고 싶습니다 🍷', 'UNRESOLVED', '', 'IDLE', ''),
-('정소민', 'COMMENT', 'FACEBOOK_COMMENT', '페이스북 페이지 팔로우 했는데 서비스 주시나요 ㅋㅋㅋ', 'UNRESOLVED', '', 'IDLE', ''),
-('강소라', 'REVIEW', 'NAVER_REVIEW', '치킨 조각이 너무 커서 먹기가 살짝 불편했어요. 다음엔 좀 작게 잘라달라고 해야겠네요.', 'UNCHECKED', '', 'IDLE', ''),
-('조정석', 'REVIEW', 'KAKAO_REVIEW', '커피 양이 진짜 혜자네요. 하루 종일 마셔도 안 줄어들어요 ㅋㅋㅋ', 'UNRESOLVED', '', 'IDLE', ''),
-('윤시윤', 'REVIEW', 'GOOGLE_REVIEW', '화장실에 가그린이랑 면봉까지 구비되어 있는 센스에 박수를 칩니다.', 'CHECKED', '', 'IDLE', ''),
-('장동건', 'COMMENT', 'INSTAGRAM_COMMENT', '리그램 완료!! 당첨되게 해주세요 제발요 🙏🙏', 'UNRESOLVED', '', 'IDLE', ''),
-('임지연', 'COMMENT', 'FACEBOOK_COMMENT', '배민 말고 요기요에도 입점해주세요ㅠㅠ 요기요 패스 쓴단 말이에요', 'UNCHECKED', '', 'IDLE', ''),
-('한석규', 'REVIEW', 'NAVER_REVIEW', '오랜만에 정말 맛있는 양념치킨을 먹었습니다. 옛날 처갓집 스타일!', 'UNRESOLVED', '', 'IDLE', ''),
-('송승헌', 'REVIEW', 'KAKAO_REVIEW', '음식 나오는 순서가 너무 엉망이었어요. 사이드 메뉴가 다 먹어갈 때쯤 나오네요.', 'CHECKED', '', 'IDLE', ''),
-('유승호', 'REVIEW', 'GOOGLE_REVIEW', '드라이브 스루 만들어주시면 진짜 매일 갈 텐데 아쉽네요 ㅠㅠ 그래도 맛은 최고!', 'UNRESOLVED', '', 'IDLE', ''),
-('황희찬', 'COMMENT', 'INSTAGRAM_COMMENT', '팝업스토어는 언제까지 운영하나요?', 'UNRESOLVED', '', 'IDLE', ''),
-('안성기', 'COMMENT', 'FACEBOOK_COMMENT', '지난주에 먹고 체했는데 식재료 관리 철저히 해주시길 바랍니다.', 'UNRESOLVED', '', 'IDLE', ''),
-('김지원', 'REVIEW', 'NAVER_REVIEW', '조명이 살짝 어두운 편이라 분위기는 좋은데 책 읽기엔 눈이 좀 침침해요.', 'UNRESOLVED', '', 'IDLE', ''),
-('이준기', 'REVIEW', 'KAKAO_REVIEW', '영수증 리뷰 이벤트로 받은 치즈스틱 존맛! 담엔 돈 내고 추가할게요.', 'UNCHECKED', '', 'IDLE', ''),
-('박신혜', 'REVIEW', 'GOOGLE_REVIEW', '주말 저녁인데도 음식 엄청 빨리 나오고 좋았습니다. 매장 회전율이 엄청나네요.', 'UNRESOLVED', '', 'IDLE', ''),
-('최민식', 'COMMENT', 'INSTAGRAM_COMMENT', '메뉴판에 알레르기 유발 물질 표기 좀 잘 보이게 해주세요!', 'UNRESOLVED', '', 'IDLE', ''),
-('정우성', 'COMMENT', 'FACEBOOK_COMMENT', '여기 쿠폰 도장 10개 모으면 뭐 주나요? 거의 다 모아갑니다 ㅋㅋ', 'CHECKED', '', 'IDLE', ''),
-('강기영', 'REVIEW', 'NAVER_REVIEW', '순살치킨은 100% 닭다리살인가요? 너무 퍽퍽하지 않고 부드러워서 좋았습니다.', 'UNRESOLVED', '', 'IDLE', ''),
-('조진웅', 'REVIEW', 'KAKAO_REVIEW', '매장 전화 연결이 너무 안 돼요. 바쁘신 건 알겠지만 전화 주문 좀 받아주세요.', 'UNRESOLVED', '', 'IDLE', ''),
-('윤계상', 'REVIEW', 'GOOGLE_REVIEW', '오픈 주방이라 조리하는 과정이 다 보여서 위생적으로 믿음이 갑니다.', 'CHECKED', '', 'IDLE', ''),
-('장근석', 'COMMENT', 'INSTAGRAM_COMMENT', '헐 굿즈도 판매하시나요?? 텀블러 디자인 너무 예뻐요 ㅠㅠ', 'UNCHECKED', '', 'IDLE', ''),
-('임창정', 'COMMENT', 'FACEBOOK_COMMENT', '소셜다모아 치킨 진짜 내 인생 치킨임.. 다들 꼭 먹어보셈', 'UNRESOLVED', '', 'IDLE', ''),
-('한예슬', 'REVIEW', 'NAVER_REVIEW', '디카페인 원두로 변경했는데도 커피 향이 훌륭했습니다. 임산부라 걱정했는데 안심이네요.', 'UNRESOLVED', '', 'IDLE', ''),
-('송중기', 'REVIEW', 'KAKAO_REVIEW', '양파가 조금 덜 익어서 매운맛이 강했습니다. 조리에 신경 써주세요.', 'CHECKED', '', 'IDLE', ''),
-('유아인', 'REVIEW', 'GOOGLE_REVIEW', '테이블 간격이 넓어서 옆 테이블 대화 소리가 안 들리는 게 제일 맘에 듭니다.', 'UNRESOLVED', '', 'IDLE', ''),
-('황광희', 'COMMENT', 'INSTAGRAM_COMMENT', '비주얼 합격! 맛도 합격! 내 마음도 합격! 💯', 'UNRESOLVED', '', 'IDLE', ''),
-('안재현', 'COMMENT', 'FACEBOOK_COMMENT', '저희 사무실 회식 여기로 결정했습니다! 금요일에 뵙겠습니다~', 'UNCHECKED', '', 'IDLE', ''),
-('김고은', 'REVIEW', 'NAVER_REVIEW', '리뷰 보고 반신반의하면서 갔는데 찐 맛집이네요. 돈 하나도 안 아까워요.', 'UNRESOLVED', '', 'IDLE', ''),
-('이민호', 'REVIEW', 'KAKAO_REVIEW', '웨이팅 기계가 먹통이라 밖에서 10분 넘게 떨었습니다. 기계 점검 좀 하세요.', 'CHECKED', '', 'IDLE', ''),
-('박형식', 'REVIEW', 'GOOGLE_REVIEW', '직원분들 유니폼이 너무 예뻐서 카페 분위기랑 찰떡이에요. 서비스도 고급집니다.', 'UNRESOLVED', '', 'IDLE', ''),
-('최우진', 'COMMENT', 'INSTAGRAM_COMMENT', '품절 너무 빨리 되는 거 아니냐구요 ㅠㅠ 내일 오픈런 달립니다', 'UNRESOLVED', '', 'IDLE', ''),
-('정용화', 'COMMENT', 'FACEBOOK_COMMENT', '학생증 보여주면 할인되는 이벤트 아직도 진행 중인가요?', 'UNRESOLVED', '', 'IDLE', ''),
-('강민혁', 'REVIEW', 'NAVER_REVIEW', '샐러드 소스를 넉넉하게 달라고 요청했는데 완전 찔끔 주셨네요. 아쉽...', 'CHECKED', '', 'IDLE', ''),
-('조병규', 'REVIEW', 'KAKAO_REVIEW', '소셜다모아 치킨 진짜 최고! 뼈 발라먹기 귀찮아서 순살 시켰는데 퀄리티 대박입니다.', 'UNRESOLVED', '', 'IDLE', ''),
-('윤균상', 'REVIEW', 'GOOGLE_REVIEW', '화장실 비누가 다 떨어졌는데 안 채워져 있더라고요. 사소한 거지만 챙겨주세요.', 'UNCHECKED', '', 'IDLE', ''),
-('장동윤', 'COMMENT', 'INSTAGRAM_COMMENT', '사진 색감 미쳤당... 필터 뭐 쓰시는지 궁금해요!', 'UNRESOLVED', '', 'IDLE', ''),
-('임시원', 'COMMENT', 'FACEBOOK_COMMENT', '여기 배달료 무료 이벤트 언제까지 하나요? 계속해주세요 제발!', 'UNRESOLVED', '', 'IDLE', ''),
-('이현우', 'REVIEW', 'NAVER_REVIEW', '포장 용기가 튼튼해서 국물이 하나도 안 새고 잘 도착했습니다. 굳굳', 'UNRESOLVED', '', 'IDLE', ''),
-('서현진', 'REVIEW', 'KAKAO_REVIEW', '매장 앞 주차 공간이 2대밖에 안 돼서 근처 공영주차장 가느라 뺑뺑 돌았어요.', 'UNRESOLVED', '', 'IDLE', ''),
-('김동욱', 'REVIEW', 'GOOGLE_REVIEW', '아이 의자랑 유아용 식기가 구비되어 있어서 노키즈존 걱정 없이 잘 다녀왔습니다.', 'CHECKED', '', 'IDLE', ''),
-('이지아', 'COMMENT', 'INSTAGRAM_COMMENT', 'DM으로 예약 문의 남겼는데 확인 좀 부탁드려요!', 'UNRESOLVED', '', 'IDLE', ''),
-('박성웅', 'COMMENT', 'FACEBOOK_COMMENT', '이번 신메뉴는 호불호가 좀 갈릴 듯? 저는 극호입니다 ㅋㅋ', 'UNRESOLVED', '', 'IDLE', '');
+INSERT INTO feedback_source (author_name, platform, original_text) VALUES
+('김철수', 'NAVER', '퇴근길에 들러서 포장했는데 식어도 바삭하고 맛있네요. 양념이 딱 제 취향입니다.'),
+('이영희', 'KAKAO', '주차장이 협소해서 조금 불편했지만, 매니저님이 친절하게 안내해주셔서 감사했습니다.'),
+('박준호', 'GOOGLE', '친구 추천으로 방문했는데 커피 산미 밸런스가 아주 훌륭합니다. 재방문 의사 100%'),
+('정수민', 'INSTAGRAM', '헐 이거 신상이에요?? 당장 내일 먹으러 갑니다 ㅠㅠ @지영 같이가자'),
+('최동석', 'FACEBOOK', '주말 단체 예약 20명 가능할까요? 동호회 모임 장소로 보고 있습니다.'),
+('윤이나', 'NAVER', '아이들 데리고 갔는데 아기 의자도 넉넉하고 덜 맵게 조리해주셔서 너무 좋았어요.'),
+('강민준', 'KAKAO', '치킨무를 빼달라고 요청했는데 그대로 왔네요. 환경 생각해서 뺀 건데 아쉽습니다.'),
+('한지혜', 'GOOGLE', '외국인 동료들과 회식으로 갔는데 다들 한국 치킨 최고라고 난리네요 ㅋㅋㅋ'),
+('송지훈', 'INSTAGRAM', '인테리어 완전 취향저격✨ 사진 백장 찍고 갑니다 📸'),
+('오민서', 'FACEBOOK', '혹시 생일자 방문하면 뭐 할인이나 서비스 같은 거 있나요?'),
+('유재석', 'NAVER', '기본 안주로 나오는 나초가 너무 맛있어요. 맥주가 술술 들어갑니다.'),
+('김태희', 'KAKAO', '화장실에 가그린이랑 면봉 있는 거 보고 감동받았습니다. 센스 대박!'),
+('이광수', 'GOOGLE', '배달시키면 한 시간 걸린다더니 30분 만에 왔어요. 빠른 배달 감사합니다.'),
+('박명수', 'INSTAGRAM', '아 다이어트 중인데 이 야밤에 이걸 봐버렸네... 책임지세요 사장님'),
+('하하', 'FACEBOOK', '여기 쿠폰 도장 10개 모으면 치킨 한 마리 무료 맞죠? 쿠폰 다 채워갑니다 ㅎㅎ'),
+('노홍철', 'NAVER', '콜라 사이즈 업그레이드 이벤트 너무 좋습니다. 치킨엔 역시 제로콜라!'),
+('정형돈', 'KAKAO', '창가 자리 뷰가 정말 좋네요. 비 오는 날 커피 마시면서 힐링하고 갑니다.'),
+('길성준', 'GOOGLE', '알바생분이 메뉴 추천을 너무 찰떡같이 해주셨어요. 덕분에 잘 먹었습니다.'),
+('전진', 'INSTAGRAM', '팝업스토어는 며칠까지 운영하나요? 주말에만 열리나요?'),
+('김동완', 'FACEBOOK', '배민으로 시켰는데 리뷰 이벤트 참여 깜빡했어요ㅠㅠ 다음번엔 꼭 할게요!'),
+('신혜성', 'NAVER', '순살은 백퍼센트 닭다리살인가요? 퍽퍽한 살이 하나도 없어서 너무 부드러워요.'),
+('이민우', 'KAKAO', '저번보다 양이 좀 줄어든 것 같은 건 기분 탓인가요? 맛은 여전히 좋습니다.'),
+('에릭', 'GOOGLE', '비건 메뉴 옵션이 있어서 너무 좋았습니다. 선택지가 다양하네요.'),
+('앤디', 'INSTAGRAM', '텀블러 굿즈 품절인가요? 언제 재입고 되나요 ㅠㅠ'),
+('박지성', 'FACEBOOK', '축구 보는 날엔 무조건 소셜다모아 치킨입니다. 스크린도 커서 경기 보기 딱 좋아요.'),
+('손흥민', 'NAVER', '튀김옷이 얇아서 덜 느끼하고 질리지 않는 맛입니다. 한화 이글스 화이팅!'),
+('이강인', 'KAKAO', '주문 키오스크가 한 대밖에 없어서 사람 많을 땐 눈치 보여요. 한 대 더 놔주세요.'),
+('김민재', 'GOOGLE', '매장이 너무 깨끗해서 바닥에서 광이 납니다. 위생 관리가 철저해 보여요.'),
+('황희찬', 'INSTAGRAM', '오픈런 성공!! 일찍 온 보람이 있네요 ㅋㅋㅋ'),
+('조규성', 'FACEBOOK', '메뉴판에 칼로리 표시해 주시면 안 될까요? 식단 중이라 궁금합니다.');
+
+-- 2. 원본 데이터를 바탕으로 customer_feedback (관리 데이터) 자동 생성 및 연결
+-- PLATFORM이 INSTAGRAM, FACEBOOK이면 'COMMENT', 나머지는 'REVIEW'로 자동 분류
+INSERT INTO customer_feedback (source_id, TYPE, STATUS, ai_status)
+SELECT 
+    source_id,
+    CASE 
+        WHEN platform IN ('INSTAGRAM', 'FACEBOOK') THEN 'COMMENT' 
+        ELSE 'REVIEW' 
+    END AS TYPE,
+    'UNRESOLVED' AS STATUS,
+    'IDLE' AS ai_status
+FROM feedback_source;
