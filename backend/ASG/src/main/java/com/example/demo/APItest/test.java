@@ -7,26 +7,6 @@ import lombok.RequiredArgsConstructor;
 
 public class test {
 	
-	// 단기예보
-	@RestController
-	@RequestMapping("/test/weather1")
-	@RequiredArgsConstructor
-	public class testWeather {
-		
-		
-		
-		
-	}
 	
-	
-	// 중기예보
-	@RestController
-	@RequestMapping("/test/weather2")
-	@RequiredArgsConstructor
-	public class testCafe {
-		
-		
-		
-		
-	}
+
 }
