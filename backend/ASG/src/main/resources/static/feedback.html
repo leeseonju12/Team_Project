@@ -1386,10 +1386,12 @@
     async function generateSingleAI(id) {
       const item = items.find(v => v.id === id);
       if (!item) return;
-      //const btn = document.getElementById(`rowAiBtn-${id}`);
+
+      const btn = document.getElementById(`rowAiBtn-${id}`);
       const spin = document.getElementById(`rowSpin-${id}`);
-      //if (btn) btn.disabled = true;
+      if (btn) btn.disabled = true;
       if (spin) spin.style.display = 'inline-block';
+      
       try {
     	// 백엔드 API 호출 (PUT 요청)
           const response = await fetch(`/api/feedbacks/${id}/ai-reply`, {
@@ -1407,43 +1409,15 @@
           console.error(e);
           showToast('AI 생성 중 오류가 발생했습니다.', 'error');
         } finally {
-          //if (btn) btn.disabled = false;
+         
+          await new Promise(resolve => setTimeout(resolve, 500)); //프론트 .5초 딜레이
+          if (btn) btn.disabled = false;
           if (spin) spin.style.display = 'none';
           renderTable();
           updateKPIs();
         }
       }
-/*
-    async function regenSingle(id) {
-      const item = items.find(v => v.id === id);
-      if (!item || !item.aiReply.trim()) return;
-      
-      //const btn = document.getElementById(`regenBtn-${id}`);
-      const spin = document.getElementById(`regenSpin-${id}`);
-      
-      //if (btn) btn.disabled = true;
-      if (spin) spin.style.display = 'inline-block';
-      try {
-    	  const response = await fetch(`/api/feedbacks/${id}/ai-reply`, {
-              method: 'PUT'
-            });
-            
-            if (!response.ok) throw new Error('API 호출 실패');
-            
-            const updatedData = await response.json();
-            Object.assign(item, updatedData);
-            
-        showToast('답변이 재생성되었습니다.', 'success');
-      } catch (e) {
-        showToast('재생성 실패', 'error');
-      } finally {
-        if (btn) btn.disabled = false;
-        if (spin) spin.style.display = 'none';
-      }
-      renderTable();
-      updateKPIs();
-    }
-    */
+
 
     async function generateAllAI() {
       const targets = filteredItems.filter(it => selectedIds.has(it.id) && it.status !== 'completed');
@@ -1451,9 +1425,11 @@
         showToast('AI 생성할 항목을 선택해 주세요.', 'error');
         return;
       }
-      //const btn = document.getElementById('btnAIAll');
+      const btn = document.getElementById('btnAIAll');
       const spin = document.getElementById('spinAll');
-      //btn.disabled = true;
+     
+      await new Promise(resolve => setTimeout(resolve, 500)); //프론트 .5초 딜레이
+      btn.disabled = true;
       spin.style.display = 'inline-block';
       const wrap = document.getElementById('progressWrap');
       const fill = document.getElementById('progressFill');
@@ -1477,6 +1453,8 @@
         } catch (e) {
         console.error(`ID ${item.id} 생성 실패`, e);
       }
+      await new Promise(resolve => setTimeout(resolve, 5000)); //제미나이 5초 딜레이
+      
       done++;
       const progress = Math.round((done / targets.length) * 100);
       fill.style.width = progress + '%';
@@ -1487,7 +1465,7 @@
       updateKPIs();
     }
       
-      
+      btn.disabled = false;
       spin.style.display = 'none';
       setTimeout(() => wrap.classList.remove('visible'), 1200);
       showToast(`AI 답변 ${done}건 생성 완료`, 'success');
@@ -1551,19 +1529,39 @@
       const spin = document.getElementById(`sendSpin-${id}`);
       if (btn) btn.disabled = true;
       if (spin) spin.style.display = 'inline-block';
+      
       item.status = 'sending';
       renderTable();
       updateKPIs();
-      await new Promise(r => setTimeout(r, 850));
-      item.status = 'completed';
-      item.sentReply = item.aiReply;
-      renderTable();
-      updateKPIs();
-      const banner = document.getElementById('sentBanner');
-      const desc = document.getElementById('sentBannerDesc');
-      desc.textContent = `${item.name}님의 댓글 답변이 전송되었고, 원문 아래에 "내 답글"로 표시됩니다.`;
-      banner.classList.add('show');
-      showToast(`${item.name}님 댓글 답변 전송 완료`, 'success');
+      
+      
+      try {
+          // 백엔드로 전송 확정 API 호출
+          const response = await fetch(`/api/feedbacks/${id}/send`, {
+            method: 'PUT'
+          });
+          
+          if (!response.ok) throw new Error('API 호출 실패');
+          
+          // 백엔드에서 업데이트된 최신 데이터 덮어쓰기 (status가 completed로 변경됨)
+          const updatedData = await response.json();
+          Object.assign(item, updatedData);
+
+          // 상단 성공 배너 띄우기
+          const banner = document.getElementById('sentBanner');
+          const desc = document.getElementById('sentBannerDesc');
+          desc.textContent = `${item.name}님의 댓글 답변이 전송되었고, 원문 아래에 "내 답글"로 표시됩니다.`;
+          banner.classList.add('show');
+          showToast(`${item.name}님 댓글 답변 전송 완료`, 'success');
+
+        } catch (e) {
+          console.error(e);
+          showToast('전송 중 오류가 발생했습니다.', 'error');
+          item.status = 'unresolved'; // 에러 시 원래 상태로 롤백
+        } finally {
+          renderTable();
+          updateKPIs();
+        }
     }
 
     async function sendAllComments() {

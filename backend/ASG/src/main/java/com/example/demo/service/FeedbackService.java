@@ -5,10 +5,17 @@ import com.example.demo.domain.FeedbackSource;
 import com.example.demo.dto.FeedbackResponseDto;
 import com.example.demo.repository.FeedbackRepository;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -17,6 +24,8 @@ import java.util.stream.Collectors;
 public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
+    @Value("${ai.api-key}")
+    private String geminiApiKey;
 
     public List<FeedbackResponseDto> getAllFeedbacks() {
         return feedbackRepository.findAll().stream()
@@ -92,16 +101,69 @@ public class FeedbackService {
         CustomerFeedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 리뷰/댓글이 존재하지 않습니다. ID: " + feedbackId));
 
-        // TODO: 나중에 이 부분을 진짜 LLM API 호출 로직으로 교체하면 됩니다.
-        String generatedReply = mockAiGeneration(feedback);
-
+        String generatedReply = callRealLLM(feedback);
         // 엔티티 업데이트 (JPA 더티 체킹으로 인해 save()를 안 해도 DB에 자동 반영됨)
         feedback.updateAiReply(generatedReply);
 
         // 변경된 최신 상태를 다시 DTO로 변환해서 프론트로 반환
         return convertToDto(feedback);
     }
+    
+    private String callRealLLM(CustomerFeedback feedback) {
+        String author = feedback.getSource().getAuthorName();
+        String text = feedback.getSource().getOriginalText();
 
+        // 1. 프롬프트(지시문) 엔지니어링 
+        String prompt = String.format(
+        		"당신은 배달도 하는 동네 인기 카페의 다정하고 친절한 사장님" +
+        	    "다음 고객의 리뷰나 댓글을 읽고, 동네 단골을 대하듯 따뜻한 말투로 답글을 작성바람" +
+        	    "고객이 언급한 것에 대해 센스 있게 답변해주세요\n\n" +
+        	    "고객 이름:%s\n고객 메시지:%s\n글자수 제한:100자내외", author, text +
+        	    "\n마지막에 사용된 토큰 수 '토큰:(토큰수량) 언급바람"
+        );
+        
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=" + geminiApiKey;
+        
+        // 3. HTTP 헤더 설정
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // JSON 바디 생성
+        // 토큰 로직 추가(generationConfig)
+        Map<String, Object> requestBody = Map.of(
+            "contents", List.of(
+                Map.of("parts", List.of(
+                    Map.of("text", prompt)
+                ))
+            ),
+            "generationConfig", Map.of(
+                    //"maxOutputTokens", 800,
+                    "temperature", 1.5      // 0.0(딱딱하고 기계적) ~ 2.0(창의적이고 감성적) 사이의 톤 조절
+            )
+        );
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+        RestTemplate restTemplate = new RestTemplate();
+
+        try {
+            // 5. API 쏘고 응답받기!
+            Map<String, Object> response = restTemplate.postForObject(url, request, Map.class);
+            
+            // 6. 복잡한 JSON 응답 구조에서 텍스트 알맹이만 파싱해서 꺼내오기
+            List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
+            Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
+            List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
+            
+            return (String) parts.get(0).get("text");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "AI 답변을 생성하는 중 서버와 통신 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+        }
+    }
+
+
+    /*
     // 임시 AI 답변 생성기 (프론트엔드에 있던 로직을 백엔드로 가져옴)
     private String mockAiGeneration(CustomerFeedback feedback) {
         String author = feedback.getSource().getAuthorName();
@@ -116,5 +178,18 @@ public class FeedbackService {
         } else {
             return author + "님, 소중한 리뷰 고맙다요";
         }
+    }
+    */
+    
+    
+ // 💡 전송 완료 처리 로직
+    @Transactional
+    public FeedbackResponseDto sendReply(Long feedbackId) {
+        CustomerFeedback feedback = feedbackRepository.findById(feedbackId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 리뷰/댓글이 존재하지 않습니다. ID: " + feedbackId));
+
+        feedback.sendReply(); // 엔티티 비즈니스 로직 호출 (상태 변경 및 sentReply 세팅)
+
+        return convertToDto(feedback);
     }
 }
