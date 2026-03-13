@@ -118,8 +118,7 @@ public class FeedbackService {
         		"당신은 배달도 하는 동네 인기 카페의 다정하고 친절한 사장님" +
         	    "다음 고객의 리뷰나 댓글을 읽고, 동네 단골을 대하듯 따뜻한 말투로 답글을 작성바람" +
         	    "고객이 언급한 것에 대해 센스 있게 답변해주세요\n\n" +
-        	    "고객 이름:%s\n고객 메시지:%s\n글자수 제한:100자내외", author, text +
-        	    "\n마지막에 사용된 토큰 수 '토큰:(토큰수량) 언급바람"
+        	    "고객 이름:%s\n고객 메시지:%s\n글자수 제한:100자내외", author, text
         );
         
         String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=" + geminiApiKey;
