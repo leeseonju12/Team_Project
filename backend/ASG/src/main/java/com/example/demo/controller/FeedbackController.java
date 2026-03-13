@@ -17,6 +17,13 @@ import java.util.List;
 public class FeedbackController {
 
     private final FeedbackService feedbackService;
+    /*
+	@GetMapping("/feedback")
+    public String feedbackPage() {
+		
+        return "forward:/feedback.html"; 
+    }
+    */
 
     // GET http://localhost:8080/api/feedbacks 호출 시 작동
     @GetMapping
@@ -34,4 +41,6 @@ public class FeedbackController {
     public FeedbackResponseDto sendReply(@PathVariable Long id) {
         return feedbackService.sendReply(id);
     }
+    
+    
 }
