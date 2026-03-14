@@ -21,6 +21,7 @@ spring:
       mode: always # 앱 실행 시 data.sql을 항상 실행하여 더미 데이터 세팅
 
 
+
 # 구글 맵 리뷰 
 outscraper:
   api-key: # 키 삭제
@@ -29,3 +30,4 @@ outscraper:
 weather:
   api:
     key: # 키 삭제
+
