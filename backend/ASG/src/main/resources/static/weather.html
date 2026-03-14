@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>날씨 대시보드</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Apple SD Gothic Neo', 'Pretendard', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 32px 16px;
+            color: #fff;
+        }
+
+        .container { max-width: 600px; margin: 0 auto; }
+
+        h1 { text-align: center; font-size: 1.3rem; font-weight: 600;
+             margin-bottom: 20px; opacity: .9; }
+
+        /* 도시 선택 */
+        .city-row { display: flex; gap: 10px; margin-bottom: 16px; }
+        select {
+            flex: 1; padding: 10px 14px; border-radius: 10px; border: none;
+            background: rgba(255,255,255,.15); color: #fff; font-size: .95rem; cursor: pointer;
+        }
+        select option { background: #1e3c72; }
+        .refresh-btn {
+            padding: 10px 18px; border-radius: 10px; border: none;
+            background: rgba(255,255,255,.25); color: #fff;
+            font-size: .95rem; cursor: pointer; transition: background .2s;
+        }
+        .refresh-btn:hover { background: rgba(255,255,255,.35); }
+
+        .base-time { text-align: center; font-size: .78rem;
+                     opacity: .6; margin-bottom: 20px; }
+
+        /* 섹션 제목 */
+        .section-title {
+            font-size: .85rem; font-weight: 600; opacity: .7;
+            text-transform: uppercase; letter-spacing: .06em;
+            margin: 24px 0 10px;
+        }
+
+        /* ── 현재 날씨 ── */
+        .main-card {
+            background: rgba(255,255,255,.13); backdrop-filter: blur(12px);
+            border-radius: 20px; padding: 28px; text-align: center;
+            margin-bottom: 12px;
+        }
+        .weather-icon { font-size: 3.6rem; margin-bottom: 6px; }
+        .temperature  { font-size: 3rem; font-weight: 700; line-height: 1; }
+        .pty-name     { font-size: .95rem; opacity: .75; margin-top: 8px; }
+
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .detail-card {
+            background: rgba(255,255,255,.10); border-radius: 14px;
+            padding: 16px; text-align: center;
+        }
+        .detail-label { font-size: .72rem; opacity: .6; margin-bottom: 5px;
+                        text-transform: uppercase; letter-spacing: .05em; }
+        .detail-value { font-size: 1.3rem; font-weight: 600; }
+        .detail-unit  { font-size: .72rem; opacity: .7; margin-left: 2px; }
+
+        /* ── 초단기예보 가로 스크롤 ── */
+        .hour-scroll {
+            display: flex; gap: 10px;
+            overflow-x: auto; padding-bottom: 6px;
+        }
+        .hour-scroll::-webkit-scrollbar { height: 4px; }
+        .hour-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.3); border-radius: 4px; }
+
+        .hour-card {
+            flex: 0 0 88px;
+            background: rgba(255,255,255,.10); border-radius: 14px;
+            padding: 14px 10px; text-align: center;
+        }
+        .hour-time  { font-size: .75rem; opacity: .65; margin-bottom: 6px; }
+        .hour-icon  { font-size: 1.6rem; margin-bottom: 4px; }
+        .hour-temp  { font-size: 1.1rem; font-weight: 600; }
+        .hour-pop   { font-size: .75rem; opacity: .7; margin-top: 4px; }
+
+        /* ── 단기예보 3일 ── */
+        .day-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .day-card {
+            background: rgba(255,255,255,.10); border-radius: 16px;
+            padding: 18px 12px; text-align: center;
+        }
+        .day-label  { font-size: .8rem; font-weight: 600; margin-bottom: 8px; }
+        .day-icon   { font-size: 2rem; margin-bottom: 6px; }
+        .day-temp   { font-size: .85rem; }
+        .day-temp .max { font-weight: 700; color: #ffcc66; }
+        .day-temp .min { opacity: .7; }
+        .day-pop    { font-size: .75rem; opacity: .65; margin-top: 6px; }
+
+        /* 로딩 / 에러 */
+        .loading { text-align: center; padding: 30px 0; opacity: .7; }
+        .spinner {
+            width: 32px; height: 32px;
+            border: 3px solid rgba(255,255,255,.2);
+            border-top-color: #fff; border-radius: 50%;
+            animation: spin .8s linear infinite; margin: 0 auto 10px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error-box {
+            background: rgba(255,80,80,.25); border-radius: 12px;
+            padding: 14px; text-align: center; font-size: .88rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🌤 날씨 대시보드</h1>
+
+    <div class="city-row">
+        <select id="citySelect" onchange="loadAll()">
+            <option value="60,127">서울</option>
+            <option value="66,103">세종</option>
+            <option value="55,124">인천</option>
+            <option value="89,90">대구</option>
+            <option value="98,76">부산</option>
+            <option value="102,84">울산</option>
+            <option value="58,74">광주</option>
+            <option value="67,100">대전</option>
+            <option value="73,134">강릉</option>
+        </select>
+        <button class="refresh-btn" onclick="loadAll()">새로고침</button>
+    </div>
+
+    <p class="base-time" id="baseTime">-</p>
+
+    <!-- 현재 날씨 -->
+    <div class="section-title">📍 현재 날씨</div>
+    <div id="currentArea"><div class="loading"><div class="spinner"></div>불러오는 중...</div></div>
+
+    <!-- 초단기예보 -->
+    <div class="section-title">⏱ 앞으로 6시간</div>
+    <div id="ultraArea"><div class="loading"><div class="spinner"></div>불러오는 중...</div></div>
+
+    <!-- 단기예보 -->
+    <div class="section-title">📅 3일 예보</div>
+    <div id="shortArea"><div class="loading"><div class="spinner"></div>불러오는 중...</div></div>
+</div>
+
+<script>
+const PTY_ICONS = {'0':'☀️','1':'🌧️','2':'🌨️','3':'❄️','5':'🌦️','6':'🌨️','7':'🌨️'};
+const SKY_ICONS = {'1':'☀️','3':'⛅','4':'☁️'};
+
+function weatherIcon(ptyCode, skyCode) {
+    if (ptyCode !== '0') return PTY_ICONS[ptyCode] ?? '🌧️';
+    return SKY_ICONS[skyCode] ?? '☁️';
+}
+
+function fmtTime(t) { // HHmm → HH:mm
+    return t.slice(0,2) + ':' + t.slice(2);
+}
+
+function fmtDate(d) { // yyyyMMdd → M/d (요일)
+    const date = new Date(
+        parseInt(d.slice(0,4)),
+        parseInt(d.slice(4,6)) - 1,
+        parseInt(d.slice(6,8))
+    );
+    const days = ['일','월','화','수','목','금','토'];
+    return `${date.getMonth()+1}/${date.getDate()}(${days[date.getDay()]})`;
+}
+
+function loading(id) {
+    document.getElementById(id).innerHTML =
+        `<div class="loading"><div class="spinner"></div>불러오는 중...</div>`;
+}
+function error(id, msg) {
+    document.getElementById(id).innerHTML =
+        `<div class="error-box">⚠️ ${msg}</div>`;
+}
+
+async function loadAll() {
+    const [nx, ny] = document.getElementById('citySelect').value.split(',');
+    loading('currentArea'); loading('ultraArea'); loading('shortArea');
+    document.getElementById('baseTime').textContent = '-';
+
+    await Promise.allSettled([
+        loadCurrent(nx, ny),
+        loadUltra(nx, ny),
+        loadShort(nx, ny)
+    ]);
+}
+
+// ── 현재 날씨 ──────────────────────────────────────────────
+async function loadCurrent(nx, ny) {
+    try {
+        const d = await fetchJson(`/api/weather/current?nx=${nx}&ny=${ny}`);
+        const bd = d.baseDate, bt = d.baseTime;
+        document.getElementById('baseTime').textContent =
+            `${bd.slice(0,4)}.${bd.slice(4,6)}.${bd.slice(6,8)} ${bt.slice(0,2)}:${bt.slice(2,4)} 기준`;
+
+        const icon = PTY_ICONS[d.ptyCode] ?? '☁️';
+        document.getElementById('currentArea').innerHTML = `
+            <div class="main-card">
+                <div class="weather-icon">${icon}</div>
+                <div class="temperature">${d.temperature ?? '-'}<span style="font-size:1.4rem">°C</span></div>
+                <div class="pty-name">강수 형태: ${d.ptyName}</div>
+            </div>
+            <div class="detail-grid">
+                <div class="detail-card">
+                    <div class="detail-label">습도</div>
+                    <div class="detail-value">${d.humidity ?? '-'}<span class="detail-unit">%</span></div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-label">풍속</div>
+                    <div class="detail-value">${d.windSpeed ?? '-'}<span class="detail-unit">m/s</span></div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-label">풍향</div>
+                    <div class="detail-value">${d.windDirection ?? '-'}<span class="detail-unit">°</span></div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-label">1시간 강수</div>
+                    <div class="detail-value">${d.rainfall ?? '-'}<span class="detail-unit">mm</span></div>
+                </div>
+            </div>`;
+    } catch(e) { error('currentArea', e.message); }
+}
+
+// ── 초단기예보 ──────────────────────────────────────────────
+async function loadUltra(nx, ny) {
+    try {
+        const data = await fetchJson(`/api/weather/ultra?nx=${nx}&ny=${ny}`);
+        const items = data.items ?? [];
+
+        const cards = items.map(it => `
+            <div class="hour-card">
+                <div class="hour-time">${fmtTime(it.fcstTime)}</div>
+                <div class="hour-icon">${weatherIcon(it.ptyCode, it.skyCode)}</div>
+                <div class="hour-temp">${it.temperature ?? '-'}°</div>
+                <div class="hour-pop">${it.humidity ?? '-'}%</div>
+            </div>`).join('');
+
+        document.getElementById('ultraArea').innerHTML =
+            `<div class="hour-scroll">${cards}</div>`;
+    } catch(e) { error('ultraArea', e.message); }
+}
+
+// ── 단기예보 ────────────────────────────────────────────────
+async function loadShort(nx, ny) {
+    try {
+        const data = await fetchJson(`/api/weather/short?nx=${nx}&ny=${ny}`);
+        const items = data.items ?? [];
+
+        // 날짜별로 그룹핑
+        const byDate = {};
+        items.forEach(it => {
+            if (!byDate[it.fcstDate]) byDate[it.fcstDate] = [];
+            byDate[it.fcstDate].push(it);
+        });
+
+        const dates = Object.keys(byDate).slice(0, 3);
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+
+        const cards = dates.map((date, i) => {
+            const dayItems = byDate[date];
+            // 낮 대표 아이콘: 12시 or 첫 번째 항목
+            const noon = dayItems.find(it => it.fcstTime === '1200') ?? dayItems[0];
+            const icon = weatherIcon(noon?.ptyCode ?? '0', noon?.skyCode ?? '1');
+            const tmx  = dayItems.find(it => it.tmx)?.tmx ?? '-';
+            const tmn  = dayItems.find(it => it.tmn)?.tmn ?? '-';
+            const popMax = Math.max(...dayItems.map(it => parseInt(it.pop ?? '0')));
+
+            const label = date === todayStr ? '오늘'
+                        : i === 1 && dates[0] === todayStr ? '내일'
+                        : fmtDate(date);
+
+            return `
+                <div class="day-card">
+                    <div class="day-label">${label}</div>
+                    <div class="day-icon">${icon}</div>
+                    <div class="day-temp">
+                        <span class="max">${tmx}°</span>
+                        <span> / </span>
+                        <span class="min">${tmn}°</span>
+                    </div>
+                    <div class="day-pop">🌂 ${popMax}%</div>
+                </div>`;
+        }).join('');
+
+        document.getElementById('shortArea').innerHTML =
+            `<div class="day-grid">${cards}</div>`;
+    } catch(e) { error('shortArea', e.message); }
+}
+
+async function fetchJson(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+}
+
+loadAll();
+</script>
+</body>
+</html>
