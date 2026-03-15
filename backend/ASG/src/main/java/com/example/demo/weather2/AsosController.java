@@ -10,21 +10,36 @@ public class AsosController {
 
     private final AsosDailyService dailyService;
     private final AsosHourlyService hourlyService;
+    private final AsosDataProcessor dataProcessor;
 
-    public AsosController(AsosDailyService dailyService, AsosHourlyService hourlyService) {
-        this.dailyService = dailyService;
+    public AsosController(AsosDailyService dailyService,
+                          AsosHourlyService hourlyService,
+                          AsosDataProcessor dataProcessor) {
+        this.dailyService  = dailyService;
         this.hourlyService = hourlyService;
+        this.dataProcessor = dataProcessor;
     }
 
+    /** 일자료 원본 조회 */
     @GetMapping("/daily")
     public ResponseEntity<List<AsosDailyItem>> getDaily(
             @RequestParam String startDt,
             @RequestParam String endDt,
             @RequestParam(defaultValue = "108") String stnIds) {
-        List<AsosDailyItem> result = dailyService.getDailyData(startDt, endDt, stnIds);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(dailyService.getDailyData(startDt, endDt, stnIds));
     }
 
+    /** 일자료 가공 조회 (쾌적지수 + 날씨등급 포함) */
+    @GetMapping("/daily/processed")
+    public ResponseEntity<List<AsosDailyProcessed>> getDailyProcessed(
+            @RequestParam String startDt,
+            @RequestParam String endDt,
+            @RequestParam(defaultValue = "108") String stnIds) {
+        List<AsosDailyItem> raw = dailyService.getDailyData(startDt, endDt, stnIds);
+        return ResponseEntity.ok(dataProcessor.process(raw));
+    }
+
+    /** 시간자료 원본 조회 */
     @GetMapping("/hourly")
     public ResponseEntity<List<AsosHourlyItem>> getHourly(
             @RequestParam String startDt,
@@ -32,11 +47,9 @@ public class AsosController {
             @RequestParam String endDt,
             @RequestParam(defaultValue = "23") String endHh,
             @RequestParam(defaultValue = "108") String stnIds) {
-        List<AsosHourlyItem> result = hourlyService.getHourlyData(startDt, startHh, endDt, endHh, stnIds);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(hourlyService.getHourlyData(startDt, startHh, endDt, endHh, stnIds));
     }
-
-}  // ← 클래스 닫는 중괄호
+}
 
 /*
  * 주소 : http://localhost:8080/asos.html
