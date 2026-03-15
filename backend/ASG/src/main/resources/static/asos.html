@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>종관기상관측(ASOS) 조회</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1a56db, #0e3a8a);
+      color: #fff;
+      padding: 20px 32px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    header h1 { font-size: 1.5rem; font-weight: 700; }
+    header p  { font-size: 0.85rem; opacity: 0.8; margin-top: 4px; }
+
+    .container { max-width: 1300px; margin: 0 auto; padding: 24px 16px; }
+
+    /* ── 검색 폼 ── */
+    .search-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      margin-bottom: 28px;
+    }
+    .search-card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 16px; color: #1a56db; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 14px;
+      align-items: end;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 5px;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #cbd5e0;
+      border-radius: 7px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .form-group input:focus, .form-group select:focus {
+      border-color: #1a56db;
+    }
+    .btn {
+      padding: 9px 22px;
+      border: none;
+      border-radius: 7px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .btn-primary { background: #1a56db; color: #fff; }
+    .btn-primary:hover { background: #1447b8; }
+    .btn-secondary { background: #e2e8f0; color: #4a5568; }
+    .btn-secondary:hover { background: #cbd5e0; }
+
+    /* ── 탭 ── */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .tab-btn {
+      padding: 9px 22px;
+      border: 2px solid #cbd5e0;
+      background: #fff;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #4a5568;
+      transition: all .2s;
+    }
+    .tab-btn.active {
+      background: #1a56db;
+      border-color: #1a56db;
+      color: #fff;
+    }
+
+    /* ── 테이블 카드 ── */
+    .data-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      display: none;
+    }
+    .data-card.active { display: block; }
+    .data-card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1a56db;
+      margin-bottom: 14px;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+    thead th {
+      background: #ebf0fb;
+      padding: 9px 12px;
+      text-align: center;
+      font-weight: 700;
+      color: #1a56db;
+      border-bottom: 2px solid #c3d1f5;
+    }
+    tbody td {
+      padding: 8px 12px;
+      text-align: center;
+      border-bottom: 1px solid #edf2f7;
+    }
+    tbody tr:hover { background: #f7faff; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-blue  { background: #dbeafe; color: #1d4ed8; }
+    .badge-green { background: #dcfce7; color: #166534; }
+
+    /* ── 상태 메시지 ── */
+    .status-msg {
+      text-align: center;
+      padding: 40px 0;
+      color: #718096;
+      font-size: 0.9rem;
+    }
+    .loading { color: #1a56db; }
+    .error   { color: #e53e3e; }
+
+    /* ── 요약 배지 ── */
+    .summary-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .summary-item {
+      background: #ebf0fb;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+    }
+    .summary-item span { font-weight: 700; color: #1a56db; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🌤 종관기상관측(ASOS) 조회</h1>
+  <p>기상청 ASOS 일자료 · 시간자료 통합 조회 시스템</p>
+</header>
+
+<div class="container">
+
+  <!-- 검색 폼 -->
+  <div class="search-card">
+    <h2>🔍 조회 조건</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>지점 번호</label>
+        <select id="stnIds">
+          <option value="108">108 – 서울</option>
+          <option value="159">159 – 부산</option>
+          <option value="143">143 – 대구</option>
+          <option value="101">101 – 춘천</option>
+          <option value="133">133 – 대전</option>
+          <option value="156">156 – 광주</option>
+          <option value="105">105 – 강릉</option>
+          <option value="184">184 – 제주</option>
+        </select>
+      </div>
+
+      <!-- 일자료 기간 -->
+      <div class="form-group">
+        <label>일자료 시작일</label>
+        <input type="date" id="dailyStart" />
+      </div>
+      <div class="form-group">
+        <label>일자료 종료일</label>
+        <input type="date" id="dailyEnd" />
+      </div>
+
+      <!-- 시간자료 기간 -->
+      <div class="form-group">
+        <label>시간자료 날짜</label>
+        <input type="date" id="hourlyDate" />
+      </div>
+      <div class="form-group">
+        <label>시작 시각</label>
+        <select id="startHh">
+          <!-- 00~23 -->
+        </select>
+      </div>
+      <div class="form-group">
+        <label>종료 시각</label>
+        <select id="endHh">
+          <!-- 00~23 -->
+        </select>
+      </div>
+
+      <div class="form-group" style="display:flex;gap:8px;">
+        <button class="btn btn-primary" onclick="fetchAll()">조회</button>
+        <button class="btn btn-secondary" onclick="resetForm()">초기화</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 탭 -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('daily', this)">📅 일자료</button>
+    <button class="tab-btn" onclick="switchTab('hourly', this)">🕐 시간자료</button>
+  </div>
+
+  <!-- 일자료 테이블 -->
+  <div id="panel-daily" class="data-card active">
+    <h2>📅 종관기상관측 일자료</h2>
+    <div class="summary-bar" id="daily-summary"></div>
+    <div class="table-wrap">
+      <div id="daily-status" class="status-msg">조회 조건을 입력하고 조회 버튼을 누르세요.</div>
+      <table id="daily-table" style="display:none">
+        <thead>
+          <tr>
+            <th>날짜</th>
+            <th>지점명</th>
+            <th>평균기온(℃)</th>
+            <th>최저기온(℃)</th>
+            <th>최고기온(℃)</th>
+            <th>일강수량(mm)</th>
+            <th>평균풍속(m/s)</th>
+            <th>최대풍속(m/s)</th>
+            <th>평균습도(%)</th>
+            <th>평균현지기압(hPa)</th>
+            <th>일조시간(hr)</th>
+          </tr>
+        </thead>
+        <tbody id="daily-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 시간자료 테이블 -->
+  <div id="panel-hourly" class="data-card">
+    <h2>🕐 종관기상관측 시간자료</h2>
+    <div class="summary-bar" id="hourly-summary"></div>
+    <div class="table-wrap">
+      <div id="hourly-status" class="status-msg">조회 조건을 입력하고 조회 버튼을 누르세요.</div>
+      <table id="hourly-table" style="display:none">
+        <thead>
+          <tr>
+            <th>시각</th>
+            <th>지점명</th>
+            <th>기온(℃)</th>
+            <th>강수량(mm)</th>
+            <th>풍속(m/s)</th>
+            <th>풍향(방위)</th>
+            <th>습도(%)</th>
+            <th>현지기압(hPa)</th>
+            <th>이슬점온도(℃)</th>
+            <th>지면온도(℃)</th>
+            <th>일조(hr)</th>
+          </tr>
+        </thead>
+        <tbody id="hourly-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /* ── 초기값 설정 ── */
+  (function init() {
+    const today = new Date();
+    const fmt = d => d.toISOString().slice(0,10);
+
+    const end = new Date(today);
+    end.setDate(end.getDate() - 1);           // 어제
+    const start = new Date(end);
+    start.setDate(start.getDate() - 6);       // 7일 전
+
+    document.getElementById('dailyStart').value = fmt(start);
+    document.getElementById('dailyEnd').value   = fmt(end);
+    document.getElementById('hourlyDate').value = fmt(end);
+
+    // 시각 옵션 채우기
+    const hours = Array.from({length:24}, (_,i) => String(i).padStart(2,'0'));
+    ['startHh','endHh'].forEach(id => {
+      const sel = document.getElementById(id);
+      hours.forEach(h => {
+        const opt = document.createElement('option');
+        opt.value = h; opt.textContent = h + '시';
+        sel.appendChild(opt);
+      });
+    });
+    document.getElementById('endHh').value = '23';
+  })();
+
+  /* ── 탭 전환 ── */
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.data-card').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + name).classList.add('active');
+  }
+
+  /* ── 날짜 포맷 helper ── */
+  function toApiDate(val) { return val.replace(/-/g, ''); }
+
+  function formatTm(tm) {
+    if (!tm) return '-';
+    if (tm.length === 10) return `${tm.slice(0,4)}-${tm.slice(4,6)}-${tm.slice(6,8)} ${tm.slice(8,10)}시`;
+    if (tm.length === 8)  return `${tm.slice(0,4)}-${tm.slice(4,6)}-${tm.slice(6,8)}`;
+    return tm;
+  }
+
+  function v(val) { return (val === '' || val === null || val === undefined) ? '-' : val; }
+
+  /* ── 조회 ── */
+  async function fetchAll() {
+    fetchDaily();
+    fetchHourly();
+  }
+
+  async function fetchDaily() {
+    const startDt = toApiDate(document.getElementById('dailyStart').value);
+    const endDt   = toApiDate(document.getElementById('dailyEnd').value);
+    const stnIds  = document.getElementById('stnIds').value;
+
+    if (!startDt || !endDt) { alert('일자료 날짜를 입력하세요.'); return; }
+
+    setStatus('daily', 'loading', '⏳ 일자료 조회 중...');
+    document.getElementById('daily-table').style.display = 'none';
+
+    try {
+      const res  = await fetch(`/api/asos/daily?startDt=${startDt}&endDt=${endDt}&stnIds=${stnIds}`);
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || '서버 오류');
+      renderDaily(data);
+    } catch(e) {
+      setStatus('daily', 'error', '❌ 오류: ' + e.message);
+    }
+  }
+
+  async function fetchHourly() {
+    const date   = toApiDate(document.getElementById('hourlyDate').value);
+    const startHh = document.getElementById('startHh').value;
+    const endHh   = document.getElementById('endHh').value;
+    const stnIds  = document.getElementById('stnIds').value;
+
+    if (!date) { alert('시간자료 날짜를 입력하세요.'); return; }
+
+    setStatus('hourly', 'loading', '⏳ 시간자료 조회 중...');
+    document.getElementById('hourly-table').style.display = 'none';
+
+    try {
+      const url = `/api/asos/hourly?startDt=${date}&startHh=${startHh}&endDt=${date}&endHh=${endHh}&stnIds=${stnIds}`;
+      const res  = await fetch(url);
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || '서버 오류');
+      renderHourly(data);
+    } catch(e) {
+      setStatus('hourly', 'error', '❌ 오류: ' + e.message);
+    }
+  }
+
+  /* ── 렌더링 ── */
+  function renderDaily(items) {
+    const tbody = document.getElementById('daily-tbody');
+    tbody.innerHTML = '';
+
+    if (!items || items.length === 0) {
+      setStatus('daily', '', '📭 조회된 데이터가 없습니다.');
+      return;
+    }
+
+    // 요약
+    const avgTemps = items.map(i => parseFloat(i.avgTa)).filter(n => !isNaN(n));
+    const totalRain = items.reduce((s,i) => s + (parseFloat(i.sumRn) || 0), 0);
+    document.getElementById('daily-summary').innerHTML = `
+      <div class="summary-item">총 <span>${items.length}</span>건</div>
+      <div class="summary-item">기간 평균기온 <span>${avgTemps.length ? (avgTemps.reduce((a,b)=>a+b,0)/avgTemps.length).toFixed(1) : '-'}℃</span></div>
+      <div class="summary-item">기간 총 강수량 <span>${totalRain.toFixed(1)}mm</span></div>
+    `;
+
+    items.forEach(i => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${formatTm(i.tm)}</td>
+        <td><span class="badge badge-blue">${v(i.stnNm)}</span></td>
+        <td>${v(i.avgTa)}</td>
+        <td style="color:#3b82f6">${v(i.minTa)}</td>
+        <td style="color:#ef4444">${v(i.maxTa)}</td>
+        <td>${v(i.sumRn)}</td>
+        <td>${v(i.avgWs)}</td>
+        <td>${v(i.maxWs)}</td>
+        <td>${v(i.avgRhm)}</td>
+        <td>${v(i.avgPa)}</td>
+        <td>${v(i.ssDur)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    setStatus('daily', '', '');
+    document.getElementById('daily-table').style.display = 'table';
+  }
+
+  function renderHourly(items) {
+    const tbody = document.getElementById('hourly-tbody');
+    tbody.innerHTML = '';
+
+    if (!items || items.length === 0) {
+      setStatus('hourly', '', '📭 조회된 데이터가 없습니다.');
+      return;
+    }
+
+    document.getElementById('hourly-summary').innerHTML = `
+      <div class="summary-item">총 <span>${items.length}</span>건</div>
+    `;
+
+    items.forEach(i => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${formatTm(i.tm)}</td>
+        <td><span class="badge badge-green">${v(i.stnNm)}</span></td>
+        <td>${v(i.ta)}</td>
+        <td>${v(i.rn)}</td>
+        <td>${v(i.ws)}</td>
+        <td>${v(i.wd)}</td>
+        <td>${v(i.hm)}</td>
+        <td>${v(i.pa)}</td>
+        <td>${v(i.td)}</td>
+        <td>${v(i.ts)}</td>
+        <td>${v(i.ss)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    setStatus('hourly', '', '');
+    document.getElementById('hourly-table').style.display = 'table';
+  }
+
+  function setStatus(type, cls, msg) {
+    const el = document.getElementById(type + '-status');
+    el.className = 'status-msg ' + cls;
+    el.textContent = msg;
+    el.style.display = msg ? 'block' : 'none';
+  }
+
+  function resetForm() {
+    location.reload();
+  }
+</script>
+</body>
+</html>

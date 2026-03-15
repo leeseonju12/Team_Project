@@ -26,8 +26,11 @@ spring:
 outscraper:
   api-key: # 키 삭제
 
-# 기상청 단기예보 API
+# 기상청 단기예보
 weather:
   api:
     key: # 키 삭제
 
+# 기상청 종관기상관측
+asos:
+  service-key: # 키 삭제
