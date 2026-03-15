@@ -25,3 +25,6 @@ spring:
         - optional:classpath*:schema.sql
       data-locations: classpath:db/channel-performance-data.sql
       continue-on-error: true
+
+ai:
+  api-key: # 키 삭제, secret 파일 숙지 필요
