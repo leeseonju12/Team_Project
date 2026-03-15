@@ -27,4 +27,4 @@ spring:
       continue-on-error: true
 
 ai:
-  api-key: # 키 삭제, secret 파일 숙지 필요
+  api-key: # api 키 삭제, secret 파일 숙지 필요

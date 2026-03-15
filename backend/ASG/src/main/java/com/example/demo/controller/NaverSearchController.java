@@ -16,12 +16,13 @@ public class NaverSearchController {
     private final NaverSearchService naverSearchService;
 
     /**
-     * GET /api/naver-search?brandId=1&from=2024-06-01&to=2024-12-31
-     * from/to 생략 시 → 최근 30일
+     * GET /api/naver-search?brandId=1&period=month&from=2024-12-01&to=2024-12-31
+     * period: week | month | year  (기본값 month)
      */
     @GetMapping
     public NaverSearchResponseDto getDashboard(
-            @RequestParam(defaultValue = "1") Long brandId,
+            @RequestParam(defaultValue = "1")    Long brandId,
+            @RequestParam(defaultValue = "month") String period,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false)
@@ -30,6 +31,6 @@ public class NaverSearchController {
         LocalDate endDate   = (to   == null) ? LocalDate.of(2024, 12, 31) : to;
         LocalDate startDate = (from == null) ? endDate.minusDays(30)      : from;
 
-        return naverSearchService.getDashboard(brandId, startDate, endDate);
+        return naverSearchService.getDashboard(brandId, startDate, endDate, period);
     }
 }

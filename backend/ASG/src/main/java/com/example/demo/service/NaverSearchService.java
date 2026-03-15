@@ -20,31 +20,27 @@ public class NaverSearchService {
     private static final DateTimeFormatter DATE_KEY_FMT =
             DateTimeFormatter.ofPattern("yyyyMMdd");
 
-    public NaverSearchResponseDto getDashboard(Long brandId, LocalDate from, LocalDate to) {
+    /**
+     * period: "week" | "month" | "year"
+     */
+    public NaverSearchResponseDto getDashboard(Long brandId, LocalDate from, LocalDate to, String period) {
 
-        // 날짜 역전 방지
         if (from.isAfter(to)) { LocalDate t = from; from = to; to = t; }
 
-        int fromKey = toDateKey(from);
-        int toKey   = toDateKey(to);
-
-        // 전 기간 길이 동일하게 계산
+        int fromKey     = toDateKey(from);
+        int toKey       = toDateKey(to);
         long days       = to.toEpochDay() - from.toEpochDay() + 1;
         int prevToKey   = toDateKey(from.minusDays(1));
         int prevFromKey = toDateKey(from.minusDays(days));
 
-        NaverSearchSummaryDto summary  = buildSummary(brandId, fromKey, toKey, prevFromKey, prevToKey);
-        List<NaverSearchTrendDto> trends   = findTrends(brandId, fromKey, toKey);
-        List<NaverKeywordDto>     keywords = findTopKeywords(brandId, fromKey, toKey);
-
         return NaverSearchResponseDto.builder()
-                .summary(summary)
-                .trends(trends)
-                .keywords(keywords)
+                .summary(buildSummary(brandId, fromKey, toKey, prevFromKey, prevToKey))
+                .trends(findTrends(brandId, fromKey, toKey, period))
+                .keywords(findTopKeywords(brandId, fromKey, toKey))
                 .build();
     }
 
-    // ── 요약 (현재 기간 합계 + 전기간 대비 증감률) ────────────────────
+    // ── 요약 ─────────────────────────────────────────────────────────
     private NaverSearchSummaryDto buildSummary(Long brandId,
                                                int fromKey, int toKey,
                                                int prevFromKey, int prevToKey) {
@@ -55,40 +51,64 @@ public class NaverSearchService {
                 WHERE brand_id = ? AND search_engine = 'naver'
                   AND date_key BETWEEN ? AND ?
                 """;
-
-        // 현재 기간
         int[] cur  = jdbcTemplate.queryForObject(sql,
                 (rs, rn) -> new int[]{rs.getInt("s"), rs.getInt("c")},
                 brandId, fromKey, toKey);
-
-        // 이전 기간
         int[] prev = jdbcTemplate.queryForObject(sql,
                 (rs, rn) -> new int[]{rs.getInt("s"), rs.getInt("c")},
                 brandId, prevFromKey, prevToKey);
-
-        double searchGrowth = calcGrowth(cur[0], prev[0]);
-        double clickGrowth  = calcGrowth(cur[1], prev[1]);
-
         return NaverSearchSummaryDto.builder()
                 .totalSearchCount(cur[0])
                 .totalClickCount(cur[1])
-                .searchGrowthPct(searchGrowth)
-                .clickGrowthPct(clickGrowth)
+                .searchGrowthPct(calcGrowth(cur[0], prev[0]))
+                .clickGrowthPct(calcGrowth(cur[1], prev[1]))
                 .build();
     }
 
-    // ── 일별 트렌드 ───────────────────────────────────────────────────
-    private List<NaverSearchTrendDto> findTrends(Long brandId, int fromKey, int toKey) {
-        String sql = """
-                SELECT date_key,
-                       COALESCE(SUM(search_count), 0) AS search_count,
-                       COALESCE(SUM(click_count),  0) AS click_count
-                FROM search_performance_daily
-                WHERE brand_id = ? AND search_engine = 'naver'
-                  AND date_key BETWEEN ? AND ?
-                GROUP BY date_key
-                ORDER BY date_key
-                """;
+    // ── 트렌드: 기간별 집계 ──────────────────────────────────────────
+    // week  → 일별  (최대 7개)
+    // month → 주별  (4~5개)
+    // year  → 월별  (최대 12개)
+    private List<NaverSearchTrendDto> findTrends(Long brandId, int fromKey, int toKey, String period) {
+
+        String sql;
+
+        if ("week".equals(period)) {
+            sql = """
+                    SELECT date_key,
+                           COALESCE(SUM(search_count), 0) AS search_count,
+                           COALESCE(SUM(click_count),  0) AS click_count
+                    FROM search_performance_daily
+                    WHERE brand_id = ? AND search_engine = 'naver'
+                      AND date_key BETWEEN ? AND ?
+                    GROUP BY date_key
+                    ORDER BY date_key
+                    """;
+        } else if ("month".equals(period)) {
+            // 주별 집계 — 해당 주의 마지막 date_key를 대표값으로
+            sql = """
+                    SELECT MAX(date_key)                    AS date_key,
+                           COALESCE(SUM(search_count), 0)  AS search_count,
+                           COALESCE(SUM(click_count),  0)  AS click_count
+                    FROM search_performance_daily
+                    WHERE brand_id = ? AND search_engine = 'naver'
+                      AND date_key BETWEEN ? AND ?
+                    GROUP BY YEARWEEK(STR_TO_DATE(date_key, '%Y%m%d'), 1)
+                    ORDER BY date_key
+                    """;
+        } else {
+            // 연간 — 월별 집계
+            sql = """
+                    SELECT MAX(date_key)                    AS date_key,
+                           COALESCE(SUM(search_count), 0)  AS search_count,
+                           COALESCE(SUM(click_count),  0)  AS click_count
+                    FROM search_performance_daily
+                    WHERE brand_id = ? AND search_engine = 'naver'
+                      AND date_key BETWEEN ? AND ?
+                    GROUP BY DATE_FORMAT(STR_TO_DATE(date_key, '%Y%m%d'), '%Y-%m')
+                    ORDER BY date_key
+                    """;
+        }
 
         return jdbcTemplate.query(sql,
                 (rs, rn) -> NaverSearchTrendDto.builder()
@@ -117,7 +137,6 @@ public class NaverSearchService {
                 ORDER BY search_count DESC
                 LIMIT 7
                 """;
-
         return jdbcTemplate.query(sql,
                 (rs, rn) -> NaverKeywordDto.builder()
                         .keywordId(rs.getLong("keyword_id"))
@@ -130,7 +149,6 @@ public class NaverSearchService {
                 fromKey, toKey, brandId);
     }
 
-    // ── 유틸 ──────────────────────────────────────────────────────────
     private int toDateKey(LocalDate d) {
         return Integer.parseInt(d.format(DATE_KEY_FMT));
     }

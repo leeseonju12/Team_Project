@@ -1277,21 +1277,21 @@
             데이터 불러오는 중...
           </div>
           <div id="naverContent">
-            <div class="search-track-grid">
-              <div class="search-stat-box">
-                <div class="search-stat-label">🔍 검색수</div>
-                <div class="search-stat-val" id="naverSearchVal">—</div>
-                <div class="search-stat-sub" id="naverSearchSub">불러오는 중...</div>
-              </div>
-              <div class="search-stat-box">
-                <div class="search-stat-label">👆 클릭수</div>
-                <div class="search-stat-val" id="naverClickVal">—</div>
-                <div class="search-stat-sub" id="naverClickSub">불러오는 중...</div>
-              </div>
+          <div class="search-track-grid">
+            <div class="search-stat-box">
+              <div class="search-stat-label">🔍 검색수</div>
+              <div class="search-stat-val" id="naverSearchVal">—</div>
+              <div class="search-stat-sub" id="naverSearchSub">불러오는 중...</div>
             </div>
-            <div style="margin-top:14px;margin-bottom:8px;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">인기 검색 키워드</div>
-            <div class="keyword-list" id="keywordList"></div>
-            <div class="chart-wrap short" style="margin-top:16px;"><canvas id="naverChart"></canvas></div>
+            <div class="search-stat-box">
+              <div class="search-stat-label">👆 클릭수</div>
+              <div class="search-stat-val" id="naverClickVal">—</div>
+              <div class="search-stat-sub" id="naverClickSub">불러오는 중...</div>
+            </div>
+          </div>
+          <div style="margin-top:14px;margin-bottom:8px;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">인기 검색 키워드</div>
+          <div class="keyword-list" id="keywordList"></div>
+          <div class="chart-wrap short" style="margin-top:16px;"><canvas id="naverChart"></canvas></div>
           </div>
         </div>
       </div>
@@ -1416,8 +1416,7 @@
       renderRankList();
       renderCompareTable();
       animateKpis();
-      // 네이버 검색 추적 API 호출 (최근 7개월 기본)
-      loadNaverData('2024-06-01', '2024-12-31');
+      loadNaverData('2024-06-01', '2024-12-31', 'year');
     });
 
     function safeBuildCharts() {
@@ -1438,9 +1437,8 @@
       renderRankList();
       renderCompareTable();
       animateKpis();
-      // 네이버 차트도 기간에 맞춰 갱신
       const { from, to } = getNaverDateRange(period);
-      loadNaverData(from, to);
+      loadNaverData(from, to, period);
     }
 
     function updateAllCharts() {
@@ -1449,7 +1447,7 @@
       updateComparisonLabels();
       updateCompareChart();
       updateDonutChart(d);
-      updateNaverChart();
+      // 네이버 차트는 loadNaverData()에서 별도 갱신
     }
 
     function buildTrendDatasets() {
@@ -1676,21 +1674,18 @@
     }
 
     // ── 네이버 검색 추적 API ──────────────────────────────────────────
-    async function loadNaverData(from, to) {
+    async function loadNaverData(from, to, period = 'month') {
       const overlay = document.getElementById('naverLoadingOverlay');
       const content = document.getElementById('naverContent');
       if (overlay) overlay.style.display = 'block';
       if (content) content.style.opacity = '0.4';
-
       try {
-        const res  = await fetch(`/api/naver-search?brandId=1&from=${from}&to=${to}`);
+        const res = await fetch(`/api/naver-search?brandId=1&period=${period}&from=${from}&to=${to}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-
         renderNaverStats(data.summary);
         renderKeywords(data.keywords);
-        buildOrUpdateNaverChart(data.trends);
-
+        buildOrUpdateNaverChart(data.trends, period);
       } catch (err) {
         console.error('네이버 검색 데이터 로드 실패:', err);
         const el = document.getElementById('naverSearchVal');
@@ -1702,16 +1697,20 @@
       }
     }
 
+    function getNaverDateRange(period) {
+      if (period === 'week') return { from: '2024-12-25', to: '2024-12-31' };
+      if (period === 'year') return { from: '2024-06-01', to: '2024-12-31' };
+      return { from: '2024-12-01', to: '2024-12-31' };
+    }
+
     function renderNaverStats(summary) {
       if (!summary) return;
-      const searchEl   = document.getElementById('naverSearchVal');
-      const clickEl    = document.getElementById('naverClickVal');
-      const searchSub  = document.getElementById('naverSearchSub');
-      const clickSub   = document.getElementById('naverClickSub');
-
+      const searchEl  = document.getElementById('naverSearchVal');
+      const clickEl   = document.getElementById('naverClickVal');
+      const searchSub = document.getElementById('naverSearchSub');
+      const clickSub  = document.getElementById('naverClickSub');
       if (searchEl) searchEl.textContent = summary.totalSearchCount.toLocaleString();
       if (clickEl)  clickEl.textContent  = summary.totalClickCount.toLocaleString();
-
       const fmtPct = (pct) => {
         const isUp  = pct >= 0;
         const color = isUp ? 'var(--green)' : 'var(--red)';
@@ -1736,7 +1735,6 @@
           <span class="kw-val">${k.searchCount.toLocaleString()}</span>
         </div>
       `).join('');
-
       setTimeout(() => {
         document.querySelectorAll('.kw-bar-fill').forEach(bar => {
           bar.style.width = (bar.dataset.target || '80') + '%';
@@ -1744,51 +1742,20 @@
       }, 200);
     }
 
-    function buildOrUpdateNaverChart(trends) {
+    function buildOrUpdateNaverChart(trends, period) {
       const canvas = document.getElementById('naverChart');
       if (!canvas || !trends || trends.length === 0) return;
 
-      // dateKey(20240601) → "6/1" 형식 레이블
-      const labels   = trends.map(t => {
+      const labels = trends.map(t => {
         const s   = String(t.dateKey);
         const mon = parseInt(s.slice(4, 6), 10);
         const day = parseInt(s.slice(6, 8), 10);
+        if (period === 'year')  return `${mon}월`;
+        if (period === 'month') return `${mon}/${day}주`;
         return `${mon}/${day}`;
       });
       const searches = trends.map(t => t.searchCount);
       const clicks   = trends.map(t => t.clickCount);
-
-      const datasetCfg = [
-        {
-          label: '검색수', data: searches,
-          borderColor: '#03C75A', backgroundColor: '#03C75A15',
-          borderWidth: 2, tension: .4, fill: true,
-          pointBackgroundColor: '#03C75A', pointRadius: 2, pointHoverRadius: 5,
-        },
-        {
-          label: '클릭수', data: clicks,
-          borderColor: '#14B8A6', backgroundColor: '#14B8A615',
-          borderWidth: 2, tension: .4, fill: true,
-          pointBackgroundColor: '#14B8A6', pointRadius: 2, pointHoverRadius: 5,
-        }
-      ];
-
-      const opts = {
-        ...chartOpts(),
-        plugins: {
-          legend: {
-            display: true, position: 'top',
-            labels: { font: { size: 10, family: 'Noto Sans KR' }, boxWidth: 8, padding: 10 }
-          },
-          tooltip: {
-            backgroundColor: 'rgba(15,23,42,.92)',
-            titleFont: { size: 11, family: 'Noto Sans KR' },
-            bodyFont:  { size: 11, family: 'Noto Sans KR' },
-            padding: 10, cornerRadius: 8,
-            callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}` }
-          }
-        }
-      };
 
       if (naverChart) {
         naverChart.data.labels           = labels;
@@ -1798,17 +1765,41 @@
       } else {
         naverChart = new Chart(canvas.getContext('2d'), {
           type: 'line',
-          data: { labels, datasets: datasetCfg },
-          options: opts
+          data: {
+            labels,
+            datasets: [
+              {
+                label: '검색수', data: searches,
+                borderColor: '#03C75A', backgroundColor: '#03C75A15',
+                borderWidth: 2, tension: .4, fill: true,
+                pointBackgroundColor: '#03C75A', pointRadius: 3, pointHoverRadius: 6,
+              },
+              {
+                label: '클릭수', data: clicks,
+                borderColor: '#14B8A6', backgroundColor: '#14B8A615',
+                borderWidth: 2, tension: .4, fill: true,
+                pointBackgroundColor: '#14B8A6', pointRadius: 3, pointHoverRadius: 6,
+              }
+            ]
+          },
+          options: {
+            ...chartOpts(),
+            plugins: {
+              legend: {
+                display: true, position: 'top',
+                labels: { font: { size: 10, family: 'Noto Sans KR' }, boxWidth: 8, padding: 10 }
+              },
+              tooltip: {
+                backgroundColor: 'rgba(15,23,42,.92)',
+                titleFont: { size: 11, family: 'Noto Sans KR' },
+                bodyFont:  { size: 11, family: 'Noto Sans KR' },
+                padding: 10, cornerRadius: 8,
+                callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}` }
+              }
+            }
+          }
         });
       }
-    }
-
-    // 기간 전환 시 네이버 데이터도 같이 갱신
-    function getNaverDateRange(period) {
-      if (period === 'week') return { from: '2024-12-25', to: '2024-12-31' };
-      if (period === 'year') return { from: '2024-01-01', to: '2024-12-31' };
-      return { from: '2024-12-01', to: '2024-12-31' };    // month
     }
 
     function renderRankList() {
@@ -1870,8 +1861,6 @@
     `;
       }).join('');
     }
-
-    function renderKeywords() { /* 구버전 — 사용 안 함 (API 버전으로 대체) */ }
 
     function setKpi(el) {
       document.querySelectorAll('.kpi-item').forEach(item => item.classList.remove('active'));
