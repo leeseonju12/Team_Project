@@ -1153,7 +1153,9 @@ background: rgba(255, 255, 255, 0.98);
           </div>
           <div class="output-actions">
             <button type="button" class="btn-sm" th:onclick="copyText(event, [[${res.platform}]])">복사</button>
-            <button type="button" class="btn-sm primary" th:style="'background:' + ${res.color} + '; border-color:' + ${res.color}">게시하기</button>
+            <button type="button" class="btn-sm primary" 
+        th:style="'background:' + ${res.color} + '; border-color:' + ${res.color}"
+        th:onclick="publishToSns(event, [[${res.platform}]])">게시하기</button>
           </div>
         </div>
 
@@ -1269,6 +1271,58 @@ background: rgba(255, 255, 255, 0.98);
     // 로딩 애니메이션 켜기
     document.getElementById('generateBtn').classList.add('loading');
   });
+  
+//7. SNS에 실제 게시하기 요청 (비동기 통신)
+  async function publishToSns(evt, platform) {
+      if (platform !== 'instagram') {
+          alert(platform + ' 게시는 아직 준비 중입니다. 인스타그램만 가능합니다!');
+          return;
+      }
+
+      const btn = evt.currentTarget;
+      const originalText = btn.textContent;
+      const contentText = document.getElementById('text-' + platform).innerText;
+
+      // TODO: 이미지 파일도 함께 보내야 하지만, 인스타그램 API 제약상
+      // 로컬 파일 업로드는 불가능하고 반드시 웹상에서 접근 가능한 URL이어야 합니다.
+      // 이 예제에서는 일단 텍스트만 전송하여 백엔드 로직을 테스트합니다.
+      
+      if(!confirm("이 내용으로 인스타그램에 게시하시겠습니까?")) return;
+
+      btn.textContent = '게시 중...';
+      btn.disabled = true;
+
+      try {
+          // 👇 주소를 Controller 매핑에 맞게 수정!
+          const response = await fetch('/content/publish/instagram', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                  caption: contentText,
+                  imageUrl: "https://images.unsplash.com/photo-1505628346881-b72b27e84530?w=500&auto=format&fit=crop", // 일단 임시 이미지
+                  accessToken: "EAAR7oIGWpiQBQ9LlBt2NzwERIVBvDGrtPjZAz6ybcFAoSqzor81BnaT1aAZAxjZABr0tZCDZBEW8EmNdTbyjFN5doKLQDBos2Xq0FHmPo5IsDRg30JkxYqhiQg3kFD05gCNTfQgePIYF00L57R8kwdv0Hd5nIohzRmtIcWYYaGC8sqxiMCRjdJUUWi7zQFAad" // 테스트용 토큰
+              })
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+              alert("성공적으로 게시되었습니다!");
+              btn.textContent = '게시 완료';
+          } else {
+              alert("게시 실패: " + (result.message || "알 수 없는 오류"));
+              btn.textContent = originalText;
+              btn.disabled = false;
+          }
+      } catch (error) {
+          console.error('Error:', error);
+          alert("서버와 통신하는 중 문제가 발생했습니다.");
+          btn.textContent = originalText;
+          btn.disabled = false;
+      }
+  }
   </script>
 </body>
 </html>
