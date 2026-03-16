@@ -1,0 +1,2121 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>소셜다모아 — 채널 성과 분석</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --teal: #14B8A6;
+      --teal-light: #CCFBF1;
+      --teal-mid: #5EEAD4;
+      --teal-dark: #0D9488;
+      --slate: #F1F5F9;
+      --slate2: #E2E8F0;
+      --indigo: #6366F1;
+      --indigo-light: #EEF2FF;
+      --indigo-dark: #4F46E5;
+      --muted: #475569;
+      --text: #0F172A;
+      --text2: #475569;
+      --text3: #94A3B8;
+      --white: #FFFFFF;
+      --border: #E2E8F0;
+      --border2: #CBD5E1;
+      --green: #22C55E;
+      --green-light: #DCFCE7;
+      --red: #EF4444;
+      --red-light: #FEE2E2;
+      --yellow: #F59E0B;
+      --yellow-light: #FEF3C7;
+      --orange: #F97316;
+      --radius: 14px;
+      --radius-sm: 9px;
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, .07), 0 1px 2px rgba(15, 23, 42, .05);
+      --shadow: 0 4px 16px rgba(15, 23, 42, .08), 0 2px 6px rgba(15, 23, 42, .05);
+      --shadow-lg: 0 12px 32px rgba(15, 23, 42, .12), 0 4px 12px rgba(15, 23, 42, .07);
+      --ig: #E1306C;
+      --fb: #1877F2;
+      --nv: #03C75A;
+      --gm: #EA4335;
+      --kk: #F9C000;
+    }
+
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--white);
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .top-stripe {
+      height: 4px;
+      background: linear-gradient(90deg, var(--teal) 0%, var(--indigo) 60%, var(--teal-mid) 100%);
+    }
+
+    header {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, var(--teal), var(--indigo));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 900;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(20, 184, 166, .35);
+      flex-shrink: 0;
+    }
+
+    .logo-name {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+    }
+
+    .logo-sub {
+      font-size: 11px;
+      color: var(--text3);
+      margin-left: 6px;
+    }
+
+    .nav-pills {
+      display: flex;
+      gap: 4px;
+    }
+
+    .nav-pill {
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      color: var(--text2);
+      background: transparent;
+      transition: all .2s;
+      font-family: 'Noto Sans KR', sans-serif;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .nav-pill:hover {
+      background: var(--slate);
+      color: var(--text);
+    }
+
+    .nav-pill.active {
+      background: var(--indigo-light);
+      border-color: #C7D2FE;
+      color: var(--indigo-dark);
+      font-weight: 600;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--teal-light);
+      border: 1px solid var(--teal-mid);
+      border-radius: 100px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--teal-dark);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--teal);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: .6;
+        transform: scale(.8);
+      }
+    }
+
+    .hero {
+      background: linear-gradient(160deg, var(--slate) 0%, rgba(238, 242, 255, .6) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 36px 40px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(20, 184, 166, .1) 0%, transparent 70%);
+      top: -200px;
+      right: -100px;
+      pointer-events: none;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(99, 102, 241, .08) 0%, transparent 70%);
+      bottom: -100px;
+      left: 25%;
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .hero-text h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(22px, 2.8vw, 32px);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -.5px;
+    }
+
+    .hero-text h1 em {
+      font-style: italic;
+      background: linear-gradient(135deg, var(--teal), var(--indigo));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-text p {
+      margin-top: 6px;
+      color: var(--text2);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .period-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .period-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: .6px;
+    }
+
+    .period-btns {
+      display: flex;
+      gap: 4px;
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 100px;
+      padding: 3px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .period-btn {
+      padding: 5px 14px;
+      border-radius: 100px;
+      border: none;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text2);
+      transition: all .2s;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    .period-btn.active {
+      background: linear-gradient(135deg, var(--teal), var(--indigo));
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(20, 184, 166, .3);
+    }
+
+    .kpi-strip {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+    }
+
+    .kpi-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+    }
+
+    .kpi-item {
+      padding: 18px 20px;
+      border-right: 1px solid var(--border);
+      cursor: pointer;
+      transition: background .2s;
+      position: relative;
+    }
+
+    .kpi-item:last-child {
+      border-right: none;
+    }
+
+    .kpi-item:hover {
+      background: var(--slate);
+    }
+
+    .kpi-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--teal), var(--indigo));
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      color: var(--text3);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .kpi-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .kpi-val {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .kpi-change {
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .kpi-change.up {
+      color: var(--green);
+    }
+
+    .kpi-change.down {
+      color: var(--red);
+    }
+
+    .kpi-change.neu {
+      color: var(--text3);
+    }
+
+    .main-wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 28px 40px 80px;
+    }
+
+    .card {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      animation: fadeUp .4s ease both;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .card-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--slate);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .card-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+    }
+
+    .card-icon.teal {
+      background: var(--teal-light);
+    }
+
+    .card-icon.indigo {
+      background: var(--indigo-light);
+    }
+
+    .card-icon.green {
+      background: var(--green-light);
+    }
+
+    .card-icon.yellow {
+      background: var(--yellow-light);
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .grid-main {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    @media(max-width:1100px) {
+      .grid-main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media(max-width:760px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+
+      .kpi-inner {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 240px;
+    }
+
+    .chart-wrap.tall {
+      height: 300px;
+    }
+
+    .chart-wrap.short {
+      height: 180px;
+    }
+
+    .metric-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .mchip {
+      padding: 4px 11px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid var(--border);
+      background: var(--white);
+      color: var(--text3);
+      transition: all .2s;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .mchip .mdot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .mchip.active {
+      background: var(--slate);
+      color: var(--text2);
+      border-color: var(--border2);
+    }
+
+    .mchip.active[data-metric=views] {
+      background: rgba(99, 102, 241, .1);
+      border-color: var(--indigo);
+      color: var(--indigo-dark);
+    }
+
+    .mchip.active[data-metric=likes] {
+      background: rgba(225, 48, 108, .08);
+      border-color: #E1306C;
+      color: #C11A58;
+    }
+
+    .mchip.active[data-metric=comments] {
+      background: rgba(20, 184, 166, .1);
+      border-color: var(--teal);
+      color: var(--teal-dark);
+    }
+
+    .mchip.active[data-metric=shares] {
+      background: rgba(249, 158, 0, .1);
+      border-color: var(--yellow);
+      color: #92400E;
+    }
+
+    .mchip.active[data-metric=followers] {
+      background: rgba(249, 115, 22, .1);
+      border-color: var(--orange);
+      color: #C2410C;
+    }
+
+    .rank-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      white-space: nowrap;
+    }
+
+    .rank-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      background: var(--white);
+      transition: all .2s;
+      cursor: default;
+    }
+
+    .rank-item:hover {
+      border-color: var(--teal);
+      background: var(--teal-light);
+    }
+
+    .rank-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .rank-num.gold {
+      background: linear-gradient(135deg, #F59E0B, #FBBF24);
+    }
+
+    .rank-num.silver {
+      background: linear-gradient(135deg, #94A3B8, #CBD5E1);
+    }
+
+    .rank-num.bronze {
+      background: linear-gradient(135deg, #F97316, #FB923C);
+    }
+
+    .rank-num.gray {
+      background: var(--text3);
+    }
+
+    .rank-platform {
+      flex: 1;
+    }
+
+    .rank-pdot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+    }
+
+    .rank-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .rank-bar-wrap {
+      flex: 2;
+    }
+
+    .rank-bar-bg {
+      height: 6px;
+      background: var(--slate);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .rank-bar-fill {
+      height: 100%;
+      border-radius: 10px;
+      transition: width 1s ease;
+    }
+
+    .rank-score {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text2);
+      min-width: 60px;
+      text-align: right;
+    }
+
+    .rank-change {
+      font-size: 11px;
+      font-weight: 600;
+      min-width: 40px;
+      text-align: right;
+    }
+
+    .rank-change.up {
+      color: var(--green);
+    }
+
+    .rank-change.down {
+      color: var(--red);
+    }
+
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .compare-table th {
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      border-bottom: 1.5px solid var(--border);
+      background: var(--slate);
+    }
+
+    .compare-table td {
+      padding: 11px 14px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .compare-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .compare-table tr:hover td {
+      background: var(--slate);
+    }
+
+    .plat-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+    }
+
+    .plat-pip {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+    }
+
+    .change-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 8px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .change-pill.up {
+      background: var(--green-light);
+      color: #15803D;
+    }
+
+    .change-pill.down {
+      background: var(--red-light);
+      color: #B91C1C;
+    }
+
+    .change-pill.neu {
+      background: var(--slate);
+      color: var(--text3);
+    }
+
+    .search-track-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 4px;
+    }
+
+    .search-stat-box {
+      background: var(--slate);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      border: 1.5px solid var(--border);
+    }
+
+    .search-stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 6px;
+    }
+
+    .search-stat-val {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--teal-dark);
+    }
+
+    .search-stat-sub {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 3px;
+    }
+
+    .keyword-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .keyword-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .kw-rank {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text3);
+      width: 20px;
+    }
+
+    .kw-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text2);
+      flex: 1;
+    }
+
+    .kw-bar-bg {
+      flex: 2;
+      height: 5px;
+      background: var(--slate2);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .kw-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--teal), var(--indigo));
+      border-radius: 10px;
+      transition: width 1s ease;
+    }
+
+    .kw-val {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      min-width: 38px;
+      text-align: right;
+    }
+
+    .ai-section {
+      margin-bottom: 20px;
+    }
+
+    .ai-card {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .ai-header {
+      padding: 16px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(135deg, rgba(20, 184, 166, .06), rgba(99, 102, 241, .06));
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ai-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ai-header-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--teal), var(--indigo));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 2px 8px rgba(20, 184, 166, .3);
+    }
+
+    .ai-header h2 {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .ai-header p {
+      font-size: 12px;
+      color: var(--text3);
+      margin-top: 1px;
+    }
+
+    .btn-ai-gen {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--teal), var(--indigo));
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      box-shadow: 0 3px 10px rgba(20, 184, 166, .25);
+      transition: all .2s;
+    }
+
+    .btn-ai-gen:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 16px rgba(20, 184, 166, .4);
+    }
+
+    .btn-ai-gen .spin {
+      display: none;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, .35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    .btn-ai-gen.loading .spin {
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .ai-body {
+      padding: 22px;
+    }
+
+    .ai-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text3);
+    }
+
+    .ai-empty-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+
+    .ai-empty h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text2);
+      margin-bottom: 5px;
+    }
+
+    .ai-empty p {
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .ai-result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    @media(max-width:760px) {
+      .ai-result-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .ai-rec-card {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      transition: all .2s;
+      animation: fadeUp .4s ease both;
+    }
+
+    .ai-rec-card:nth-child(2) {
+      animation-delay: .06s;
+    }
+
+    .ai-rec-card:nth-child(3) {
+      animation-delay: .12s;
+    }
+
+    .ai-rec-card:hover {
+      border-color: var(--teal);
+      box-shadow: var(--shadow);
+    }
+
+    .ai-rec-header {
+      padding: 11px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ai-rec-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, var(--teal), var(--indigo));
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .ai-rec-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .ai-rec-body {
+      padding: 12px 14px;
+      font-size: 12px;
+      color: var(--text2);
+      line-height: 1.7;
+    }
+
+    .ai-rec-body strong {
+      color: var(--teal-dark);
+    }
+
+    .ai-summary-box {
+      background: linear-gradient(135deg, var(--teal-light), var(--indigo-light));
+      border: 1.5px solid var(--teal-mid);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.75;
+    }
+
+    .ai-summary-box .ai-sum-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--teal-dark);
+      margin-bottom: 6px;
+    }
+
+    .typing-cursor::after {
+      content: '▍';
+      animation: blink .8s step-end infinite;
+      color: var(--teal);
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0;
+      }
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 9999;
+      background: var(--text);
+      color: #fff;
+      padding: 11px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all .3s cubic-bezier(.34, 1.56, .64, 1);
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success {
+      background: var(--teal-dark);
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--text3);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    @media(max-width:900px) {
+      .main-wrap {
+        padding: 20px 16px 60px;
+      }
+
+      header {
+        padding: 0 16px;
+      }
+
+      .hero {
+        padding: 24px 16px 20px;
+      }
+
+      .kpi-strip {
+        padding: 0 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="top-stripe"></div>
+
+  <header>
+    <div class="logo">
+      <div class="logo-mark">S</div>
+      <span class="logo-name">소셜다모아</span>
+      <span class="logo-sub">All Social Gather</span>
+    </div>
+    <nav class="nav-pills">
+      <a href="#" class="nav-pill">✏️ 콘텐츠 생성</a>
+      <a href="/feedback" class="nav-pill">💬 리뷰 관리</a>
+      <a href="/channel-performance" class="nav-pill active">📊 성과 분석</a>
+    </nav>
+    <div class="status-pill">
+      <span class="status-dot"></span>데이터 동기화 완료
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <h1>채널 성과를 <em>한눈에</em>,<br />데이터 기반으로 전략 수립</h1>
+        <p>모든 SNS 채널의 성과를 통합 분석하고 AI가 다음 마케팅 전략을 추천합니다.</p>
+      </div>
+      <div class="period-bar">
+        <span class="period-label">기간</span>
+        <div class="period-btns">
+          <button class="period-btn" data-period="week" onclick="setPeriod('week')">주간</button>
+          <button class="period-btn active" data-period="month" onclick="setPeriod('month')">월간</button>
+          <button class="period-btn" data-period="year" onclick="setPeriod('year')">연간</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kpi-strip">
+    <div class="kpi-inner">
+      <div class="kpi-item active" onclick="setKpi(this,'views')" data-metric="views">
+        <div class="kpi-label"><span class="kpi-dot" style="background:var(--indigo)"></span>총 조회수</div>
+        <div class="kpi-val" id="kpi-views">284.7K</div>
+        <div class="kpi-change up" id="kpi-views-chg">▲ 12.4%</div>
+      </div>
+      <div class="kpi-item" onclick="setKpi(this,'likes')" data-metric="likes">
+        <div class="kpi-label"><span class="kpi-dot" style="background:#E1306C"></span>좋아요</div>
+        <div class="kpi-val" id="kpi-likes">18.2K</div>
+        <div class="kpi-change up" id="kpi-likes-chg">▲ 8.1%</div>
+      </div>
+      <div class="kpi-item" onclick="setKpi(this,'comments')" data-metric="comments">
+        <div class="kpi-label"><span class="kpi-dot" style="background:var(--teal)"></span>댓글</div>
+        <div class="kpi-val" id="kpi-comments">4,391</div>
+        <div class="kpi-change up" id="kpi-comments-chg">▲ 5.3%</div>
+      </div>
+      <div class="kpi-item" onclick="setKpi(this,'shares')" data-metric="shares">
+        <div class="kpi-label"><span class="kpi-dot" style="background:var(--yellow)"></span>공유</div>
+        <div class="kpi-val" id="kpi-shares">2,104</div>
+        <div class="kpi-change down" id="kpi-shares-chg">▼ 2.1%</div>
+      </div>
+      <div class="kpi-item" onclick="setKpi(this,'reviews')" data-metric="reviews">
+        <div class="kpi-label"><span class="kpi-dot" style="background:var(--green)"></span>리뷰</div>
+        <div class="kpi-val" id="kpi-reviews">312</div>
+        <div class="kpi-change up" id="kpi-reviews-chg">▲ 18.6%</div>
+      </div>
+      <div class="kpi-item" onclick="setKpi(this,'followers')" data-metric="followers">
+        <div class="kpi-label"><span class="kpi-dot" style="background:var(--orange)"></span>팔로워 증가</div>
+        <div class="kpi-val" id="kpi-followers">+1,284</div>
+        <div class="kpi-change up" id="kpi-followers-chg">▲ 23.8%</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-wrap">
+    <div class="section-label">📈 통합 추이 분석</div>
+    <div class="grid-main" style="margin-bottom:20px;">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="card-icon indigo">📈</div>SNS 반응 통합 추이
+          </div>
+          <div class="metric-chips">
+            <div class="mchip active" data-metric="views" onclick="toggleMetric('views')"><span class="mdot" style="background:var(--indigo)"></span>조회수</div>
+            <div class="mchip active" data-metric="likes" onclick="toggleMetric('likes')"><span class="mdot" style="background:#E1306C"></span>좋아요</div>
+            <div class="mchip" data-metric="comments" onclick="toggleMetric('comments')"><span class="mdot" style="background:var(--teal)"></span>댓글</div>
+            <div class="mchip" data-metric="shares" onclick="toggleMetric('shares')"><span class="mdot" style="background:var(--yellow)"></span>공유</div>
+            <div class="mchip" data-metric="followers" onclick="toggleMetric('followers')"><span class="mdot" style="background:var(--orange)"></span>팔로워</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap tall"><canvas id="trendChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="">🏆</div>플랫폼 반응 순위
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="rank-list" id="rankList"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">🔀 플랫폼 비교 분석</div>
+    <div class="grid-2" style="margin-bottom:20px;">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="">📊</div>전월 대비 상승도 비교
+          </div>
+          <select id="compareMetricSel" onchange="updateCompareChart()" style="padding:5px 10px;border-radius:7px;border:1.5px solid var(--border);background:var(--white);font-size:12px;font-family:'Noto Sans KR',sans-serif;outline:none;cursor:pointer;color:var(--text2);">
+            <option value="views">조회수</option>
+            <option value="likes">좋아요</option>
+            <option value="comments">댓글</option>
+            <option value="shares">공유</option>
+          </select>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap"><canvas id="compareChart"></canvas></div>
+          <div style="margin-top:16px;">
+            <table class="compare-table">
+              <thead>
+                <tr>
+                  <th>플랫폼</th>
+                  <th id="compareCurLabel">이번 달</th>
+                  <th id="comparePrevLabel">지난 달</th>
+                  <th>변화율</th>
+                </tr>
+              </thead>
+              <tbody id="compareTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="">🔍</div>네이버 검색 영향 추적
+          </div>
+          <div style="display:flex;gap:6px;">
+            <a href="https://datalab.naver.com/" target="_blank" style="padding:4px 10px;border-radius:6px;border:1.5px solid var(--border);background:var(--white);font-size:11px;font-weight:600;color:var(--nv);text-decoration:none;display:flex;align-items:center;gap:4px;">데이터랩 ↗</a>
+            <a href="https://surffing.net/" target="_blank" style="padding:4px 10px;border-radius:6px;border:1.5px solid var(--border);background:var(--white);font-size:11px;font-weight:600;color:var(--text3);text-decoration:none;display:flex;align-items:center;gap:4px;">surffing ↗</a>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- 로딩 오버레이 -->
+          <div id="naverLoadingOverlay" style="display:none;text-align:center;padding:40px 0;color:var(--text3);font-size:13px;">
+            <div style="width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px;"></div>
+            데이터 불러오는 중...
+          </div>
+          <div id="naverContent">
+          <!-- ① 검색수 + 주요 사용자 요약 -->
+          <div class="search-track-grid">
+            <div class="search-stat-box">
+              <div class="search-stat-label">🔍 검색수</div>
+              <div class="search-stat-val" id="naverSearchVal">14,820</div>
+              <div class="search-stat-sub" id="naverSearchSub">전월 대비 <span style="color:var(--green);font-weight:700;">▲ 22.4%</span></div>
+            </div>
+            <div class="search-stat-box">
+              <div class="search-stat-label">👤 주요 검색 사용자</div>
+              <div class="search-stat-val" id="naverUserStat" style="font-size:15px;line-height:1.4;">20-30대 여성</div>
+              <div class="search-stat-sub" id="naverUserStatSub">전월: 20대 남성이 가장 많이 검색</div>
+            </div>
+          </div>
+          <!-- ② 업종 맞춤 인기 검색 키워드 -->
+          <div style="margin-top:14px;margin-bottom:4px;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">업종 인기 검색 키워드</div>
+          <div class="keyword-list" id="keywordList"></div>
+          <!-- ③ 드롭다운 + 차트 -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;margin-bottom:8px;">
+            <span style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">상세 분석</span>
+            <select id="naverChartTypeSel" onchange="switchNaverChart()" style="padding:4px 10px;border-radius:7px;border:1.5px solid var(--border);background:var(--white);font-size:11px;font-family:'Noto Sans KR',sans-serif;outline:none;cursor:pointer;color:var(--text2);">
+              <option value="trend">검색수 추이</option>
+              <option value="age">연령대 분포</option>
+              <option value="gender">성별 비율</option>
+            </select>
+          </div>
+          <div class="chart-wrap short" style="position:relative;">
+            <canvas id="naverTrendChart"></canvas>
+            <canvas id="naverAgeChart"    style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
+            <canvas id="naverGenderChart" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
+          </div><!-- /naverContent -->
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:20px;">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="">🗂️</div>조회수 채널 비중
+          </div>
+        </div>
+        <div class="card-body" style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+          <div style="width:200px;height:200px;flex-shrink:0;"><canvas id="donutChart"></canvas></div>
+          <div style="flex:1;min-width:160px;" id="donutLegend"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="">⏰</div>시간대별 조회율
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap"><canvas id="hourlyChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">✦ AI 다음 액션 추천</div>
+    <div class="ai-section">
+      <div class="ai-card">
+        <div class="ai-header">
+          <div class="ai-header-left">
+            <div class="ai-header-icon">✦</div>
+            <div>
+              <h2>AI 전략 추천</h2>
+              <p>채널 성과 데이터를 분석해 최적 채널·시간·콘텐츠 유형 조합을 도출합니다</p>
+            </div>
+          </div>
+          <button class="btn-ai-gen" id="aiGenBtn" onclick="generateStrategy()">
+            <span class="spin"></span>
+            <span class="btn-text">✦ 전략 분석 시작</span>
+          </button>
+        </div>
+        <div class="ai-body">
+          <div class="ai-empty" id="aiEmpty">
+            <div class="ai-empty-icon">🧠</div>
+            <h3>아직 분석이 실행되지 않았어요</h3>
+            <p>위의 <strong>전략 분석 시작</strong> 버튼을 누르면<br />현재 채널 성과를 바탕으로 최적 전략을 추천해드립니다.</p>
+          </div>
+          <div id="aiResult" style="display:none;">
+            <div class="ai-result-grid" id="aiCards"></div>
+            <div class="ai-summary-box" id="aiSummary">
+              <div class="ai-sum-label">✦ 종합 인사이트</div>
+              <div id="aiSummaryText"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const PLATFORMS = [{ id: 'instagram', name: 'Instagram', color: '#E1306C' },
+      { id: 'facebook', name: 'Facebook', color: '#1877F2' },
+      { id: 'naver', name: '네이버 블로그', color: '#03C75A' },
+      { id: 'google', name: '구글 지도', color: '#EA4335' },
+      { id: 'kakao', name: '카카오 채널', color: '#F9C000' },
+    ];
+    const DATA = {
+      week: {
+        labels: ['월', '화', '수', '목', '금', '토', '일'],
+        views: [[3200, 4100, 3800, 5200, 4800, 6100, 5400],[1200, 1500, 1300, 1800, 1600, 2100, 1900],[2100, 2400, 2200, 2800, 2500, 3200, 2900],[800, 900, 850, 1100, 1000, 1300, 1100],[600, 700, 650, 850, 750, 950, 880]],
+        likes: [[320, 410, 380, 520, 480, 610, 540],[120, 150, 130, 180, 160, 210, 190],[210, 240, 220, 280, 250, 320, 290],[80, 90, 85, 110, 100, 130, 110],[60, 70, 65, 85, 75, 95, 88]],
+        comments: [[48, 62, 57, 78, 72, 92, 81],[18, 23, 20, 27, 24, 32, 29],[32, 36, 33, 42, 38, 48, 44],[12, 14, 13, 17, 15, 20, 17],[9, 11, 10, 13, 11, 14, 13]],
+        shares: [[24, 31, 29, 39, 36, 46, 41],[9, 12, 10, 14, 12, 16, 15],[16, 18, 17, 21, 19, 24, 22],[6, 7, 7, 9, 8, 10, 9],[5, 6, 5, 7, 6, 8, 7]],
+        followers: [[45, 58, 52, 68, 63, 82, 74],[12, 15, 13, 18, 16, 21, 19],[28, 32, 30, 38, 34, 43, 39],[8, 9, 9, 11, 10, 13, 12],[6, 7, 7, 9, 8, 10, 9]],
+        rankScores: [128400, 62400, 94500, 38200, 28800],
+        donut: [45, 22, 33, 14, 10],
+        compare: { views: { cur: [45800, 22100, 33400, 13600, 10200], prev: [39200, 20400, 29800, 11800, 9400] }, likes: { cur: [3780, 1830, 2760, 1120, 840], prev: [3210, 1690, 2430, 970, 780] }, comments: { cur: [570, 275, 415, 168, 126], prev: [510, 252, 368, 148, 116] }, shares: { cur: [247, 119, 180, 73, 55], prev: [262, 128, 190, 78, 58] } },
+      },
+      month: {
+        labels: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
+        views: [[28000, 31000, 29000, 35000, 38000, 42000, 39000, 45000, 48000, 51000, 49000, 58000],[10000, 11500, 10800, 13000, 14200, 15800, 14600, 16900, 18100, 19400, 18600, 22100],[18000, 19800, 18600, 22200, 24100, 26800, 24800, 28600, 30600, 32800, 31400, 37400],[7200, 7900, 7400, 8800, 9600, 10700, 9900, 11400, 12200, 13100, 12500, 14900],[5400, 5900, 5600, 6600, 7200, 8000, 7400, 8500, 9100, 9800, 9400, 11200]],
+        likes: [[2800, 3100, 2900, 3500, 3800, 4200, 3900, 4500, 4800, 5100, 4900, 5800],[1000, 1150, 1080, 1300, 1420, 1580, 1460, 1690, 1810, 1940, 1860, 2210],[1800, 1980, 1860, 2220, 2410, 2680, 2480, 2860, 3060, 3280, 3140, 3740],[720, 790, 740, 880, 960, 1070, 990, 1140, 1220, 1310, 1250, 1490],[540, 590, 560, 660, 720, 800, 740, 850, 910, 980, 940, 1120]],
+        comments: [[420, 465, 435, 525, 570, 630, 585, 675, 720, 765, 735, 870],[150, 173, 162, 195, 213, 237, 219, 254, 272, 291, 279, 332],[270, 297, 279, 333, 362, 402, 372, 429, 459, 492, 471, 561],[108, 119, 111, 132, 144, 161, 149, 171, 183, 197, 188, 224],[81, 89, 83, 99, 108, 120, 111, 128, 137, 148, 141, 168]],
+        shares: [[182, 201, 189, 227, 247, 273, 253, 292, 312, 331, 318, 376],[65, 75, 70, 85, 92, 103, 95, 110, 118, 126, 121, 144],[117, 129, 121, 145, 157, 175, 162, 186, 199, 214, 205, 244],[47, 51, 48, 57, 62, 70, 65, 75, 80, 86, 82, 98],[35, 38, 36, 43, 47, 52, 48, 56, 60, 64, 61, 73]],
+        followers: [[380, 420, 395, 475, 515, 570, 525, 610, 650, 695, 665, 790],[95, 105, 99, 119, 129, 143, 131, 153, 163, 174, 167, 198],[190, 210, 198, 238, 258, 285, 263, 305, 325, 348, 333, 396],[48, 52, 49, 59, 64, 71, 66, 76, 81, 87, 83, 99],[36, 39, 37, 44, 48, 53, 49, 57, 61, 65, 62, 74]],
+        rankScores: [284700, 108400, 215600, 84200, 63200],
+        donut: [38, 14, 29, 11, 8],
+        compare: { views: { cur: [58000, 22100, 37400, 14900, 11200], prev: [49000, 18600, 31400, 12500, 9400] }, likes: { cur: [5800, 2210, 3740, 1490, 1120], prev: [4900, 1860, 3140, 1250, 940] }, comments: { cur: [870, 332, 561, 224, 168], prev: [735, 279, 471, 188, 141] }, shares: { cur: [376, 144, 244, 98, 73], prev: [318, 121, 205, 82, 61] } },
+      },
+      year: {
+        labels: ['2023 Q1', '2023 Q2', '2023 Q3', '2023 Q4', '2024 Q1', '2024 Q2', '2024 Q3', '2024 Q4'],
+        views: [[88000, 105000, 132000, 162000, 195000, 228000, 261000, 284700],[33000, 39000, 49000, 61000, 73000, 86000, 98000, 108400],[56000, 67000, 84000, 103000, 124000, 145000, 167000, 215600],[22000, 26000, 33000, 40000, 48000, 57000, 65000, 84200],[17000, 20000, 25000, 31000, 37000, 43000, 50000, 63200]],
+        likes: [[8800, 10500, 13200, 16200, 19500, 22800, 26100, 28470],[3300, 3900, 4900, 6100, 7300, 8600, 9800, 10840],[5600, 6700, 8400, 10300, 12400, 14500, 16700, 21560],[2200, 2600, 3300, 4000, 4800, 5700, 6500, 8420],[1700, 2000, 2500, 3100, 3700, 4300, 5000, 6320]],
+        comments: [[1320, 1575, 1980, 2430, 2925, 3420, 3915, 4270],[495, 585, 735, 915, 1095, 1290, 1470, 1626],[840, 1005, 1260, 1545, 1860, 2175, 2505, 3234],[330, 390, 495, 600, 720, 855, 975, 1263],[255, 300, 375, 465, 555, 645, 750, 948]],
+        shares: [[572, 683, 858, 1053, 1267, 1482, 1696, 1849],[215, 254, 319, 397, 475, 559, 638, 705],[364, 436, 547, 670, 807, 943, 1085, 1401],[143, 169, 215, 260, 312, 371, 423, 548],[110, 130, 163, 201, 235, 281, 325, 411]],
+        followers: [[1140, 1365, 1716, 2106, 2535, 2964, 3393, 3699],[429, 508, 638, 793, 949, 1117, 1275, 1411],[726, 869, 1092, 1339, 1613, 1885, 2168, 2802],[286, 338, 429, 519, 624, 742, 845, 1095],[220, 260, 325, 401, 469, 561, 649, 821]],
+        rankScores: [756000, 320400, 540200, 208400, 141200],
+        donut: [40, 13, 29, 11, 7],
+        compare: { views: { cur: [284700, 108400, 215600, 84200, 63200], prev: [220000, 82000, 165000, 62000, 48000] }, likes: { cur: [28470, 10840, 21560, 8420, 6320], prev: [22000, 8200, 16500, 6200, 4800] }, comments: { cur: [4270, 1626, 3234, 1263, 948], prev: [3300, 1280, 2520, 960, 730] }, shares: { cur: [1849, 705, 1401, 548, 411], prev: [1430, 560, 1080, 420, 310] } },
+      }
+    };
+
+    const METRIC_COLORS = { views: '#6366F1', likes: '#E1306C', comments: '#14B8A6', shares: '#F59E0B', followers: '#F97316' };
+
+    let currentPeriod = 'month';
+    let activeMetrics = new Set(['views', 'likes']);
+    let trendChart = null;
+    let compareChart = null;
+    let donutChart = null;
+    let hourlyChart = null;
+    let naverTrendChart  = null;
+    let naverAgeChart    = null;
+    let naverGenderChart = null;
+    let currentNaverChart = 'trend';
+
+    window.addEventListener('DOMContentLoaded', () => {
+      safeBuildCharts();
+      renderRankList();
+      renderCompareTable();
+      animateKpis();
+      loadNaverData('month');   // API 호출로 초기화
+    });
+
+    function safeBuildCharts() {
+      buildTrendChart();
+      buildCompareChart();
+      updateComparisonLabels();
+      buildDonutChart();
+      buildHourlyChart();
+      // naverChart는 loadNaverData() 응답 후 초기화
+    }
+
+    function setPeriod(period) {
+      currentPeriod = period;
+      document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.period === period);
+      });
+      updateAllCharts();
+      renderRankList();
+      renderCompareTable();
+      animateKpis();
+      loadNaverData(period);    // 기간 전환 시 API 재호출
+    }
+
+    function updateAllCharts() {
+      const d = DATA[currentPeriod];
+      updateTrendChart(d);
+      updateComparisonLabels();
+      updateCompareChart();
+      updateDonutChart(d);
+      // 네이버는 loadNaverData()에서 별도 처리
+    }
+
+    function buildTrendDatasets() {
+      const d = DATA[currentPeriod];
+      const metricMap = { views: d.views, likes: d.likes, comments: d.comments, shares: d.shares, followers: d.followers };
+      const labels = { views: '조회수', likes: '좋아요', comments: '댓글', shares: '공유', followers: '팔로워' };
+      const datasets = [];
+
+      activeMetrics.forEach(metric => {
+        const total = metricMap[metric][0].map((_, i) => metricMap[metric].reduce((sum, platformRow) => sum + platformRow[i], 0));
+        datasets.push({
+          label: labels[metric],
+          data: total,
+          borderColor: METRIC_COLORS[metric],
+          backgroundColor: METRIC_COLORS[metric] + '15',
+          borderWidth: 2.5,
+          tension: 0.4,
+          fill: true,
+          pointBackgroundColor: METRIC_COLORS[metric],
+          pointRadius: 3,
+          pointHoverRadius: 6,
+        });
+      });
+      return datasets;
+    }
+
+    function buildTrendChart() {
+      const canvas = document.getElementById('trendChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      trendChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: DATA[currentPeriod].labels, datasets: buildTrendDatasets() },
+        options: chartOpts(),
+      });
+    }
+
+    function updateTrendChart(d) {
+      if (!trendChart) return;
+      trendChart.data.labels = d.labels;
+      trendChart.data.datasets = buildTrendDatasets();
+      trendChart.update('active');
+    }
+
+    function toggleMetric(metric) {
+      if (activeMetrics.has(metric)) activeMetrics.delete(metric);
+      else activeMetrics.add(metric);
+
+      const chip = document.querySelector(`.mchip[data-metric="${metric}"]`);
+      if (chip) chip.classList.toggle('active', activeMetrics.has(metric));
+      updateTrendChart(DATA[currentPeriod]);
+    }
+
+
+    function getComparisonLabels() {
+      if (currentPeriod === 'week') return { current: '이번 주', previous: '지난 주' };
+      if (currentPeriod === 'year') return { current: '올해', previous: '작년' };
+      return { current: '이번 달', previous: '지난 달' };
+    }
+
+    function updateComparisonLabels() {
+      const labels = getComparisonLabels();
+      const curHeader = document.getElementById('compareCurLabel');
+      const prevHeader = document.getElementById('comparePrevLabel');
+      if (curHeader) curHeader.textContent = labels.current;
+      if (prevHeader) prevHeader.textContent = labels.previous;
+      if (compareChart && compareChart.data?.datasets?.length >= 2) {
+        compareChart.data.datasets[0].label = labels.current;
+        compareChart.data.datasets[1].label = labels.previous;
+      }
+    }
+
+    function compareData(metric) {
+      return DATA[currentPeriod].compare[metric] || DATA[currentPeriod].compare.views;
+    }
+
+    function buildCompareChart() {
+      const canvas = document.getElementById('compareChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const sel = document.getElementById('compareMetricSel')?.value || 'views';
+      const cd = compareData(sel);
+
+      compareChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: PLATFORMS.map(p => p.name),
+          datasets: [
+            {
+              label: getComparisonLabels().current,
+              data: cd.cur,
+              backgroundColor: PLATFORMS.map(p => p.color + 'CC'),
+              borderRadius: 6,
+              borderSkipped: false,
+            },
+            {
+              label: getComparisonLabels().previous,
+              data: cd.prev,
+              backgroundColor: PLATFORMS.map(p => p.color + '44'),
+              borderRadius: 6,
+              borderSkipped: false,
+              borderWidth: 1.5,
+              borderColor: PLATFORMS.map(p => p.color),
+            }
+          ]
+        },
+        options: {
+          ...chartOpts(),
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                font: { size: 11, family: 'Noto Sans KR' },
+                boxWidth: 10,
+                padding: 14
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(15,23,42,.92)',
+              titleFont: { size: 11, family: 'Noto Sans KR' },
+              bodyFont: { size: 11, family: 'Noto Sans KR' },
+              padding: 10,
+              cornerRadius: 8,
+            }
+          }
+        }
+      });
+    }
+
+    function updateCompareChart() {
+      if (!compareChart) return;
+      const sel = document.getElementById('compareMetricSel')?.value || 'views';
+      const cd = compareData(sel);
+      updateComparisonLabels();
+      compareChart.data.datasets[0].data = cd.cur;
+      compareChart.data.datasets[1].data = cd.prev;
+      compareChart.update('active');
+      renderCompareTable();
+    }
+
+    function buildDonutChart() {
+      const canvas = document.getElementById('donutChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const d = DATA[currentPeriod];
+
+      donutChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: PLATFORMS.map(p => p.name),
+          datasets: [{
+            data: d.donut,
+            backgroundColor: PLATFORMS.map(p => p.color),
+            borderWidth: 2,
+            borderColor: '#fff',
+            hoverOffset: 8,
+          }]
+        },
+        options: {
+          cutout: '68%',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}%` } }
+          }
+        }
+      });
+
+      renderDonutLegend(d);
+    }
+
+    function updateDonutChart(d) {
+      if (!donutChart) return;
+      donutChart.data.datasets[0].data = d.donut;
+      donutChart.update('active');
+      renderDonutLegend(d);
+    }
+
+    function renderDonutLegend(d) {
+      const el = document.getElementById('donutLegend');
+      if (!el) return;
+      el.innerHTML = PLATFORMS.map((p, i) => `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <span style="width:10px;height:10px;border-radius:50%;background:${p.color};flex-shrink:0;display:inline-block;"></span>
+      <span style="font-size:12px;color:var(--text2);flex:1;">${p.name}</span>
+      <span style="font-size:12px;font-weight:700;color:var(--text);">${d.donut[i]}%</span>
+    </div>
+  `).join('');
+    }
+
+    function buildHourlyChart() {
+      const canvas = document.getElementById('hourlyChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const hours = Array.from({ length: 24 }, (_, i) => `${i}시`);
+      const hourlyData = [120, 80, 60, 45, 40, 55, 180, 420, 680, 810, 920, 860, 780, 720, 680, 740, 890, 1020, 1100, 980, 820, 620, 380, 200];
+
+      hourlyChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: hours,
+          datasets: [{
+            label: '조회율',
+            data: hourlyData,
+            backgroundColor: hourlyData.map(v => {
+              if (v >= 900) return '#14B8A6CC';
+              if (v >= 600) return '#6366F1AA';
+              return '#CBD5E1';
+            }),
+            borderRadius: 4,
+            borderSkipped: false,
+          }]
+        },
+        options: {
+          ...chartOpts(),
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y.toLocaleString()} 조회` } }
+          }
+        }
+      });
+    }
+
+    // ════════════════════════════════════════════════════
+    // 네이버 검색 추적 — 데이터랩 API 연동
+    // ════════════════════════════════════════════════════
+
+    function getNaverDateRange(period) {
+      const today = new Date();
+      const fmt = d => d.toISOString().slice(0, 10);
+      if (period === 'week') {
+        const from = new Date(today); from.setDate(today.getDate() - 6);
+        return { from: fmt(from), to: fmt(today) };
+      }
+      if (period === 'year') {
+        const from = new Date(today); from.setFullYear(today.getFullYear() - 1);
+        return { from: fmt(from), to: fmt(today) };
+      }
+      // month
+      const from = new Date(today); from.setMonth(today.getMonth() - 1);
+      return { from: fmt(from), to: fmt(today) };
+    }
+
+    async function loadNaverData(period) {
+      const overlay = document.getElementById('naverLoadingOverlay');
+      const content = document.getElementById('naverContent');
+      if (overlay) overlay.style.display = 'block';
+      if (content) content.style.opacity = '0.4';
+
+      try {
+        const { from, to } = getNaverDateRange(period);
+        const res = await fetch(`/api/naver-search?period=${period}&from=${from}&to=${to}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        renderNaverSummary(data.summary);
+        renderNaverKeywords(data.keywords);
+        renderNaverTrendChart(data.trends);
+        renderNaverAgeChart(data.ageLabels, data.ageCur, data.agePrev);
+        renderNaverGenderChart(
+          data.genderFemaleCur, data.genderMaleCur,
+          data.genderFemalePrev, data.genderMalePrev
+        );
+
+      } catch (err) {
+        console.error('네이버 데이터 로드 실패:', err);
+        const el = document.getElementById('naverSearchVal');
+        if (el) el.textContent = '오류';
+        showToast('네이버 데이터 로드에 실패했습니다.', '');
+      } finally {
+        if (overlay) overlay.style.display = 'none';
+        if (content) content.style.opacity = '1';
+      }
+    }
+
+    // ── 요약 카드 ─────────────────────────────────────────
+    function renderNaverSummary(summary) {
+      if (!summary) return;
+      const sEl   = document.getElementById('naverSearchVal');
+      const sSub  = document.getElementById('naverSearchSub');
+      const uEl   = document.getElementById('naverUserStat');
+      const uSub  = document.getElementById('naverUserStatSub');
+      if (sEl)  sEl.textContent  = summary.totalSearchCount.toLocaleString();
+      if (sSub) {
+        const up = summary.searchGrowthPct >= 0;
+        sSub.innerHTML = `전월 대비 <span style="color:${up ? 'var(--green)' : 'var(--red)'};font-weight:700;">${up ? '▲' : '▼'} ${Math.abs(summary.searchGrowthPct).toFixed(1)}%</span>`;
+      }
+      if (uEl)  uEl.textContent  = summary.topAgeGroup + ' ' + summary.topGender + '이 가장 많이 검색';
+      if (uSub) uSub.textContent = '';
+    }
+
+    // ── 인기 키워드 ───────────────────────────────────────
+    function renderNaverKeywords(keywords) {
+      const el = document.getElementById('keywordList');
+      if (!el || !keywords || keywords.length === 0) return;
+      const max = keywords[0].searchCount || 1;
+      el.innerHTML = keywords.map((k, i) => `
+        <div class="keyword-row">
+          <span class="kw-rank">${i + 1}</span>
+          <span class="kw-name">${k.keywordText}</span>
+          <div class="kw-bar-bg">
+            <div class="kw-bar-fill" style="width:0%" data-target="${Math.round(k.searchCount / max * 100)}"></div>
+          </div>
+          <span class="kw-val">${k.searchCount.toLocaleString()}</span>
+        </div>
+      `).join('');
+      setTimeout(() => {
+        document.querySelectorAll('.kw-bar-fill').forEach(b => {
+          b.style.width = (b.dataset.target || '80') + '%';
+        });
+      }, 200);
+    }
+
+    // ── 검색수 추이 차트 ──────────────────────────────────
+    function renderNaverTrendChart(trends) {
+      const canvas = document.getElementById('naverTrendChart');
+      if (!canvas || !trends || trends.length === 0) return;
+      const labels = trends.map(t => t.label);
+      const data   = trends.map(t => t.searchCount);
+      if (naverTrendChart) {
+        naverTrendChart.data.labels           = labels;
+        naverTrendChart.data.datasets[0].data = data;
+        naverTrendChart.update('active');
+      } else {
+        naverTrendChart = new Chart(canvas.getContext('2d'), {
+          type: 'line',
+          data: { labels, datasets: [{
+            label: '검색수', data,
+            borderColor: '#03C75A', backgroundColor: '#03C75A15',
+            borderWidth: 2, tension: .4, fill: true,
+            pointBackgroundColor: '#03C75A', pointRadius: 3, pointHoverRadius: 6,
+          }]},
+          options: {
+            ...chartOpts(),
+            plugins: {
+              legend: { display: false },
+              tooltip: { backgroundColor: 'rgba(15,23,42,.92)', callbacks: { label: ctx => ` 검색수: ${ctx.parsed.y.toLocaleString()}` } }
+            }
+          }
+        });
+      }
+    }
+
+    // ── 연령대 분포 차트 ──────────────────────────────────
+    function renderNaverAgeChart(labels, cur, prev) {
+      const canvas = document.getElementById('naverAgeChart');
+      if (!canvas) return;
+      if (naverAgeChart) {
+        naverAgeChart.data.datasets[0].data = cur;
+        naverAgeChart.data.datasets[1].data = prev;
+        naverAgeChart.update('active');
+      } else {
+        naverAgeChart = new Chart(canvas.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [
+              { label: '이번 기간', data: cur,  backgroundColor: '#14B8A6CC', borderRadius: 5, borderSkipped: false },
+              { label: '전 기간',   data: prev, backgroundColor: '#14B8A644', borderRadius: 5, borderSkipped: false, borderWidth: 1.5, borderColor: '#14B8A6' }
+            ]
+          },
+          options: {
+            ...chartOpts(),
+            plugins: {
+              legend: { display: true, position: 'top', labels: { font: { size: 10, family: 'Noto Sans KR' }, boxWidth: 8, padding: 10 } },
+              tooltip: { backgroundColor: 'rgba(15,23,42,.92)', callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}%` } }
+            },
+            scales: {
+              x: { grid: { color: 'rgba(0,0,0,.04)' }, ticks: { font: { size: 10, family: 'Noto Sans KR' }, color: '#94A3B8' } },
+              y: { grid: { color: 'rgba(0,0,0,.04)' }, ticks: { font: { size: 10, family: 'Noto Sans KR' }, color: '#94A3B8', callback: v => v + '%' }, beginAtZero: true, max: 50 }
+            }
+          }
+        });
+      }
+    }
+
+    // ── 성별 비율 차트 ────────────────────────────────────
+    function renderNaverGenderChart(femaleCur, maleCur, femalePrev, malePrev) {
+      const canvas = document.getElementById('naverGenderChart');
+      if (!canvas) return;
+      if (naverGenderChart) {
+        naverGenderChart.data.datasets[0].data = [femaleCur, maleCur];
+        naverGenderChart.data.datasets[1].data = [femalePrev, malePrev];
+        naverGenderChart.update('active');
+      } else {
+        naverGenderChart = new Chart(canvas.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: ['여성', '남성'],
+            datasets: [
+              { label: '이번 기간', data: [femaleCur, maleCur],   backgroundColor: ['#E1306CCC','#1877F2CC'], borderRadius: 5, borderSkipped: false },
+              { label: '전 기간',   data: [femalePrev, malePrev], backgroundColor: ['#E1306C44','#1877F244'], borderRadius: 5, borderSkipped: false, borderWidth: 1.5, borderColor: ['#E1306C','#1877F2'] }
+            ]
+          },
+          options: {
+            ...chartOpts(),
+            plugins: {
+              legend: { display: true, position: 'top', labels: { font: { size: 10, family: 'Noto Sans KR' }, boxWidth: 8, padding: 10 } },
+              tooltip: { backgroundColor: 'rgba(15,23,42,.92)', callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}%` } }
+            },
+            scales: {
+              x: { grid: { color: 'rgba(0,0,0,.04)' }, ticks: { font: { size: 11, family: 'Noto Sans KR' }, color: '#94A3B8' } },
+              y: { grid: { color: 'rgba(0,0,0,.04)' }, ticks: { font: { size: 10, family: 'Noto Sans KR' }, color: '#94A3B8', callback: v => v + '%' }, beginAtZero: true, max: 100 }
+            }
+          }
+        });
+      }
+    }
+
+    function switchNaverChart() {
+      currentNaverChart = document.getElementById('naverChartTypeSel').value;
+      document.getElementById('naverTrendChart').style.display  = currentNaverChart === 'trend'  ? 'block' : 'none';
+      document.getElementById('naverAgeChart').style.display    = currentNaverChart === 'age'    ? 'block' : 'none';
+      document.getElementById('naverGenderChart').style.display = currentNaverChart === 'gender' ? 'block' : 'none';
+    }
+
+    function renderRankList() {
+      const scores = DATA[currentPeriod].rankScores;
+      const sorted = PLATFORMS.map((p, i) => ({ ...p, score: scores[i] })).sort((a, b) => b.score - a.score);
+      const max = sorted[0].score;
+      const numClass = ['gold', 'silver', 'bronze', 'gray', 'gray'];
+      const changes = ['+12.4%', '+8.1%', '+15.2%', '-3.1%', '+5.7%'];
+      const upDown = [true, true, true, false, true];
+      const el = document.getElementById('rankList');
+      if (!el) return;
+
+      el.innerHTML = sorted.map((p, i) => `
+    <div class="rank-item">
+      <div class="rank-num ${numClass[i]}">${i + 1}</div>
+      <div class="rank-platform">
+        <span class="rank-pdot" style="background:${p.color}"></span>
+        <span class="rank-name">${p.name}</span>
+      </div>
+      <div class="rank-bar-wrap">
+        <div class="rank-bar-bg">
+          <div class="rank-bar-fill" style="width:${Math.round(p.score / max * 100)}%;background:${p.color}"></div>
+        </div>
+      </div>
+      <span class="rank-score">${p.score.toLocaleString()}</span>
+      <span class="rank-change ${upDown[i] ? 'up' : 'down'}">${changes[i]}</span>
+    </div>
+  `).join('');
+
+      setTimeout(() => {
+        document.querySelectorAll('.rank-bar-fill').forEach(bar => {
+          const width = bar.style.width;
+          bar.style.width = '0';
+          setTimeout(() => {
+            bar.style.width = width;
+          }, 100);
+        });
+      }, 100);
+    }
+
+    function renderCompareTable() {
+      const sel = document.getElementById('compareMetricSel')?.value || 'views';
+      const cd = compareData(sel);
+      const el = document.getElementById('compareTableBody');
+      if (!el) return;
+
+      el.innerHTML = PLATFORMS.map((p, i) => {
+        const cur = cd.cur[i];
+        const prev = cd.prev[i];
+        const pct = ((cur - prev) / prev * 100).toFixed(1);
+        const up = pct >= 0;
+        return `
+      <tr>
+        <td><div class="plat-cell"><span class="plat-pip" style="background:${p.color}"></span>${p.name}</div></td>
+        <td style="font-weight:700;">${cur.toLocaleString()}</td>
+        <td style="color:var(--text3);">${prev.toLocaleString()}</td>
+        <td><span class="change-pill ${up ? 'up' : 'down'}">${up ? '▲' : '▼'} ${Math.abs(pct)}%</span></td>
+      </tr>
+    `;
+      }).join('');
+    }
+
+
+
+    function setKpi(el) {
+      document.querySelectorAll('.kpi-item').forEach(item => item.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function animateKpis() {
+      const vals = {
+        week: { views: '28.5K', likes: '1.8K', comments: '439', shares: '210', reviews: '31', followers: '+128' },
+        month: { views: '284.7K', likes: '18.2K', comments: '4,391', shares: '2,104', reviews: '312', followers: '+1,284' },
+        year: { views: '2.84M', likes: '182K', comments: '43.9K', shares: '21.0K', reviews: '3,120', followers: '+12,840' },
+      };
+      const v = vals[currentPeriod];
+      document.getElementById('kpi-views').textContent = v.views;
+      document.getElementById('kpi-likes').textContent = v.likes;
+      document.getElementById('kpi-comments').textContent = v.comments;
+      document.getElementById('kpi-shares').textContent = v.shares;
+      document.getElementById('kpi-reviews').textContent = v.reviews;
+      document.getElementById('kpi-followers').textContent = v.followers;
+    }
+
+    function chartOpts() {
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { intersect: false, mode: 'index' },
+        scales: {
+          x: {
+            grid: { color: 'rgba(0,0,0,.04)' },
+            ticks: { font: { size: 10, family: 'Noto Sans KR' }, color: '#94A3B8' }
+          },
+          y: {
+            grid: { color: 'rgba(0,0,0,.04)' },
+            ticks: { font: { size: 10, family: 'Noto Sans KR' }, color: '#94A3B8' },
+            beginAtZero: true
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(15,23,42,.92)',
+            titleFont: { size: 11, family: 'Noto Sans KR' },
+            bodyFont: { size: 11, family: 'Noto Sans KR' },
+            padding: 10,
+            cornerRadius: 8,
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}`
+            }
+          }
+        }
+      };
+    }
+
+    function getTopPlatforms(scores, count = 3) {
+      return PLATFORMS.map((p, i) => ({ ...p, score: scores[i] })).sort((a, b) => b.score - a.score).slice(0, count);
+    }
+
+    function getBestHourInfo() {
+      const hourlyData = [120, 80, 60, 45, 40, 55, 180, 420, 680, 810, 920, 860, 780, 720, 680, 740, 890, 1020, 1100, 980, 820, 620, 380, 200];
+      const bestValue = Math.max(...hourlyData);
+      const bestIndex = hourlyData.indexOf(bestValue);
+      let timeLabel = `${bestIndex}시`;
+      if (bestIndex >= 17 && bestIndex <= 20) timeLabel = '17시~20시';
+      else if (bestIndex >= 10 && bestIndex <= 13) timeLabel = '10시~13시';
+      else if (bestIndex >= 7 && bestIndex <= 9) timeLabel = '7시~9시';
+      return { bestIndex, bestValue, timeLabel };
+    }
+
+    function getContentTypeByPlatform(platformId) {
+      const map = {
+        instagram: '비주얼 중심 이벤트형 게시물',
+        facebook: '정보형·공지형 게시물',
+        naver: '리뷰형·상세 소개형 포스트',
+        google: '리뷰 유도형 콘텐츠',
+        kakao: '재방문 유도형 메시지',
+      };
+      return map[platformId] || '일반 홍보형 콘텐츠';
+    }
+
+    function buildSimpleStrategy() {
+      const d = DATA[currentPeriod];
+      const topPlatforms = getTopPlatforms(d.rankScores, 3);
+      const bestHour = getBestHourInfo();
+      const bestShareIdx = d.donut.indexOf(Math.max(...d.donut));
+      const bestSharePlatform = PLATFORMS[bestShareIdx];
+
+      const recommendations = topPlatforms.map((platform, idx) => {
+        const type = getContentTypeByPlatform(platform.id);
+        let title = '채널 강화';
+        if (idx === 0) title = '핵심 채널';
+        if (idx === 1) title = '확장 운영';
+        if (idx === 2) title = '보완 전략';
+
+        let detail = '';
+        if (platform.id === 'instagram') {
+          detail = `${platform.name}의 반응 점수가 가장 높아 우선 운영 채널로 적합합니다. ${bestHour.timeLabel} 업로드를 중심으로 신메뉴, 이벤트, 전후 비교형 콘텐츠를 집중 운영하는 것이 좋습니다.`;
+        } else if (platform.id === 'naver') {
+          detail = `${platform.name}는 검색 유입과 상세 정보 전달에 강점이 있습니다. 키워드 중심 제목과 후기형 글 구성을 통해 검색 노출과 클릭 전환을 함께 노리는 전략이 효과적입니다.`;
+        } else if (platform.id === 'facebook') {
+          detail = `${platform.name}는 안정적인 도달 확보에 유리합니다. 공지, 프로모션, 혜택 안내처럼 빠르게 이해되는 정보형 콘텐츠를 정기적으로 배치하는 것이 좋습니다.`;
+        } else if (platform.id === 'google') {
+          detail = `${platform.name}는 방문 전환과 리뷰 신뢰도 확보에 적합합니다. 방문 후기 유도 문구와 평점 관리 중심으로 운영하면 효과가 좋습니다.`;
+        } else {
+          detail = `${platform.name}는 재방문 유도와 소식 전달에 유리합니다. 짧은 혜택 안내와 한정 이벤트 메시지를 정기 발행하는 전략이 적합합니다.`;
+        }
+
+        return { title, channel: platform.name, time: bestHour.timeLabel, type, detail };
+      });
+
+      const summary = `${bestSharePlatform.name} 채널 비중이 가장 높고, 전체 반응 점수 기준 상위 채널에 운영 자원을 먼저 집중하는 것이 좋습니다. 조회 반응이 높은 시간대는 ${bestHour.timeLabel}로 확인되어 해당 시간 중심의 예약 발행 전략이 유효합니다. 또한 검색형 채널과 반응형 채널의 역할을 분리해 운영하면 도달과 전환을 동시에 개선할 수 있습니다.`;
+      return { recommendations, summary };
+    }
+
+    async function generateStrategy() {
+      const btn = document.getElementById('aiGenBtn');
+      btn.classList.add('loading');
+      btn.querySelector('.btn-text').textContent = '분석 중...';
+      document.getElementById('aiEmpty').style.display = 'none';
+      document.getElementById('aiResult').style.display = 'block';
+      document.getElementById('aiCards').innerHTML = '';
+      document.getElementById('aiSummaryText').textContent = '';
+      document.getElementById('aiSummaryText').classList.remove('typing-cursor');
+
+      try {
+        await new Promise(resolve => setTimeout(resolve, 650));
+        const parsed = buildSimpleStrategy();
+
+        document.getElementById('aiCards').innerHTML = parsed.recommendations.map((r, i) => `
+      <div class="ai-rec-card">
+        <div class="ai-rec-header">
+          <div class="ai-rec-num">${i + 1}</div>
+          <div class="ai-rec-title">${r.title}</div>
+        </div>
+        <div class="ai-rec-body">
+          <strong>📢 채널:</strong> ${r.channel}<br>
+          <strong>⏰ 시간:</strong> ${r.time}<br>
+          <strong>📝 유형:</strong> ${r.type}<br><br>
+          ${r.detail}
+        </div>
+      </div>
+    `).join('');
+
+        const sumEl = document.getElementById('aiSummaryText');
+        const txt = parsed.summary;
+        sumEl.classList.add('typing-cursor');
+        let i = 0;
+        const iv = setInterval(() => {
+          sumEl.textContent = txt.slice(0, ++i);
+          if (i >= txt.length) {
+            clearInterval(iv);
+            sumEl.classList.remove('typing-cursor');
+          }
+        }, 18);
+
+        showToast('전략 분석이 완료되었습니다!', 'success');
+      } catch (error) {
+        document.getElementById('aiEmpty').style.display = 'flex';
+        document.getElementById('aiResult').style.display = 'none';
+        showToast('분석 중 오류가 발생했습니다. 다시 시도해 주세요.', '');
+        console.error(error);
+      }
+
+      btn.classList.remove('loading');
+      btn.querySelector('.btn-text').textContent = '✦ 전략 분석 시작';
+    }
+
+    function showToast(msg, type) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show ' + (type || '');
+      setTimeout(() => t.classList.remove('show'), 3200);
+    }
+  </script>
+</body>
+
+</html>
