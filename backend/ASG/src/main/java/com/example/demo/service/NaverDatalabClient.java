@@ -37,7 +37,7 @@ public class NaverDatalabClient {
 
             HttpRequest httpRequest = HttpRequest.newBuilder()
                 .uri(URI.create(datalabUrl))
-                .timeout(Duration.ofSeconds(30))
+                .timeout(Duration.ofSeconds(60))
                 .header("Content-Type", "application/json")
                 .header("X-Naver-Client-Id", clientId)
                 .header("X-Naver-Client-Secret", clientSecret)
@@ -48,7 +48,9 @@ public class NaverDatalabClient {
             	    .connectTimeout(Duration.ofSeconds(60))
             	    .build()
             	    .send(httpRequest, HttpResponse.BodyHandlers.ofString());
-
+            
+            System.out.println(response.body());
+            
             if (response.statusCode() != 200) {
                 throw new RuntimeException("네이버 API 오류: " + response.statusCode());
             }
