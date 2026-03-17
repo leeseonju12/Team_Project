@@ -1535,13 +1535,29 @@
       updateKPIs();
       
       
+      
+      //const myRealToken = "EAAemf
+      
       try {
+    	  const urlParams = new URLSearchParams(window.location.search);
+          const accessToken = urlParams.get('token');
+          
+
+          if (!accessToken) {
+              throw new Error('인스타그램 접근 토큰이 없습니다. 다시 로그인해 주세요.');
+          }
+
+    	  
           // 백엔드로 전송 확정 API 호출
-          const response = await fetch(`/api/feedbacks/${id}/send`, {
+          const response = await fetch(`/api/feedbacks/${id}/send?accessToken=${accessToken}`, {
+      	 //const response = await fetch(`/api/feedbacks/${id}/send?accessToken=${myRealToken}`, {
             method: 'PUT'
           });
           
-          if (!response.ok) throw new Error('API 호출 실패');
+        	if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || '알 수 없는 서버 에러 발생');
+            }
           
           // 백엔드에서 업데이트된 최신 데이터 덮어쓰기 (status가 completed로 변경됨)
           const updatedData = await response.json();
@@ -1559,6 +1575,8 @@
           showToast('전송 중 오류가 발생했습니다.', 'error');
           item.status = 'unresolved'; // 에러 시 원래 상태로 롤백
         } finally {
+        	if (btn) btn.disabled = false;
+            if (spin) spin.style.display = 'none';
           renderTable();
           updateKPIs();
         }

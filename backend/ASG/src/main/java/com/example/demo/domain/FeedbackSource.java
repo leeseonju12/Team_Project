@@ -5,11 +5,17 @@ import java.time.LocalDateTime;
 import com.example.demo.domain.enums.Platform;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "feedback_source")
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class FeedbackSource {
 	
 	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,5 +31,8 @@ public class FeedbackSource {
     private String originalText;
 
     private LocalDateTime createdAt;
+    
+    @Column(name = "external_id")
+    private String externalId; // 인스타그램 댓글 고유 id
     
 }

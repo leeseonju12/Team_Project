@@ -2,7 +2,8 @@ package com.example.demo.service; // 본인 패키지명으로 변경하세요
 
 import com.example.demo.domain.CustomerFeedback;
 import com.example.demo.domain.FeedbackSource;
-import com.example.demo.dto.FeedbackResponseDto;
+import com.example.demo.domain.enums.Platform;
+import com.example.demo.dto.FeedbackDto;
 import com.example.demo.repository.FeedbackRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -24,17 +25,21 @@ import java.util.stream.Collectors;
 public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
+    private final GeminiApiClient geminiApiClient;
+    private final InstagramApiService instagramApiService;
+    
+    /*
     @Value("${ai.api-key}")
-    private String geminiApiKey;
+    private String geminiApiKey;*/
 
-    public List<FeedbackResponseDto> getAllFeedbacks() {
+    public List<FeedbackDto> getAllFeedbacks() {
         return feedbackRepository.findAll().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
     // Entity -> DTO 변환 로직
-    private FeedbackResponseDto convertToDto(CustomerFeedback feedback) {
+    private FeedbackDto convertToDto(CustomerFeedback feedback) {
         String platformLabel = "";
         String platClass = "";
         String avatarColor = "";
@@ -77,8 +82,19 @@ public class FeedbackService {
                 }
             }
         }
+        
+        
+        String status = "unresolved";
+        if (feedback.getSentReply() != null && !feedback.getSentReply().isBlank()) {
+            status = "completed";
+        } 
+        // 답글 전송은 안 했지만 AI가 답변을 만들어뒀다면? -> 답변 생성됨
+        else if (feedback.getAiReply() != null && !feedback.getAiReply().isBlank()) {
+            status = "generated";
+        }
+        // status 관련 이후에 꼭 옮기자...
 
-        return FeedbackResponseDto.builder()
+        return FeedbackDto.builder()
                 .id(feedback.getId())
                 .name(authorName)
                 .type(feedback.getType() != null ? feedback.getType().name().toLowerCase() : "")
@@ -88,7 +104,8 @@ public class FeedbackService {
                 .avatar(avatarChar)
                 .avatarColor(avatarColor)
                 .text(originalText)
-                .status(feedback.getStatus() != null ? feedback.getStatus().name().toLowerCase() : "")
+                //.status(feedback.getStatus() != null ? feedback.getStatus().name().toLowerCase() : "")
+                .status(status)
                 .aiReply(feedback.getAiReply() != null ? feedback.getAiReply() : "")
                 .aiStatus(feedback.getAiStatus() != null ? feedback.getAiStatus().name().toLowerCase() : "idle")
                 .sentReply(feedback.getSentReply() != null ? feedback.getSentReply() : "")
@@ -97,11 +114,26 @@ public class FeedbackService {
     
  // 💡 단건 AI 답변 생성 로직
     @Transactional // DB 값을 변경(Update)하므로 꼭 필요합니다!
-    public FeedbackResponseDto generateAiReply(Long feedbackId) {
+    public FeedbackDto generateAiReply(Long feedbackId) {
         CustomerFeedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 리뷰/댓글이 존재하지 않습니다. ID: " + feedbackId));
 
-        String generatedReply = callRealLLM(feedback);
+        String author = feedback.getSource().getAuthorName();
+        String text = feedback.getSource().getOriginalText();
+        
+        String prompt = String.format(
+                "당신은 요식업 매장을 운영하는 사장님입니다.\n" +
+                "다음 고객의 리뷰나 댓글을 읽고, 동네 단골을 대하듯 따뜻한 말투로 답글을 작성바람.\n" +
+                "고객이 언급한 것에 대해 센스 있게 답변해주세요\n\n" +
+                "고객 이름:%s\n고객 메시지:%s\n글자수 제한: 50자 내외", 
+                author != null ? author : "고객", 
+                text != null ? text : ""
+        );
+        
+        String generatedReply = geminiApiClient.requestToGemini(prompt);
+        if ("[]".equals(generatedReply) || generatedReply == null || generatedReply.isBlank()) {
+            generatedReply = "AI 답변을 생성하는 중 서버와 통신 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+        }
         // 엔티티 업데이트 (JPA 더티 체킹으로 인해 save()를 안 해도 DB에 자동 반영됨)
         feedback.updateAiReply(generatedReply);
 
@@ -109,6 +141,7 @@ public class FeedbackService {
         return convertToDto(feedback);
     }
     
+    /*
     private String callRealLLM(CustomerFeedback feedback) {
         String author = feedback.getSource().getAuthorName();
         String text = feedback.getSource().getOriginalText();
@@ -160,6 +193,7 @@ public class FeedbackService {
             return "AI 답변을 생성하는 중 서버와 통신 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
         }
     }
+    */
 
 
     /*
@@ -183,10 +217,19 @@ public class FeedbackService {
     
  // 💡 전송 완료 처리 로직
     @Transactional
-    public FeedbackResponseDto sendReply(Long feedbackId) {
+    public FeedbackDto sendReply(Long feedbackId, String accessToken) {
         CustomerFeedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 리뷰/댓글이 존재하지 않습니다. ID: " + feedbackId));
 
+        // 인스타
+        if (feedback.getSource().getPlatform() == Platform.INSTAGRAM) {
+            String commentId = feedback.getSource().getExternalId(); // 저장해둔 인스타 댓글 ID
+            String replyText = feedback.getAiReply(); // AI가 만든 답변
+
+            // 2. 🌟 진짜 인스타그램 서버에 답글 전송!
+            instagramApiService.replyToComment(commentId, replyText, accessToken);
+        }
+        
         feedback.sendReply(); // 엔티티 비즈니스 로직 호출 (상태 변경 및 sentReply 세팅)
 
         return convertToDto(feedback);

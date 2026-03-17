@@ -1,7 +1,10 @@
 package com.example.demo.domain;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -12,12 +15,17 @@ import com.example.demo.domain.enums.FeedbackType;
 @Entity
 @Table(name = "customer_feedback")
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class CustomerFeedback {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "feedback_id")
     private Long id;
 
+    
+    
     /*
     // 어떤 브랜드의 어떤 플랫폼에 달린 피드백인지 연결
     @ManyToOne(fetch = FetchType.LAZY)
@@ -26,7 +34,7 @@ public class CustomerFeedback {
     */
     
     // 원본 데이터(Source)와 1:1 연결
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "source_id")
     private FeedbackSource source;
 

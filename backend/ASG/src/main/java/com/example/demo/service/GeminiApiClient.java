@@ -39,6 +39,10 @@ public class GeminiApiClient {
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("contents", List.of(partNode));
+        
+        requestBody.put("generationConfig", Map.of(
+        	    "temperature", 1.5 // 0.0 ~ 2.0 사이값 (높을수록 창의적)
+        	));
 
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
 

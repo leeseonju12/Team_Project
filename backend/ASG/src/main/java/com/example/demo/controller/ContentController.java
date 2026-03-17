@@ -12,12 +12,14 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.example.demo.dto.ContentRequest;
 import com.example.demo.dto.SnsResult;
 import com.example.demo.service.ContentService;
 import com.example.demo.service.InstagramApiService; // 추가됨
+import com.fasterxml.jackson.databind.JsonNode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -74,6 +76,28 @@ public class ContentController {
 
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
+        }
+    }
+    
+    @GetMapping("/instagram/comments")
+    @ResponseBody
+    public String getInstagramComments(
+            @RequestParam("mediaId") String mediaId, 
+            @RequestParam("token") String accessToken) {
+        
+        try {
+            //JsonNode comments = instagramApiService.getComments(mediaId, accessToken);
+        	JsonNode comments = instagramApiService.getCommentsAndSave(mediaId, accessToken);
+
+            if (comments == null || comments.isEmpty()) {
+                return "<h3>댓글이 없거나 가져올 수 없습니다.</h3>";
+            }
+
+            return "<h1>댓글 목록 (JSON)</h1>" +
+                   "<pre>" + comments.toPrettyString() + "</pre>";
+
+        } catch (Exception e) {
+            return "<h1>에러 발생</h1><p>" + e.getMessage() + "</p>";
         }
     }
 }
