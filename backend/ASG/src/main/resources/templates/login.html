@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ASG 소셜 로그인</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2rem auto; max-width: 420px; }
+        a.btn { display: inline-block; width: 100%; margin-top: 10px; padding: 10px; box-sizing: border-box; text-align: center; text-decoration: none; border: 1px solid #ddd; }
+        .error { color: #c0392b; }
+        .message { color: #2980b9; }
+    </style>
+</head>
+<body>
+<h2>소셜다모아 로그인</h2>
+<p class="error" th:if="${param.error}" th:text="${param.error}"></p>
+<p class="message" th:if="${param.logout}">로그아웃 되었습니다.</p>
+
+<a class="btn" href="/oauth2/authorization/google">Google 로그인</a>
+<a class="btn" href="/oauth2/authorization/kakao">Kakao 로그인</a>
+<a class="btn" href="/oauth2/authorization/naver">Naver 로그인</a>
+</body>
+</html>

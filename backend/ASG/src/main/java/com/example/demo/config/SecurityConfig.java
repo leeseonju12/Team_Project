@@ -1,46 +1,76 @@
 package com.example.demo.config;
 
+import com.example.demo.security.CustomLogoutSuccessHandler;
+import com.example.demo.security.NoCacheHeaderFilter;
+import com.example.demo.security.OAuth2LoginFailureHandler;
+import com.example.demo.security.OAuth2LoginSuccessHandler;
+import com.example.demo.service.auth.CustomOAuth2UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-	
-	/*
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
+    private final CustomLogoutSuccessHandler customLogoutSuccessHandler;
+    private final NoCacheHeaderFilter noCacheHeaderFilter;
+
+    /*
+     * [참고 - 이전 임시 설정]
+     * @Bean
+     * public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+     *     http
+     *         .authorizeHttpRequests(auth -> auth
+     *             .requestMatchers("/", "/login**", "/error", "/instagram/**", "/content/**", "/feedback")
+     *             .permitAll()
+     *             .anyRequest().authenticated()
+     *         )
+     *         .oauth2Login(oauth2 -> oauth2
+     *             .defaultSuccessUrl("/facebook/token", true) // 로그인 성공 시 이 주소로 이동!
+     *         );
+     *     return http.build();
+     * }
+     */
+
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login**", "/error", "/instagram/**","/content/**","/feedback"
-                		+ "").permitAll()
-                .anyRequest().authenticated()
-            )
-            .oauth2Login(oauth2 -> oauth2
-                .defaultSuccessUrl("/facebook/token", true) // 로그인 성공 시 이 주소로 이동!
-            );
+                // 1. CSRF 보안 기능을 끕니다 (이게 범인입니다!)
+                .csrf(csrf -> csrf.disable())
+
+                .authorizeHttpRequests(auth -> auth
+                        // 2. 아까 고민하신 "무한 페이지" 해결책:
+                        // 기본 공개 경로 + OAuth2 경로 허용
+                        .requestMatchers("/", "/login", "/logout/success", "/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                        // 3. 어드민/마이페이지는 인증 필요
+                        .requestMatchers("/admin/**", "/mypage/**").authenticated()
+                        .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .successHandler(oAuth2LoginSuccessHandler)
+                        .failureHandler(oAuth2LoginFailureHandler)
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessHandler(customLogoutSuccessHandler)
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .deleteCookies("JSESSIONID")
+                )
+                .addFilterAfter(noCacheHeaderFilter, SecurityContextHolderFilter.class);
+
         return http.build();
-    }*/
-	
-	@Bean
-	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-	    http
-	        // 1. CSRF 보안 기능을 끕니다 (이게 범인입니다!)
-	        .csrf(csrf -> csrf.disable())
-	        
-	        .authorizeHttpRequests(auth -> auth
-	            // 2. 아까 고민하신 "무한 페이지" 해결책: 
-	            // 로그인이 필요한 주소만 딱 집어서 막고, 나머지는 다 열어줍니다.
-	            .requestMatchers("/admin/**", "/mypage/**").authenticated() 
-	            .anyRequest().permitAll() 
-	        )
-	        .oauth2Login(oauth2 -> oauth2
-	            .defaultSuccessUrl("/facebook/token", true)
-	        );
-	    return http.build();
-	}
+    }
 }

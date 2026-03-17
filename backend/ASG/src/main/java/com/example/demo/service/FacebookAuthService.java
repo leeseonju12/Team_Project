@@ -11,7 +11,7 @@ import java.util.Map;
 @Service
 public class FacebookAuthService {
 
-    // application.yml에 있는 앱 ID와 시크릿 코드를 가져옵니다.
+//     Sapplication.yml에 있는 앱 ID와 시크릿 코드를 가져옵니다.
     @Value("${spring.security.oauth2.client.registration.facebook.client-id}")
     private String clientId;
 

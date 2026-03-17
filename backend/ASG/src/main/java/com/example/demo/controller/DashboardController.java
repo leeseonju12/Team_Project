@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class DashboardController {
 
-    @GetMapping("/dashboard")
+    @GetMapping("/dashboard-old")
     public String dashboard(
             @AuthenticationPrincipal OAuth2User oauth2User,
             @RegisteredOAuth2AuthorizedClient("facebook") OAuth2AuthorizedClient authorizedClient) {
