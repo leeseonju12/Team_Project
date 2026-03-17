@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
-import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,9 +20,9 @@ public class NaverSearchService {
 	private final NaverDatalabClient datalabClient;
 	private final JdbcTemplate jdbcTemplate;
 
-	// API 동시 호출 제한 (네이버 레이트 리밋 대응: 최대 5개)
-	private static final Semaphore API_LIMIT = new Semaphore(5);
+	// 14번 동시 호출 → 스레드 16개짜리 전용 풀
 	private static final ExecutorService POOL = Executors.newFixedThreadPool(20);
+	private static final int TIMEOUT_SEC = 15;
 
 	private static final List<String> AGE_CODES = List.of("1", "2", "3", "4", "5", "6");
 	private static final List<String> AGE_LABELS = List.of("10대", "20대", "30대", "40대", "50대", "60대+");
@@ -52,30 +51,22 @@ public class NaverSearchService {
 
 		// 내 매장명 검색수 추이
 		final String storeNameFinal = storeName;
-		var fTrend = CompletableFuture.supplyAsync(() -> {
-			try { API_LIMIT.acquire(); try { return datalabClient.search(new NaverDatalabRequestDto(fromStr, toStr, timeUnit, List.of(new NaverDatalabRequestDto.KeywordGroup(storeNameFinal, List.of(storeNameFinal))))); } finally { API_LIMIT.release(); } } catch (Exception e) { throw new RuntimeException(e); }
-		}, POOL);
+		var fTrend = CompletableFuture.supplyAsync(
+				() -> datalabClient.search(new NaverDatalabRequestDto(fromStr, toStr, timeUnit,
+						List.of(new NaverDatalabRequestDto.KeywordGroup(storeNameFinal, List.of(storeNameFinal))))),
+				POOL);
 
 		// 전 기간 검색수 추이 (증감률 계산용)
-		var fTrendPrev = CompletableFuture.supplyAsync(() -> {
-			try { API_LIMIT.acquire(); try { return datalabClient.search(new NaverDatalabRequestDto(prevFromStr, prevToStr, timeUnit, List.of(new NaverDatalabRequestDto.KeywordGroup(storeNameFinal, List.of(storeNameFinal))))); } finally { API_LIMIT.release(); } } catch (Exception e) { throw new RuntimeException(e); }
-		}, POOL);
+		var fTrendPrev = CompletableFuture.supplyAsync(
+				() -> datalabClient.search(new NaverDatalabRequestDto(prevFromStr, prevToStr, timeUnit,
+						List.of(new NaverDatalabRequestDto.KeywordGroup(storeNameFinal, List.of(storeNameFinal))))),
+				POOL);
 
 		// 동종업계 인기 키워드
 		final List<String> kwsFinal = industryKws;
-		var fKeywords = CompletableFuture.supplyAsync(() -> {
-			try {
-				API_LIMIT.acquire();
-				try {
-					return datalabClient.search(new NaverDatalabRequestDto(fromStr, toStr, timeUnit,
-							kwsFinal.stream().map(kw -> new NaverDatalabRequestDto.KeywordGroup(kw, List.of(kw))).toList()));
-				} finally {
-					API_LIMIT.release();
-				}
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-		}, POOL);
+		var fKeywords = CompletableFuture.supplyAsync(() -> datalabClient.search(new NaverDatalabRequestDto(fromStr,
+				toStr, "date",
+				kwsFinal.stream().map(kw -> new NaverDatalabRequestDto.KeywordGroup(kw, List.of(kw))).toList())), POOL);
 
 		// 성별/연령대 — 전부 동시에 호출
         var fFemaleCur  = CompletableFuture.supplyAsync(() -> getRatioAvg(fromStr,     toStr,     storeNameFinal, "f", null), POOL);
@@ -98,14 +89,14 @@ public class NaverSearchService {
         allGenderAge.add(fFemaleCur); allGenderAge.add(fMaleCur);
         allGenderAge.add(fFemalePrev); allGenderAge.add(fMalePrev);
         allGenderAge.addAll(fAgeCur); allGenderAge.addAll(fAgePrev);
-        try { CompletableFuture.allOf(allGenderAge.toArray(new CompletableFuture[0])).get(); } catch (Exception ignored) {}
+        try { CompletableFuture.allOf(allGenderAge.toArray(new CompletableFuture[0])).get(TIMEOUT_SEC, TimeUnit.SECONDS); } catch (Exception ignored) {}
 
 		// ── 2. 결과 수집 ─────────────────────────────────────────
 
 		// 검색수 추이
 		List<NaverSearchTrendDto> trends;
 		try {
-			trends = fTrend.get().results().get(0).data().stream()
+			trends = fTrend.get(TIMEOUT_SEC, TimeUnit.SECONDS).results().get(0).data().stream()
 					.map(p -> NaverSearchTrendDto.builder().label(formatLabel(p.period(), period))
 							.searchCount((int) Math.round(p.ratio() * 100)).build())
 					.toList();
@@ -116,7 +107,7 @@ public class NaverSearchService {
 		// 동종업계 키워드 순위
 		List<NaverKeywordDto> keywords = new ArrayList<>();
 		try {
-			var kwResults = fKeywords.get().results();
+			var kwResults = fKeywords.get(TIMEOUT_SEC, TimeUnit.SECONDS).results();
 			for (int i = 0; i < kwResults.size(); i++) {
 				var r = kwResults.get(i);
 				int avg = (int) Math.round(r.data().stream().mapToDouble(d -> d.ratio()).average().orElse(0) * 100);
@@ -162,7 +153,7 @@ public class NaverSearchService {
 		// 전 기간 검색수 합계 및 증감률
 		int prevTotalSearch = 0;
 		try {
-			prevTotalSearch = fTrendPrev.get().results().get(0).data().stream()
+			prevTotalSearch = fTrendPrev.get(TIMEOUT_SEC, TimeUnit.SECONDS).results().get(0).data().stream()
 					.mapToInt(p -> (int) Math.round(p.ratio() * 100)).sum();
 		} catch (Exception e) {
 			prevTotalSearch = 0;
@@ -186,17 +177,12 @@ public class NaverSearchService {
 		return List.of("강남 카페 추천", "카페 신메뉴", "디저트 맛집", "브런치 카페", "아메리카노");
 	}
 
-	// ── 헬퍼: 단일 API 호출 평균 ratio (Semaphore로 동시 호출 수 제한) ───
+	// ── 헬퍼: 단일 API 호출 평균 ratio ───────────────────────────
 	private double getRatioAvg(String from, String to, String keyword, String gender, List<String> ages) {
 		try {
-			API_LIMIT.acquire();
-			try {
-				var resp = datalabClient.search(new NaverDatalabRequestDto(from, to, "date",
-						List.of(new NaverDatalabRequestDto.KeywordGroup(keyword, List.of(keyword))), gender, ages));
-				return resp.results().get(0).data().stream().mapToDouble(d -> d.ratio()).average().orElse(0);
-			} finally {
-				API_LIMIT.release();
-			}
+			var resp = datalabClient.search(new NaverDatalabRequestDto(from, to, "date",
+					List.of(new NaverDatalabRequestDto.KeywordGroup(keyword, List.of(keyword))), gender, ages));
+			return resp.results().get(0).data().stream().mapToDouble(d -> d.ratio()).average().orElse(0);
 		} catch (Exception e) {
 			return 0.0;
 		}
@@ -205,7 +191,7 @@ public class NaverSearchService {
 	// ── 헬퍼: Future 안전 get (타임아웃 적용) ────────────────────
 	private double safeGet(CompletableFuture<Double> f, double defaultVal) {
 		try {
-			return f.get();
+			return f.get(TIMEOUT_SEC, TimeUnit.SECONDS);
 		} catch (Exception e) {
 			return defaultVal;
 		}
@@ -223,7 +209,7 @@ public class NaverSearchService {
 	// ── 연령대 비율 정규화 → 합계 100% ───────────────────────────
 	private List<Integer> normalizeAge(List<CompletableFuture<Double>> futures) {
 		try {
-			CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
+			CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(TIMEOUT_SEC, TimeUnit.SECONDS);
 		} catch (Exception ignored) {
 		}
 
