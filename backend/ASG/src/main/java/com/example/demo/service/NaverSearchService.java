@@ -65,7 +65,7 @@ public class NaverSearchService {
         final List<String> kwsFinal = industryKws;
         var fKeywords = CompletableFuture.supplyAsync(() ->
             datalabClient.search(new NaverDatalabRequestDto(
-                fromStr, toStr, "date",
+                fromStr, toStr, timeUnit,
                 kwsFinal.stream()
                     .map(kw -> new NaverDatalabRequestDto.KeywordGroup(kw, List.of(kw)))
                     .toList()
@@ -148,8 +148,10 @@ public class NaverSearchService {
         List<Integer> agePrev = normalizeAge(fAgePrev);
 
         // 주요 사용자 요약
-        String topAge    = getTopAge(ageCur);
-        String topGender = gFemaleCur >= gMaleCur ? "여성" : "남성";
+        boolean ageHasData    = ageCur.stream().anyMatch(v -> v > 0);
+        boolean genderHasData = total > 0;
+        String topAge    = ageHasData    ? getTopAge(ageCur)                          : null;
+        String topGender = genderHasData ? (gFemaleCur >= gMaleCur ? "여성" : "남성") : null;
         int totalSearch  = trends.stream().mapToInt(NaverSearchTrendDto::searchCount).sum();
 
         return NaverSearchResponseDto.builder()
@@ -173,6 +175,7 @@ public class NaverSearchService {
 
     // ── 업종별 동종업계 키워드 (최대 5개) ─────────────────────────
     // TODO: 업종/브랜드별 동적 키워드 로직으로 교체 예정
+    // 데이터랩 - 검색어 트렌드에서 결과 받아옴
     private List<String> getIndustryKeywords(Map<String, Object> brand) {
         return List.of(
             "강남 카페 추천",
@@ -205,11 +208,20 @@ public class NaverSearchService {
         catch (Exception e) { return defaultVal; }
     }
 
-    // ── 연령대 비율 정규화 → 합계 100% ───────────────────────────
+    // ── 연령대 비율 정규화 ───────────────────────────
     private List<Integer> normalizeAge(List<CompletableFuture<Double>> futures) {
+        try {
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                .get(TIMEOUT_SEC, TimeUnit.SECONDS);
+        } catch (Exception ignored) {}
+
         List<Double> ratios = futures.stream()
-            .map(f -> safeGet(f, 0.0))
+            .map(f -> {
+                try { return f.isDone() ? f.get() : 0.0; }
+                catch (Exception e) { return 0.0; }
+            })
             .collect(Collectors.toList());
+
         double total = ratios.stream().mapToDouble(Double::doubleValue).sum();
         List<Integer> result = new ArrayList<>();
         int sum = 0;
@@ -222,10 +234,8 @@ public class NaverSearchService {
         return result;
     }
 
-    // ── 매장명: location_name > service_name > brand_name ─────────
+    // ── 매장명: brand_name 기준 ───────────────────────────────────
     private String getStoreName(Map<String, Object> brand) {
-        if (brand.get("location_name") != null) return brand.get("location_name").toString();
-        if (brand.get("service_name")  != null) return brand.get("service_name").toString();
         return brand.get("brand_name").toString();
     }
 
