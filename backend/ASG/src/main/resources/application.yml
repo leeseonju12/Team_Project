@@ -78,3 +78,6 @@ spring:
 
 ai:
   api-key: # api 키 삭제, secret 파일 숙지 필요
+instagram:
+  api:
+    access-token:

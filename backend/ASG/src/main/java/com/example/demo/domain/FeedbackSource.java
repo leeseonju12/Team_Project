@@ -32,7 +32,7 @@ public class FeedbackSource {
 
     private LocalDateTime createdAt;
     
-    @Column(name = "external_id")
+    @Column(unique = true, name = "external_id")
     private String externalId; // 인스타그램 댓글 고유 id
     
 }

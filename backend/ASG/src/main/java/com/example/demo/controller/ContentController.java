@@ -56,17 +56,18 @@ public class ContentController {
             // 프론트에서 보내준 텍스트 내용, 임시 이미지 URL, 토큰
             String caption = requestData.get("caption");
             String imageUrl = requestData.get("imageUrl");
+            /*
             String accessToken = requestData.get("accessToken");
 
             if (accessToken == null || accessToken.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("message", "액세스 토큰이 없습니다."));
-            }
+            }*/
 
             // 1. 인스타그램 계정 ID 조회
-            String igAccountId = instagramApiService.getInstagramAccountId(accessToken);
+            String igAccountId = instagramApiService.getInstagramAccountId();
             
             // 2. 피드 발행 (한글 깨짐 해결된 버전 호출)
-            String publishedId = instagramApiService.publishInstagramPost(igAccountId, imageUrl, caption, accessToken);
+            String publishedId = instagramApiService.publishInstagramPost(igAccountId, imageUrl, caption);
 
             // 성공 응답 (JSON)
             Map<String, String> result = new HashMap<>();
@@ -82,12 +83,11 @@ public class ContentController {
     @GetMapping("/instagram/comments")
     @ResponseBody
     public String getInstagramComments(
-            @RequestParam("mediaId") String mediaId, 
-            @RequestParam("token") String accessToken) {
+            @RequestParam("mediaId") String mediaId) {
         
         try {
             //JsonNode comments = instagramApiService.getComments(mediaId, accessToken);
-        	JsonNode comments = instagramApiService.getCommentsAndSave(mediaId, accessToken);
+        	JsonNode comments = instagramApiService.getCommentsAndSave(mediaId);
 
             if (comments == null || comments.isEmpty()) {
                 return "<h3>댓글이 없거나 가져올 수 없습니다.</h3>";
@@ -100,4 +100,6 @@ public class ContentController {
             return "<h1>에러 발생</h1><p>" + e.getMessage() + "</p>";
         }
     }
+    
+    
 }

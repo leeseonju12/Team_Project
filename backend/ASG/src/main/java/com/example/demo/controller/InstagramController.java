@@ -17,13 +17,13 @@ public class InstagramController {
 
     // 주소창에 ?token=파란색장기토큰 을 넣어서 테스트할 엔드포인트
     @GetMapping("/instagram/data")
-    public String getInstagramData(@RequestParam("token") String accessToken) {
+    public String getInstagramData() {
         try {
             // 1. 인스타그램 비즈니스 ID 가져오기
-            String igAccountId = instagramApiService.getInstagramAccountId(accessToken);
+            String igAccountId = instagramApiService.getInstagramAccountId();
             
             // 2. 해당 ID로 피드(게시물) 가져오기
-            JsonNode feedData = instagramApiService.getInstagramFeed(igAccountId, accessToken);
+            JsonNode feedData = instagramApiService.getInstagramFeed(igAccountId);
 
             // 3. 화면에 보기 좋게 출력
             return "<h1>인스타그램 연동 성공! 🎉</h1>" +
@@ -38,10 +38,10 @@ public class InstagramController {
     }
 
     @GetMapping("/instagram/post")
-    public String postToInstagram(@RequestParam("token") String accessToken) {
+    public String postToInstagram() {
         try {
             // 1. 내 인스타그램 ID 가져오기
-            String igAccountId = instagramApiService.getInstagramAccountId(accessToken);
+            String igAccountId = instagramApiService.getInstagramAccountId();
             
             // 2. 테스트용 공개 이미지 URL (인터넷에서 접근 가능한 아무 이미지나 가능)
             String testImageUrl = "https://images.unsplash.com/photo-1505628346881-b72b27e84530?w=500&auto=format&fit=crop";
@@ -50,7 +50,7 @@ public class InstagramController {
             String caption = "나는 행복합니다~ 🦅🧡 API 자동 게시 테스트 중입니다!\n\n#개발자 #테스트";
 
             // 4. 서비스 호출하여 글 올리기!
-            String publishedId = instagramApiService.publishInstagramPost(igAccountId, testImageUrl, caption, accessToken);
+            String publishedId = instagramApiService.publishInstagramPost(igAccountId, testImageUrl, caption);
 
             return "<h1>게시 성공! 🎉</h1>" +
                    "<p>인스타그램 피드를 확인해 보세요!</p>" +

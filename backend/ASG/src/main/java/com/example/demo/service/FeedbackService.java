@@ -217,7 +217,7 @@ public class FeedbackService {
     
  // 💡 전송 완료 처리 로직
     @Transactional
-    public FeedbackDto sendReply(Long feedbackId, String accessToken) {
+    public FeedbackDto sendReply(Long feedbackId) {
         CustomerFeedback feedback = feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 리뷰/댓글이 존재하지 않습니다. ID: " + feedbackId));
 
@@ -227,7 +227,7 @@ public class FeedbackService {
             String replyText = feedback.getAiReply(); // AI가 만든 답변
 
             // 2. 🌟 진짜 인스타그램 서버에 답글 전송!
-            instagramApiService.replyToComment(commentId, replyText, accessToken);
+            instagramApiService.replyToComment(commentId, replyText);
         }
         
         feedback.sendReply(); // 엔티티 비즈니스 로직 호출 (상태 변경 및 sentReply 세팅)

@@ -13,6 +13,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -21,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 @Service
@@ -33,12 +37,51 @@ public class InstagramApiService {
     
     private final InstagramCommentRepository commentRepository;
     private final FeedbackRepository feedbackRepository; // 통합 레포
+    
+    @Value("${instagram.api.access-token}")
+    private String accessToken;
 
+ // 🌟 yml에 적어둔 여러 개의 계정 ID를 한 번에 불러옵니다.
+    @Value("${instagram.api.account-ids}")
+    private List<String> systemAccountIds;
+
+    @Transactional
+    public int syncAllInstagramComments() {
+        int newCommentCount = 0;
+        try {
+            // 🌟 등록된 2~3개의 계정을 하나씩 돌면서 피드를 긁어옵니다!
+            for (String igAccountId : systemAccountIds) {
+                System.out.println("=== 동기화 시작 - 인스타 계정 ID: " + igAccountId + " ===");
+                
+                // 해당 계정의 전체 피드(게시물 목록) 가져오기
+                JsonNode feed = getInstagramFeed(igAccountId);
+                
+                if (feed != null && feed.isArray()) {
+                    for (JsonNode media : feed) {
+                        String mediaId = media.get("id").asText();
+                        // 각 게시물의 댓글을 수집하고 DB에 저장
+                        newCommentCount += fetchAndSaveCommentsForMedia(mediaId);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("전체 댓글 동기화 중 에러: " + e.getMessage());
+        }
+        return newCommentCount;
+    }
+    
     // 1. 인스타그램 비즈니스 계정 ID 조회
-    public String getInstagramAccountId(String accessToken) {
+    public String getInstagramAccountId() {
+    	System.out.println("=== getInstagramAccountId 메서드 진입! ===");
+        System.out.println("현재 세팅된 토큰: " + accessToken);
         String url = GRAPH_API_BASE_URL + "/me/accounts?fields=instagram_business_account&access_token=" + accessToken;
         try {
+
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            
+            System.out.println("=== 페이스북 정상 응답 ===");
+            System.out.println(response.getBody());
+            
             JsonNode rootNode = objectMapper.readTree(response.getBody());
             JsonNode data = rootNode.get("data");
 
@@ -49,14 +92,26 @@ public class InstagramApiService {
                     }
                 }
             }
+        } catch (RestClientResponseException e) {
+            // 🌟 페이스북이 400 에러 등을 던지면 여기서 잡힙니다!
+            System.err.println("=== 페이스북 API 통신 실패 (에러 원본) ===");
+            System.err.println("상태 코드: " + e.getStatusCode());
+            System.err.println("에러 메시지: " + e.getResponseBodyAsString());
+            System.err.println("=========================================");
+            throw new RuntimeException("연결된 인스타그램 비즈니스 계정을 찾을 수 없습니다. RestClientResponseException e");
+            
         } catch (Exception e) {
             System.err.println("인스타그램 계정 ID 조회 실패: " + e.getMessage());
+            System.err.println("yml 첫번째 아이디 연동합니다." + systemAccountIds.get(0));
+            if (systemAccountIds != null && !systemAccountIds.isEmpty())
+                return systemAccountIds.get(0);
         }
-        throw new RuntimeException("연결된 인스타그램 비즈니스 계정을 찾을 수 없습니다.");
-    }
+        throw new RuntimeException("연결된 인스타그램 비즈니스 계정을 찾을 수 없습니다. Exception e");
+    } 
+    
 
     // 2. 인스타그램 피드 조회
-    public JsonNode getInstagramFeed(String igAccountId, String accessToken) {
+    public JsonNode getInstagramFeed(String igAccountId) {
         String fields = "id,caption,media_type,media_url,permalink,timestamp";
         String url = GRAPH_API_BASE_URL + "/" + igAccountId + "/media?fields=" + fields + "&access_token=" + accessToken;
         try {
@@ -70,13 +125,13 @@ public class InstagramApiService {
     }
 
     // 3. 인스타그램 게시물 통합 발행 (2-Step)
-    public String publishInstagramPost(String igAccountId, String imageUrl, String caption, String accessToken) {
-        String containerId = createMediaContainer(igAccountId, imageUrl, caption, accessToken);
-        return publishMedia(igAccountId, containerId, accessToken);
+    public String publishInstagramPost(String igAccountId, String imageUrl, String caption) {
+        String containerId = createMediaContainer(igAccountId, imageUrl, caption);
+        return publishMedia(igAccountId, containerId);
     }
 
     // Step 1: 미디어 컨테이너 생성 (Body 전송 방식 - 한글 깨짐 방지)
-    private String createMediaContainer(String igAccountId, String imageUrl, String caption, String accessToken) {
+    private String createMediaContainer(String igAccountId, String imageUrl, String caption) {
         String url = GRAPH_API_BASE_URL + "/" + igAccountId + "/media";
         
         HttpHeaders headers = new HttpHeaders();
@@ -99,7 +154,7 @@ public class InstagramApiService {
     }
 
     // Step 2: 게시물 최종 발행
-    private String publishMedia(String igAccountId, String creationId, String accessToken) {
+    private String publishMedia(String igAccountId, String creationId) {
         String url = GRAPH_API_BASE_URL + "/" + igAccountId + "/media_publish";
         
         HttpHeaders headers = new HttpHeaders();
@@ -123,7 +178,7 @@ public class InstagramApiService {
     
      // 특정 게시물의 댓글 목록을 가져옵니다.
 
-    public JsonNode getComments(String mediaId, String accessToken) {
+    public JsonNode getComments(String mediaId) {
         // 가져올 필드: 댓글 ID, 내용, 작성시간, 작성자 정보
         String fields = "id,text,timestamp,username,like_count";
         String url = GRAPH_API_BASE_URL + "/" + mediaId + "/comments?fields=" + fields + "&access_token=" + accessToken;
@@ -142,7 +197,7 @@ public class InstagramApiService {
 
     // DB에 저장해서 그걸 불러오는 방식
     @Transactional
-    public JsonNode getCommentsAndSave(String mediaId, String accessToken) {
+    public JsonNode getCommentsAndSave(String mediaId) {
         String fields = "id,text,timestamp,username,like_count";
         String url = GRAPH_API_BASE_URL + "/" + mediaId + "/comments?fields=" + fields + "&access_token=" + accessToken;
 
@@ -201,7 +256,7 @@ public class InstagramApiService {
     /**
      * 인스타그램 서버에 실제 답글을 전송하는 핵심 메서드
      */
-    public void replyToComment(String commentId, String message, String accessToken) {
+    public void replyToComment(String commentId, String message) {
         // /{comment-id}/replies 엔드포인트 사용
         String url = GRAPH_API_BASE_URL + "/" + commentId + "/replies";
 
@@ -221,4 +276,49 @@ public class InstagramApiService {
             throw new RuntimeException("인스타그램 답글 전송 실패: " + e.getMessage());
         }
     }
+    
+    /**
+     * 특정 게시물의 댓글을 가져와 중복 검사 후 저장하는 내부 메서드
+     */
+    private int fetchAndSaveCommentsForMedia(String mediaId) {
+        int count = 0;
+        String fields = "id,text,timestamp,username,like_count";
+        String url = GRAPH_API_BASE_URL + "/" + mediaId + "/comments?fields=" + fields + "&access_token=" + accessToken;
+
+        try {
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            JsonNode dataArray = objectMapper.readTree(response.getBody()).get("data");
+
+            if (dataArray != null && dataArray.isArray()) {
+                for (JsonNode node : dataArray) {
+                    String commentId = node.get("id").asText(); // 인스타그램 고유 댓글 ID
+
+                    // 🌟 핵심: DB에 이미 이 댓글 ID가 있는지 검사! 없으면 저장합니다.
+                    if (!feedbackRepository.existsBySource_ExternalId(commentId)) {
+                        
+                        FeedbackSource source = FeedbackSource.builder()
+                                .externalId(commentId) // 여기에 고유 ID 저장
+                                .authorName(node.path("username").asText("unknown"))
+                                .originalText(node.path("text").asText(""))
+                                .platform(com.example.demo.domain.enums.Platform.INSTAGRAM)
+                                .build();
+
+                        CustomerFeedback feedback = CustomerFeedback.builder()
+                                .source(source)
+                                .type(FeedbackType.COMMENT)
+                                .aiStatus(AiStatus.IDLE)
+                                .build();
+                        
+                        feedbackRepository.save(feedback);
+                        count++; // 새로 저장된 개수 증가
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("게시물(" + mediaId + ") 댓글 수집 에러: " + e.getMessage());
+        }
+        return count;
+    }
+    
+    
 }

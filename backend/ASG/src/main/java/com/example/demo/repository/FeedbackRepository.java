@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface FeedbackRepository extends JpaRepository<CustomerFeedback, Long> {
+	
+	boolean existsBySource_ExternalId(String externalId);
 }

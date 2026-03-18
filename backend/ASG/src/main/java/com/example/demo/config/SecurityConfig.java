@@ -24,35 +24,23 @@ public class SecurityConfig {
     private final CustomLogoutSuccessHandler customLogoutSuccessHandler;
     private final NoCacheHeaderFilter noCacheHeaderFilter;
 
-    /*
-     * [참고 - 이전 임시 설정]
-     * @Bean
-     * public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-     *     http
-     *         .authorizeHttpRequests(auth -> auth
-     *             .requestMatchers("/", "/login**", "/error", "/instagram/**", "/content/**", "/feedback")
-     *             .permitAll()
-     *             .anyRequest().authenticated()
-     *         )
-     *         .oauth2Login(oauth2 -> oauth2
-     *             .defaultSuccessUrl("/facebook/token", true) // 로그인 성공 시 이 주소로 이동!
-     *         );
-     *     return http.build();
-     * }
-     */
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 // 1. CSRF 보안 기능을 끕니다 (이게 범인입니다!)
-                .csrf(csrf -> csrf.disable())
+                //.csrf(csrf -> csrf.disable())
 
                 .authorizeHttpRequests(auth -> auth
                         // 2. 아까 고민하신 "무한 페이지" 해결책:
                         // 기본 공개 경로 + OAuth2 경로 허용
-                        .requestMatchers("/", "/login", "/logout/success", "/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/", "/login", "/logout/success", "/error").permitAll()
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
-                        // 3. 어드민/마이페이지는 인증 필요
+                        
+                        .requestMatchers("/feedback.html", "/api/feedbacks/**", "/feedback").permitAll()
+                        .requestMatchers("/content/**").permitAll()
+
                         .requestMatchers("/admin/**", "/mypage/**").authenticated()
                         .anyRequest().authenticated()
                 )
