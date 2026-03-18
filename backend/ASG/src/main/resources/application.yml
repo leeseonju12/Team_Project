@@ -7,6 +7,11 @@ spring:
     username: root
     password:
   
+  data: #네이버 api 호출 제한용
+    redis:
+      host: localhost   # Redis 서버 주소
+      port: 6379
+  
   jpa:
     hibernate:
       # update: Entity 클래스를 보고 없는 테이블(customer_feedback)을 자동으로 만들어줌
@@ -26,11 +31,14 @@ spring:
       data-locations: classpath:db/channel-performance-data.sql
       continue-on-error: true
 
+
 ai:
   api-key: AIzaSyDSIGzXu_aCC07ZamOmG800N-b-SFs6hgE
 
 naver:
   api:
-    client-id: 
-    client-secret: 
+    client-id: iFAYCG0_BINaE42m91cu
+    client-secret: GNC6Ght_O4
     datalab-url: https://openapi.naver.com/v1/datalab/search
+
+
