@@ -1840,13 +1840,19 @@
       }, 200);
     }
 
-    // ── 검색수 추이 차트 ──────────────────────────────────
+ // ── 검색수 추이 차트 ──────────────────────────────────
     function renderNaverTrendChart(trends) {
       const canvas = document.getElementById('naverTrendChart');
       if (!canvas || !trends || trends.length === 0) return;
+      
       const labels = trends.map(t => t.label);
-      const data   = trends.map(t => t.searchCount);
-      const yMax   = Math.ceil(Math.max(...data) * 1.2 / 100) * 100 || 100;
+      const data   = trends.map(t => t.searchCount); // 백엔드에서 받은 % 값 (예: 15, 25)
+
+      // ── [수정 1] yMax 계산 로직 변경 ──────────────────────────
+      // 기존: 100단위 반올림 -> 변경: 데이터 최대값의 1.2배 혹은 고정 100
+      const calculatedMax = Math.ceil(Math.max(...data, 0) * 1.2 / 5) * 5;
+      const yMax = Math.min(100, calculatedMax) || 100;
+
       if (naverTrendChart) {
         naverTrendChart.data.labels           = labels;
         naverTrendChart.data.datasets[0].data = data;
@@ -1856,57 +1862,105 @@
         naverTrendChart = new Chart(canvas.getContext('2d'), {
           type: 'line',
           data: { labels, datasets: [{
-            label: '검색수', data,
+            label: '검색비중', // 명칭 변경
+            data,
             borderColor: '#03C75A', backgroundColor: '#03C75A15',
             borderWidth: 2, tension: .4, fill: true,
             pointBackgroundColor: '#03C75A', pointRadius: 3, pointHoverRadius: 6,
           }]},
           options: {
             ...chartOpts(),
-            scales: { ...chartOpts().scales, y: { ...chartOpts().scales.y, max: yMax } },
+            scales: { 
+              ...chartOpts().scales, 
+              y: { 
+                ...chartOpts().scales.y, 
+                max: yMax,
+                beginAtZero: true,
+                // ── [수정 2] Y축 눈금 뒤에 % 추가 ───────────────────
+                ticks: {
+                  callback: function(value) {
+                    return value + '%';
+                  }
+                }
+              } 
+            },
             plugins: {
               legend: { display: false },
-              tooltip: { backgroundColor: 'rgba(15,23,42,.92)', callbacks: { label: ctx => ` 검색수: ${ctx.parsed.y.toLocaleString()}` } }
+              // ── [수정 3] 툴팁 숫자에 % 추가 ──────────────────────
+              tooltip: { 
+                backgroundColor: 'rgba(15,23,42,.92)', 
+                callbacks: { 
+                  label: ctx => ` 검색비중: ${ctx.parsed.y}%` 
+                } 
+              }
             }
           }
         });
       }
     }
 
-    // ── 연령대 분포 차트 ──────────────────────────────────
     function renderNaverAgeChart(labels, cur, prev) {
-      const canvas = document.getElementById('naverAgeChart');
-      if (!canvas) return;
-      const yMax = Math.min(100, Math.ceil(Math.max(...cur, ...prev) * 1.2 / 5) * 5) || 100;
-      if (naverAgeChart) {
-        naverAgeChart.data.datasets[0].data = cur;
-        naverAgeChart.data.datasets[1].data = prev;
-        naverAgeChart.options.scales.y.max  = yMax;
-        naverAgeChart.update('active');
-      } else {
-        naverAgeChart = new Chart(canvas.getContext('2d'), {
-          type: 'bar',
-          data: {
-            labels,
-            datasets: [
-              { label: '이번 기간', data: cur,  backgroundColor: '#14B8A6CC', borderRadius: 5, borderSkipped: false },
-              { label: '전 기간',   data: prev, backgroundColor: '#14B8A644', borderRadius: 5, borderSkipped: false, borderWidth: 1.5, borderColor: '#14B8A6' }
-            ]
-          },
-          options: {
-            ...chartOpts(),
-            plugins: {
-              legend: { display: true, position: 'top', labels: { font: { size: 10, family: 'Noto Sans KR' }, boxWidth: 8, padding: 10 } },
-              tooltip: { backgroundColor: 'rgba(15,23,42,.92)', callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}%` } }
-            },
-            scales: {
-              x: { grid: { color: 'rgba(0,0,0,.04)' }, ticks: { font: { size: 10, family: 'Noto Sans KR' }, color: '#94A3B8' } },
-              y: { grid: { color: 'rgba(0,0,0,.04)' }, ticks: { font: { size: 10, family: 'Noto Sans KR' }, color: '#94A3B8', callback: v => v + '%' }, beginAtZero: true, max: yMax }
-            }
-          }
-        });
-      }
-    }
+    	  const canvas = document.getElementById('naverAgeChart');
+    	  if (!canvas) return;
+
+    	  // ✅ 데이터 중 최대값의 1.2배를 기준으로 5단위 반올림 (최대 100)
+    	  // 이 계산식을 통해 차트가 적절한 높이를 유지합니다.
+    	  const calculatedMax = Math.ceil(Math.max(...cur, ...prev, 0) * 1.2 / 5) * 5;
+    	  const yMax = Math.min(100, calculatedMax) || 100;
+
+    	  if (naverAgeChart) {
+    	    // ── 기존 차트 업데이트 ──
+    	    naverAgeChart.data.datasets[0].data = cur;
+    	    naverAgeChart.data.datasets[1].data = prev;
+    	    naverAgeChart.options.scales.y.max = yMax; // ✅ 업데이트 시에도 계산된 yMax 적용
+    	    naverAgeChart.update('active');
+    	  } else {
+    	    // ── 차트 신규 생성 ──
+    	    naverAgeChart = new Chart(canvas.getContext('2d'), {
+    	      type: 'bar',
+    	      data: {
+    	        labels,
+    	        datasets: [
+    	          { label: '이번 기간', data: cur,  backgroundColor: '#14B8A6CC', borderRadius: 5, borderSkipped: false },
+    	          { label: '전 기간',   data: prev, backgroundColor: '#14B8A644', borderRadius: 5, borderSkipped: false, borderWidth: 1.5, borderColor: '#14B8A6' }
+    	        ]
+    	      },
+    	      options: {
+    	        ...chartOpts(),
+    	        plugins: {
+    	          legend: { 
+    	            display: true, 
+    	            position: 'top', 
+    	            labels: { font: { size: 10, family: 'Noto Sans KR' }, boxWidth: 8, padding: 10 } 
+    	          },
+    	          tooltip: { 
+    	            backgroundColor: 'rgba(15,23,42,.92)', 
+    	            callbacks: { 
+    	              label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}%` 
+    	            } 
+    	          }
+    	        },
+    	        scales: {
+    	          x: { 
+    	            grid: { color: 'rgba(0,0,0,.04)' }, 
+    	            ticks: { font: { size: 10, family: 'Noto Sans KR' }, color: '#94A3B8' } 
+    	          },
+    	          y: { 
+    	            grid: { color: 'rgba(0,0,0,.04)' }, 
+    	            ticks: { 
+    	              font: { size: 10, family: 'Noto Sans KR' }, 
+    	              color: '#94A3B8', 
+    	              callback: v => v + '%' 
+    	            }, 
+    	            beginAtZero: true, 
+    	            max: yMax // ❌ 100 대신 계산된 yMax를 사용하여 가독성 확보!
+    	          }
+    	        }
+    	      }
+    	    });
+    	  }
+    	}
+    
 
     // ── 성별 비율 차트 ────────────────────────────────────
     function renderNaverGenderChart(femaleCur, maleCur, femalePrev, malePrev) {
