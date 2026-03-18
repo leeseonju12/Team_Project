@@ -29,4 +29,10 @@ public class AuthViewController {
         model.addAttribute("loginUser", principal.getUser());
         return "dashboard";
     }
+    
+    @GetMapping("/landing-page")
+    public String landing() {
+        // -- 확인: templates/landing-page.html 파일을 찾아감 --
+        return "landing-page"; 
+    }
 }

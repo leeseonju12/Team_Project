@@ -34,7 +34,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 2. 아까 고민하신 "무한 페이지" 해결책:
                         // 기본 공개 경로 + OAuth2 경로 허용
-                        .requestMatchers("/", "/login", "/logout/success", "/error").permitAll()
+                        .requestMatchers("/", "/login", "/logout/success", "/error", "/landing-page").permitAll()
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         
