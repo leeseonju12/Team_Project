@@ -1840,33 +1840,63 @@
       }, 200);
     }
 
-    // ── 검색수 추이 차트 ──────────────────────────────────
+ // ── 네이버 검색 추이 차트 렌더링 (Y축 100% 고정 버전) ──────────────────────────
     function renderNaverTrendChart(trends) {
       const canvas = document.getElementById('naverTrendChart');
       if (!canvas || !trends || trends.length === 0) return;
+      
+      // 1. 전체 합계를 구해서 백분율(%) 데이터 변환
+      const rawCounts = trends.map(t => t.searchCount);
+      const totalSum  = rawCounts.reduce((a, b) => a + b, 0);
+      
       const labels = trends.map(t => t.label);
-      const data   = trends.map(t => t.searchCount);
-      const yMax   = Math.ceil(Math.max(...data) * 1.2 / 100) * 100 || 100;
+      // 백분율 계산 (소수점 1자리까지)
+      const percentData = rawCounts.map(v => totalSum > 0 ? (v / totalSum * 100).toFixed(1) : 0);
+
       if (naverTrendChart) {
-        naverTrendChart.data.labels           = labels;
-        naverTrendChart.data.datasets[0].data = data;
-        naverTrendChart.options.scales.y.max  = yMax;
-        naverTrendChart.update('active');
+        naverTrendChart.data.labels = labels;
+        naverTrendChart.data.datasets[0].data = percentData;
+        naverTrendChart.options.scales.y.max = 100; // ✅ Y축 최댓값 100으로 고정
+        naverTrendChart.update();
       } else {
         naverTrendChart = new Chart(canvas.getContext('2d'), {
           type: 'line',
-          data: { labels, datasets: [{
-            label: '검색수', data,
-            borderColor: '#03C75A', backgroundColor: '#03C75A15',
-            borderWidth: 2, tension: .4, fill: true,
-            pointBackgroundColor: '#03C75A', pointRadius: 3, pointHoverRadius: 6,
-          }]},
+          data: { 
+            labels, 
+            datasets: [{
+              label: '검색 비중 (%)',
+              data: percentData,
+              borderColor: '#03C75A', 
+              backgroundColor: '#03C75A15',
+              borderWidth: 2, 
+              tension: .4, 
+              fill: true,
+              pointBackgroundColor: '#03C75A',
+              pointRadius: 3
+            }]
+          },
           options: {
             ...chartOpts(),
-            scales: { ...chartOpts().scales, y: { ...chartOpts().scales.y, max: yMax } },
+            scales: { 
+              ...chartOpts().scales, 
+              y: { 
+                ...chartOpts().scales.y, 
+                beginAtZero: true,
+                max: 100, // ✅ Y축 최댓값 100으로 고정
+                ticks: {
+                  stepSize: 20, // 0, 20, 40, 60, 80, 100 단위로 눈금 표시
+                  callback: function(value) { return value + '%'; }
+                }
+              } 
+            },
             plugins: {
               legend: { display: false },
-              tooltip: { backgroundColor: 'rgba(15,23,42,.92)', callbacks: { label: ctx => ` 검색수: ${ctx.parsed.y.toLocaleString()}` } }
+              tooltip: {
+                backgroundColor: 'rgba(15,23,42,.92)',
+                callbacks: {
+                  label: (ctx) => ` 검색 비중: ${ctx.parsed.y}%`
+                }
+              }
             }
           }
         });
