@@ -47,7 +47,7 @@ public class NaverSearchService {
         String timeUnit    = switch (period) {
             case "week"  -> "date";
             case "year"  -> "month";
-            default      -> "week";
+            default      -> "date"; // month도 일별 포인트로 촘촘하게
         };
 
         // week는 항상 어제(to) ~ 어제-6일(from) 고정
@@ -125,13 +125,13 @@ public class NaverSearchService {
 
         // ── 3. 결과 수집 ─────────────────────────────────────────
 
-        // 검색 추이: 각 데이터 포인트의 DataLab 지수(0~100)
+        // 검색 추이: ratio는 이미 0~100 스케일 → * 100 제거
         List<NaverSearchTrendDto> trends;
         try {
             trends = fTrend.get().results().get(0).data().stream()
                     .map(p -> NaverSearchTrendDto.builder()
                             .label(formatLabel(p.period(), period))
-                            .searchCount((int) Math.round(p.ratio() * 100))
+                            .searchCount((int) Math.round(p.ratio()))
                             .build())
                     .toList();
         } catch (Exception e) {
@@ -373,7 +373,7 @@ public class NaverSearchService {
         int day = parts.length > 2 ? Integer.parseInt(parts[2]) : 1;
         return switch (periodType) {
             case "year"  -> mon + "월";
-            case "month" -> mon + "/" + day + "주";
+            case "month" -> mon + "/" + day;  // 일별 포인트이므로 월/일 표기
             default      -> mon + "/" + day;
         };
     }
