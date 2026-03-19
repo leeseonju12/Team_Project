@@ -49,10 +49,16 @@ public class NaverSearchService {
             case "year"  -> "month";
             default      -> "week";
         };
-        String fromStr     = from.toString();
-        String toStr       = to.toString();
-        String prevFromStr = getPrevFrom(from, to);
-        String prevToStr   = from.minusDays(1).toString();
+
+        // week는 항상 어제(to) ~ 어제-6일(from) 고정
+        // → DataLab 100 기준점이 기간마다 달라지므로 기간을 고정해야 평균값이 일관성을 가짐
+        LocalDate effectiveTo   = "week".equals(period) ? LocalDate.now().minusDays(1) : to;
+        LocalDate effectiveFrom = "week".equals(period) ? effectiveTo.minusDays(6)    : from;
+
+        String fromStr     = effectiveFrom.toString();
+        String toStr       = effectiveTo.toString();
+        String prevFromStr = getPrevFrom(effectiveFrom, effectiveTo);
+        String prevToStr   = effectiveFrom.minusDays(1).toString();
 
         // ── 1. 병렬 API 호출 (19개 → 17개) ─────────────────────
 
@@ -119,7 +125,7 @@ public class NaverSearchService {
 
         // ── 3. 결과 수집 ─────────────────────────────────────────
 
-        // 검색수 추이
+        // 검색 추이: 각 데이터 포인트의 DataLab 지수(0~100)
         List<NaverSearchTrendDto> trends;
         try {
             trends = fTrend.get().results().get(0).data().stream()
@@ -176,24 +182,41 @@ public class NaverSearchService {
         boolean ageHasData    = ageCur.stream().anyMatch(v -> v > 0);
         String topAge         = ageHasData ? getTopAge(ageCur) : null;
         String topGender      = totalCur > 0 ? (gFemaleCur >= gMaleCur ? "여성" : "남성") : null;
-        int totalSearch       = trends.stream().mapToInt(NaverSearchTrendDto::searchCount).sum();
 
-        // 전기간 증감률
-        int prevTotalSearch = 0;
+        // 검색 활동량: DataLab 지수(ratio) 는 이미 0~100 스케일
+        // → * 100 하면 최대 10,000까지 뻥튀기되므로 ratio 그대로 평균
+        int activityScore;
         try {
-            prevTotalSearch = fTrendPrev.get().results().get(0).data().stream()
-                    .mapToInt(p -> (int) Math.round(p.ratio() * 100)).sum();
+            activityScore = (int) Math.round(
+                    fTrend.get().results().get(0).data().stream()
+                            .mapToDouble(p -> p.ratio())
+                            .average().orElse(0));
+        } catch (Exception e) {
+            log.warn("[NaverSearch] activityScore 계산 실패: {}", e.getMessage());
+            activityScore = 0;
+        }
+        String activityStatus = getActivityStatus(activityScore);
+
+        // 전기간 증감률 (동일하게 ratio 그대로 평균)
+        int prevActivityScore = 0;
+        try {
+            prevActivityScore = (int) Math.round(
+                    fTrendPrev.get().results().get(0).data().stream()
+                            .mapToDouble(p -> p.ratio())
+                            .average().orElse(0));
         } catch (Exception e) {
             log.warn("[NaverSearch] 이전 기간 트렌드 없음: {}", e.getMessage());
         }
-        double growthPct = prevTotalSearch > 0
-                ? Math.round((totalSearch - prevTotalSearch) / (double) prevTotalSearch * 1000.0) / 10.0
+        double growthPct = prevActivityScore > 0
+                ? Math.round((activityScore - prevActivityScore) / (double) prevActivityScore * 1000.0) / 10.0
                 : 0.0;
 
-        log.info("[NaverSearch] 대시보드 완성 — brandId: {}, period: {}, totalSearch: {}, topAge: {}, topGender: {}", brandId, period, totalSearch, topAge, topGender);
+        log.info("[NaverSearch] 대시보드 완성 — brandId: {}, period: {}, activityScore: {}, activityStatus: {}, topAge: {}, topGender: {}",
+                brandId, period, activityScore, activityStatus, topAge, topGender);
         return NaverSearchResponseDto.builder()
                 .summary(NaverSearchSummaryDto.builder()
-                        .totalSearchCount(totalSearch)
+                        .totalSearchCount(activityScore)       // 평균 활동 지수 (0~100)
+                        .searchActivityStatus(activityStatus)  // 폭발적 / 안정적 / 침체기  ← DTO에 필드 추가 필요
                         .searchGrowthPct(growthPct)
                         .topAgeGroup(topAge)
                         .topGender(topGender)
@@ -312,6 +335,15 @@ public class NaverSearchService {
         }
         result.add(Math.max(0, 100 - sum));
         return result;
+    }
+
+    // ── 검색 활동 상태 분류 ────────────────────────────────────────
+    // DataLab 지수 평균(0~100) 기준
+    // 임계값은 실제 데이터 누적 후 튜닝 권장
+    private String getActivityStatus(int avgScore) {
+        if (avgScore >= 70) return "폭발적";
+        if (avgScore >= 40) return "안정적";
+        return "침체기";
     }
 
     // ── 매장명 ───────────────────────────────────────────────────
