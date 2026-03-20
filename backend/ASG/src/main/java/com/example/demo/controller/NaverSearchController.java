@@ -21,7 +21,7 @@ public class NaverSearchController {
     @GetMapping
     
     public NaverSearchResponseDto getDashboard(
-            @RequestParam(defaultValue = "1")    Long brandId,
+            @RequestParam(defaultValue = "2")    Long brandId,
             @RequestParam(defaultValue = "month") String period,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -35,10 +35,10 @@ public class NaverSearchController {
 }
 
 /*
- * 브랜드 테이블의 1번 아이디가 검색 기준입니다
+ * 브랜드 테이블의 2번 아이디가 검색 기준입니다
  * 검색 수 = brand_name 이 검색된 횟수
  * 주요 검색 사용자 = brand_name 을 검색한 연령대/성별
- * 업종 인기 검색 키워드 = getIndustryKeywords 에서 정해놓은 리소스 (추후 교체)
+ * 업종 인기 검색 키워드 = 각 업종별 인기 검색어 (다소 하드코딩)
  * 상세 분석 = brand_name 기준
  * 
  * 검색된 기록이 없다면 데이터가 없다는 문구가 나오도록 처리했고

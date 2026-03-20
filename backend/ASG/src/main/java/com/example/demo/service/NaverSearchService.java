@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -263,9 +264,56 @@ public class NaverSearchService {
     // ── 업종별 동종업계 키워드 ────────────────────────────────────
     // TODO: 업종/브랜드별 동적 키워드 로직으로 교체 예정
     private List<String> getIndustryKeywords(Map<String, Object> brand) {
-        return List.of("강남 카페 추천", "카페 신메뉴", "디저트 맛집", "브런치 카페", "아메리카노");
+        String industryType = (String) brand.get("industry_type");
+        List<String> candidates = getCandidateKeywords(industryType); // 최대 5개 (DataLab 제한)
+
+        // DataLab에서 오늘 기준 7일 비교 → ratio 높은 순 반환
+        try {
+            LocalDate to   = LocalDate.now().minusDays(1);
+            LocalDate from = to.minusDays(6);
+
+            var request = new NaverDatalabRequestDto(
+                    from.toString(), to.toString(), "date",
+                    candidates.stream()
+                            .map(kw -> new NaverDatalabRequestDto.KeywordGroup(kw, List.of(kw)))
+                            .toList());
+
+            var resp = searchWithSemaphore(request);
+
+            return resp.results().stream()
+                    .sorted(Comparator.comparingDouble(
+                            r -> -r.data().stream().mapToDouble(d -> d.ratio()).average().orElse(0)))
+                    .map(r -> r.title())
+                    .toList();
+
+        } catch (Exception e) {
+            log.warn("[NaverSearch] 동적 키워드 조회 실패, 기본값 사용: {}", e.getMessage());
+            return getCandidateKeywords(industryType);
+        }
     }
 
+    // 업종별 후보 키워드풀 (DataLab은 한 번에 최대 5개)
+    private List<String> getCandidateKeywords(String industryType) {
+        return switch (industryType) {
+            case "CAFE"         -> List.of("카페 추천", "카페 신메뉴", "디저트 맛집", "브런치 카페", "아메리카노");
+            case "RESTAURANT"   -> List.of("맛집 추천", "점심 특선", "저녁 맛집", "혼밥", "배달 맛집");
+            case "FAST_FOOD"    -> List.of("햄버거 맛집", "패스트푸드 추천", "치킨 버거", "세트메뉴", "햄버거 맛집");
+            case "BAR"          -> List.of("술집 추천", "분위기 좋은 바", "이자카야 추천", "와인바", "칵테일바");
+            case "BAKERY"       -> List.of("빵집 추천", "베이커리 신메뉴", "소금빵 맛집", "크루아상 맛집", "식빵 맛집");
+            case "DESSERT"      -> List.of("디저트 카페", "케이크 맛집", "마카롱 추천", "아이스크림 맛집", "빙수 맛집");
+            case "HAIR_SALON"   -> List.of("미용실 추천", "헤어샵 예약", "염색 잘하는 곳", "커트 잘하는 미용실", "펌 추천");
+            case "NAIL"         -> List.of("네일샵 추천", "젤네일 디자인", "네일아트 예약", "발네일 추천", "네일 가격");
+            case "SPA_MASSAGE"  -> List.of("마사지샵 추천", "스파 예약", "피부관리 잘하는 곳", "아로마 마사지", "힐링 스파");
+            case "FITNESS"      -> List.of("헬스장 추천", "PT 가격", "크로스핏 추천", "헬스 등록", "퍼스널트레이닝");
+            case "PILATES_YOGA" -> List.of("필라테스 추천", "요가 학원", "필라테스 가격", "요가 초보", "몸매관리 운동");
+            case "RETAIL"       -> List.of("편집샵 추천", "신상 입고", "한정판 구매", "편집샵 세일", "브랜드 추천");
+            case "CLOTHING"     -> List.of("옷 쇼핑", "빈티지샵 추천", "코디 추천", "의류 세일", "가을 신상");
+            case "LAUNDRY"      -> List.of("세탁소 추천", "드라이클리닝 가격", "이불 세탁", "명품 세탁", "운동화 세탁");
+            case "PET"          -> List.of("펫샵 추천", "강아지 용품", "고양이 간식 추천", "동물병원 추천", "반려동물 미용");
+            case "EDUCATION"    -> List.of("학원 추천", "과외 추천", "수능 학원", "성인 영어학원", "자격증 학원");
+            default             -> List.of("매장 추천", "신메뉴", "할인 이벤트", "맛집", "베스트메뉴");
+        };
+    }
     // ── 최대 3회 재시도 + Semaphore 순차 호출 ────────────────────
     private static final int  MAX_RETRY      = 3;
     private static final long RETRY_DELAY_MS = 5000; // 재시도 전 5초 대기

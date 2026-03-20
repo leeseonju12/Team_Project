@@ -33,12 +33,12 @@ spring:
 
 
 ai:
-  api-key: AIzaSyDSIGzXu_aCC07ZamOmG800N-b-SFs6hgE
+  api-key: 
 
 naver:
   api:
-    client-id: iFAYCG0_BINaE42m91cu
-    client-secret: GNC6Ght_O4
+    client-id: 
+    client-secret: 
     datalab-url: https://openapi.naver.com/v1/datalab/search
 
 
