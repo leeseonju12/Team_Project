@@ -927,6 +927,79 @@ background: rgba(255, 255, 255, 0.98);
       border: none;
       line-height: 1;
     }
+    
+
+	#uploadZone {
+	    cursor: pointer;
+	    transition: background-color 0.2s;
+	}
+
+	#uploadZone.dragover {
+	    background-color: var(--indigo-light, #eef2ff);
+	    border-color: var(--indigo, #6366f1);
+	}
+	
+	.img-previews {
+	    display: flex;
+	    flex-wrap: wrap;
+	    gap: 12px;
+	    margin-top: 12px;
+	}
+	
+	.preview-item {
+	    position: relative;
+	    width: 100px;
+	    height: 100px;
+	    border-radius: 8px;
+	    overflow: hidden;
+	    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+	    border: 1px solid var(--border);
+	    display: flex;
+	    align-items: center;
+	    justify-content: center;
+	    background: #f8fafc;
+	}
+	
+	.preview-item img {
+	    width: 100%;
+	    height: 100%;
+	    object-fit: cover;
+	}
+	
+	/* 이미지 우측 상단 X 버튼 */
+	.btn-remove-img {
+	    position: absolute;
+	    top: 4px;
+	    right: 4px;
+	    background: rgba(0, 0, 0, 0.6);
+	    color: white;
+	    border: none;
+	    border-radius: 50%;
+	    width: 20px;
+	    height: 20px;
+	    font-size: 10px;
+	    cursor: pointer;
+	    display: flex;
+	    align-items: center;
+	    justify-content: center;
+	    padding: 0;
+	}
+	
+	.btn-remove-img:hover {
+	    background: rgba(220, 38, 38, 0.9); /* 빨간색 */
+	}
+	
+	/* 로딩 중 텍스트 */
+	.loading-text {
+	    font-size: 11px;
+	    color: var(--text3);
+	    text-align: center;
+	} 
+    
+    
+
+    
+    
 
     .time-tip {
       display: inline-flex;
@@ -1323,6 +1396,91 @@ background: rgba(255, 255, 255, 0.98);
           btn.disabled = false;
       }
   }
+  
+  
+  
+  document.addEventListener('DOMContentLoaded', () => {
+	    const uploadZone = document.getElementById('uploadZone');
+	    const imgInput = document.getElementById('imgInput');
+	    const imgPreviews = document.getElementById('imgPreviews');
+
+	    // 1. 클릭 시 숨겨진 input=file 창 열기
+	    uploadZone.addEventListener('click', () => imgInput.click());
+
+	    // 2. 드래그 앤 드롭 이벤트 처리
+	    uploadZone.addEventListener('dragover', (e) => {
+	        e.preventDefault();
+	        uploadZone.classList.add('dragover');
+	    });
+
+	    uploadZone.addEventListener('dragleave', () => {
+	        uploadZone.classList.remove('dragover');
+	    });
+
+	    uploadZone.addEventListener('drop', (e) => {
+	        e.preventDefault();
+	        uploadZone.classList.remove('dragover');
+	        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+	            handleImageFiles(e.dataTransfer.files);
+	        }
+	    });
+
+	    // 3. 파일 탐색기에서 파일을 선택했을 때
+	    imgInput.addEventListener('change', (e) => {
+	        if (e.target.files && e.target.files.length > 0) {
+	            handleImageFiles(e.target.files);
+	            // 같은 파일을 또 올릴 수 있도록 value 초기화
+	            imgInput.value = ''; 
+	        }
+	    });
+
+	    // 4. 파일을 하나씩 백엔드로 전송하는 핵심 함수
+	    async function handleImageFiles(files) {
+	        for (const file of files) {
+	            if (!file.type.startsWith('image/')) {
+	                alert('이미지 파일만 업로드 가능합니다!');
+	                continue;
+	            }
+
+	            // A. 로딩 중인 UI 먼저 화면에 그리기
+	            const previewDiv = document.createElement('div');
+	            previewDiv.className = 'preview-item';
+	            previewDiv.innerHTML = `<span class="loading-text">업로드 중...</span>`;
+	            imgPreviews.appendChild(previewDiv);
+
+	            // B. 서버로 보낼 데이터 포장 (백엔드가 @RequestParam("file")로 받음)
+	            const formData = new FormData();
+	            formData.append('file', file);
+
+	            try {
+	                // 백엔드의 업로드 API 호출!
+	                const response = await fetch('/content/upload-image', {
+	                    method: 'POST',
+	                    body: formData
+	                });
+	                
+	                const result = await response.json();
+
+	                if (response.ok) {
+	                    // C. 성공: 로딩 지우고 썸네일 + X버튼 + 숨겨진 URL input 렌더링
+	                    previewDiv.innerHTML = `
+	                        <img src="${result.imageUrl}" alt="Uploaded">
+	                        <button type="button" class="btn-remove-img" onclick="this.parentElement.remove()" title="삭제">✕</button>
+	                        <input type="hidden" class="uploaded-img-url" name="uploadedImgUrls" value="${result.imageUrl}">
+	                    `;
+	                } else {
+	                    throw new Error(result.message);
+	                }
+	            } catch (error) {
+	                console.error(error);
+	                previewDiv.innerHTML = `
+	                    <span class="loading-text" style="color: red;">실패</span>
+	                    <button type="button" class="btn-remove-img" onclick="this.parentElement.remove()">✕</button>
+	                `;
+	            }
+	        }
+	    }
+	});
   </script>
 </body>
 </html>

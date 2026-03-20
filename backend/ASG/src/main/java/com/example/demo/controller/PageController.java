@@ -12,7 +12,7 @@ public class PageController {
 	@Autowired
     private InstagramApiService instagramApiService;
 	
-	@GetMapping("/feedback")
+	@GetMapping("/feedbacks")
 	public String feedbackPage() {
 		
 		System.out.println("===PageController: 대시보드 접속 & 동기화 시작 ===");
