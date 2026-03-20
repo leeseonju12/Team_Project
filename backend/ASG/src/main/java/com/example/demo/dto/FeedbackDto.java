@@ -19,4 +19,5 @@ public class FeedbackDto {
     private String aiReply;          // AI 답변
     private String aiStatus;         // "idle" or "done"
     private String sentReply;        // 최종 전송 답글
+    private String originUrl;
 }

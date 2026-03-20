@@ -35,4 +35,7 @@ public class FeedbackSource {
     @Column(unique = true, name = "external_id")
     private String externalId; // 인스타그램 댓글 고유 id
     
+    @Column(name = "origin_url")
+    private String originUrl; // 댓글이 있는 게시글 url
+    
 }

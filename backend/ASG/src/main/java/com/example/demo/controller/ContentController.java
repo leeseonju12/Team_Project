@@ -79,27 +79,23 @@ public class ContentController {
             return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
         }
     }
+  
     
-    @GetMapping("/instagram/comments")
+    @GetMapping("/instagram/sync-comments")
     @ResponseBody
-    public String getInstagramComments(
-            @RequestParam("mediaId") String mediaId) {
-        
+    public ResponseEntity<?> syncInstagramComments() {
         try {
-            //JsonNode comments = instagramApiService.getComments(mediaId, accessToken);
-        	JsonNode comments = instagramApiService.getCommentsAndSave(mediaId);
+            int newCommentCount = instagramApiService.syncAllInstagramComments();
 
-            if (comments == null || comments.isEmpty()) {
-                return "<h3>댓글이 없거나 가져올 수 없습니다.</h3>";
-            }
-
-            return "<h1>댓글 목록 (JSON)</h1>" +
-                   "<pre>" + comments.toPrettyString() + "</pre>";
+            Map<String, Object> result = new HashMap<>();
+            result.put("message", "success");
+            result.put("newCommentCount", newCommentCount);
+            
+            return ResponseEntity.ok(result);
 
         } catch (Exception e) {
-            return "<h1>에러 발생</h1><p>" + e.getMessage() + "</p>";
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
         }
     }
-    
     
 }

@@ -43,6 +43,7 @@ public class InstagramController {
             // 1. 내 인스타그램 ID 가져오기
             String igAccountId = instagramApiService.getInstagramAccountId();
             
+        	
             // 2. 테스트용 공개 이미지 URL (인터넷에서 접근 가능한 아무 이미지나 가능)
             String testImageUrl = "https://images.unsplash.com/photo-1505628346881-b72b27e84530?w=500&auto=format&fit=crop";
             

@@ -56,11 +56,13 @@ public class InstagramApiService {
                 // 해당 계정의 전체 피드(게시물 목록) 가져오기
                 JsonNode feed = getInstagramFeed(igAccountId);
                 
+                
                 if (feed != null && feed.isArray()) {
                     for (JsonNode media : feed) {
                         String mediaId = media.get("id").asText();
+                        String permalink = media.path("permalink").asText("");
                         // 각 게시물의 댓글을 수집하고 DB에 저장
-                        newCommentCount += fetchAndSaveCommentsForMedia(mediaId);
+                        newCommentCount += fetchAndSaveCommentsForMedia(mediaId, permalink);
                     }
                 }
             }
@@ -113,7 +115,9 @@ public class InstagramApiService {
     // 2. 인스타그램 피드 조회
     public JsonNode getInstagramFeed(String igAccountId) {
         String fields = "id,caption,media_type,media_url,permalink,timestamp";
-        String url = GRAPH_API_BASE_URL + "/" + igAccountId + "/media?fields=" + fields + "&access_token=" + accessToken;
+        //String url = GRAPH_API_BASE_URL + "/" + igAccountId + "/media?fields=" + fields + "&access_token=" + accessToken;
+        String url = GRAPH_API_BASE_URL + "/" + igAccountId + "/media?fields=id,caption,timestamp,permalink&access_token=" + accessToken;
+        
         try {
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
             JsonNode rootNode = objectMapper.readTree(response.getBody());
@@ -174,41 +178,24 @@ public class InstagramApiService {
             throw new RuntimeException("게시물 최종 발행 실패: " + e.getMessage());
         }
     }
-    
-    
-     // 특정 게시물의 댓글 목록을 가져옵니다.
-
-    public JsonNode getComments(String mediaId) {
-        // 가져올 필드: 댓글 ID, 내용, 작성시간, 작성자 정보
-        String fields = "id,text,timestamp,username,like_count";
-        String url = GRAPH_API_BASE_URL + "/" + mediaId + "/comments?fields=" + fields + "&access_token=" + accessToken;
-
-        try {
-            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-            JsonNode rootNode = objectMapper.readTree(response.getBody());
-            
-            // 댓글 목록은 "data" 배열 안에 들어있습니다.
-            return rootNode.get("data");
-        } catch (Exception e) {
-            System.err.println("댓글 조회 중 에러 발생: " + e.getMessage());
-            return null;
-        }
-    }
 
     // DB에 저장해서 그걸 불러오는 방식
     @Transactional
     public JsonNode getCommentsAndSave(String mediaId) {
-        String fields = "id,text,timestamp,username,like_count";
+        String fields = "id,text,timestamp,username,like_count,media{permalink}";
         String url = GRAPH_API_BASE_URL + "/" + mediaId + "/comments?fields=" + fields + "&access_token=" + accessToken;
-
+        
         try {
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
             JsonNode rootNode = objectMapper.readTree(response.getBody());
             JsonNode dataArray = rootNode.get("data"); // 댓글 배열
+        
 
             if (dataArray != null && dataArray.isArray()) {
                 // 배열을 돌면서 하나씩 DB에 저장
                 for (JsonNode node : dataArray) {
+                	
+                	String originUrl = node.path("media").path("permalink").asText("");
                 	
                 	// 🌟 A. 통합 DB용 '출처' 정보 생성
                     FeedbackSource source = FeedbackSource.builder()
@@ -216,6 +203,7 @@ public class InstagramApiService {
                             .authorName(node.path("username").asText("unknown"))
                             .originalText(node.path("text").asText(""))
                             .platform(com.example.demo.domain.enums.Platform.INSTAGRAM)
+
                             .build();
 
                     // 🌟 B. 통합 DB용 '피드백' 객체 생성
@@ -242,6 +230,8 @@ public class InstagramApiService {
                     // DB에 저장! (이미 같은 ID가 있으면 UPDATE, 없으면 INSERT 해줍니다)
                     commentRepository.save(comment);
                     */
+                    
+                    
 	
                 }
             }
@@ -280,7 +270,7 @@ public class InstagramApiService {
     /**
      * 특정 게시물의 댓글을 가져와 중복 검사 후 저장하는 내부 메서드
      */
-    private int fetchAndSaveCommentsForMedia(String mediaId) {
+    private int fetchAndSaveCommentsForMedia(String mediaId, String permalink) {
         int count = 0;
         String fields = "id,text,timestamp,username,like_count";
         String url = GRAPH_API_BASE_URL + "/" + mediaId + "/comments?fields=" + fields + "&access_token=" + accessToken;
@@ -301,6 +291,7 @@ public class InstagramApiService {
                                 .authorName(node.path("username").asText("unknown"))
                                 .originalText(node.path("text").asText(""))
                                 .platform(com.example.demo.domain.enums.Platform.INSTAGRAM)
+                                .originUrl(permalink)
                                 .build();
 
                         CustomerFeedback feedback = CustomerFeedback.builder()

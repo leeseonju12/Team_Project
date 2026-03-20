@@ -109,6 +109,7 @@ public class FeedbackService {
                 .aiReply(feedback.getAiReply() != null ? feedback.getAiReply() : "")
                 .aiStatus(feedback.getAiStatus() != null ? feedback.getAiStatus().name().toLowerCase() : "idle")
                 .sentReply(feedback.getSentReply() != null ? feedback.getSentReply() : "")
+                .originUrl(feedback.getSource().getOriginUrl())
                 .build();
     }
     
