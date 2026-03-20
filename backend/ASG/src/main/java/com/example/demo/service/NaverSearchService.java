@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,13 +25,14 @@ public class NaverSearchService {
 
     private static final ExecutorService POOL = Executors.newFixedThreadPool(20);
 
-    // 네이버 API 동시 호출 수 제한: 5개 초과 시 Connection reset 발생
-    private static final Semaphore NAVER_SEMAPHORE = new Semaphore(1); // 완전 순차 호출 - 동시 호출 시 Connection reset 방지
+    // 네이버 API 동시 호출 수 제한: Connection reset 방지를 위해 완전 순차 호출
+    private static final Semaphore NAVER_SEMAPHORE = new Semaphore(1);
 
-    private static final List<String> AGE_CODES  = List.of("1", "2", "3", "4", "5", "6");
     private static final List<String> AGE_LABELS = List.of("10대", "20대", "30대", "40대", "50대", "60대+");
 
-    // 나이+성별 12개 조합 — DataLab API에 gender + ages 동시 지정
+    // 나이+성별 12개 조합
+    // 순서: 10대f, 10대m, 20대f, 20대m, 30대f, 30대m, 40대f, 40대m, 50대f, 50대m, 60대+f, 60대+m
+    // → 짝수 인덱스=여성, 홀수=남성 / (인덱스/2) = 나이 인덱스(0~5)
     private record AgeGenderCombo(String ageCode, String ageLabel, String gender, String genderLabel) {}
     private static final List<AgeGenderCombo> AGE_GENDER_COMBOS = List.of(
         new AgeGenderCombo("1", "10대",  "f", "여성"),
@@ -50,7 +50,6 @@ public class NaverSearchService {
     );
 
     // 캐시 키: brandId + period만 사용
-    // → 같은 브랜드·기간 단위는 1시간 내 재호출 시 캐시에서 반환 (API 미호출)
     // → from/to를 키에 넣으면 LocalDate.now()가 매번 달라져 캐시가 무의미해짐
     @Cacheable(value = "naverDashboard", key = "#brandId + '_' + #period")
     public NaverSearchResponseDto getDashboard(Long brandId, LocalDate from, LocalDate to, String period) {
@@ -58,17 +57,17 @@ public class NaverSearchService {
         // ── 0. DB에서 브랜드 정보 조회 ───────────────────────────
         Map<String, Object> brand = jdbcTemplate.queryForMap(
                 "SELECT brand_name, service_name, industry_type, location_name FROM brand WHERE brand_id = ?", brandId);
-        String storeName   = getStoreName(brand);
+        String storeName         = getStoreName(brand);
         List<String> industryKws = getIndustryKeywords(brand);
 
-        String timeUnit    = switch (period) {
-            case "week"  -> "date";
-            case "year"  -> "month";
-            default      -> "date"; // month도 일별 포인트로 촘촘하게
+        String timeUnit = switch (period) {
+            case "week" -> "date";
+            case "year" -> "month";
+            default     -> "date"; // month: 일별 포인트로 촘촘하게
         };
 
-        // week는 항상 어제(to) ~ 어제-6일(from) 고정
-        // → DataLab 100 기준점이 기간마다 달라지므로 기간을 고정해야 평균값이 일관성을 가짐
+        // week는 항상 어제 ~ 어제-6일 고정
+        // → DataLab 100 기준점이 기간마다 달라지므로 고정해야 평균값이 일관성을 가짐
         LocalDate effectiveTo   = "week".equals(period) ? LocalDate.now().minusDays(1) : to;
         LocalDate effectiveFrom = "week".equals(period) ? effectiveTo.minusDays(6)    : from;
 
@@ -77,9 +76,16 @@ public class NaverSearchService {
         String prevFromStr = getPrevFrom(effectiveFrom, effectiveTo);
         String prevToStr   = effectiveFrom.minusDays(1).toString();
 
-        // ── 1. 병렬 API 호출 (19개 → 17개) ─────────────────────
+        // ── 1. API 호출 목록 (총 31개) ───────────────────────────
+        // [ 1]   검색 추이 현재
+        // [ 2]   검색 추이 이전
+        // [ 3]   업종 키워드 5개 (배치 1호출)
+        // [ 4- 5] 성별 현재 (여성/남성)
+        // [ 6- 7] 성별 이전 (여성/남성)
+        // [ 8-19] 나이+성별 조합 현재 12개
+        // [20-31] 나이+성별 조합 이전 12개
+        // ※ 기존 fAgeCur/fAgePrev(12개) 제거 → 콤보에서 역산하므로 불필요
 
-        // Semaphore로 감싼 search 호출: 동시 5개 초과 시 대기
         var fTrend = CompletableFuture.supplyAsync(() -> searchWithSemaphore(
                 new NaverDatalabRequestDto(fromStr, toStr, timeUnit,
                         List.of(new NaverDatalabRequestDto.KeywordGroup(storeName, List.of(storeName))))), POOL);
@@ -94,8 +100,7 @@ public class NaverSearchService {
                                 .map(kw -> new NaverDatalabRequestDto.KeywordGroup(kw, List.of(kw)))
                                 .toList())), POOL);
 
-        // 성별은 여성+남성 지수 둘 다 받아야 비율 계산 가능
-        // 여성/(여성+남성)*100 → 여성% , 남성% = 100 - 여성%
+        // 성별 비율 차트용 (전체 성별, 나이 무관)
         var fFemaleCur  = CompletableFuture.supplyAsync(
                 () -> getRatioAvg(fromStr,     toStr,     storeName, "f", null), POOL);
         var fMaleCur    = CompletableFuture.supplyAsync(
@@ -105,17 +110,8 @@ public class NaverSearchService {
         var fMalePrev   = CompletableFuture.supplyAsync(
                 () -> getRatioAvg(prevFromStr, prevToStr, storeName, "m", null), POOL);
 
-        List<CompletableFuture<Double>> fAgeCur = AGE_CODES.stream()
-                .map(age -> CompletableFuture.supplyAsync(
-                        () -> getRatioAvg(fromStr, toStr, storeName, null, List.of(age)), POOL))
-                .toList();
-
-        List<CompletableFuture<Double>> fAgePrev = AGE_CODES.stream()
-                .map(age -> CompletableFuture.supplyAsync(
-                        () -> getRatioAvg(prevFromStr, prevToStr, storeName, null, List.of(age)), POOL))
-                .toList();
-
-        // 나이+성별 12개 조합: 정확한 "30대 여성" 같은 최고 그룹 판별용
+        // 나이+성별 12개 조합 현재/이전
+        // → 연령대 차트(ageCur/agePrev)도 이 결과에서 역산하므로 별도 fAgeCur 불필요
         List<CompletableFuture<Double>> fCombosCur = AGE_GENDER_COMBOS.stream()
                 .map(c -> CompletableFuture.supplyAsync(
                         () -> getRatioAvg(fromStr, toStr, storeName, c.gender(), List.of(c.ageCode())), POOL))
@@ -126,11 +122,10 @@ public class NaverSearchService {
                         () -> getRatioAvg(prevFromStr, prevToStr, storeName, c.gender(), List.of(c.ageCode())), POOL))
                 .toList();
 
-        // 각 Future가 예외를 던져도 allOf가 중단되지 않도록 exceptionally로 감쌈
-        // → 하나가 Connection reset 나도 나머지 16개는 계속 진행
-        var fTrendSafe    = fTrend.exceptionally(e -> { log.warn("[NaverSearch] fTrend 실패: {}", e.getMessage()); return null; });
+        // 예외 발생해도 allOf가 멈추지 않도록 safe 래핑
+        var fTrendSafe     = fTrend.exceptionally(e    -> { log.warn("[NaverSearch] fTrend 실패: {}",     e.getMessage()); return null; });
         var fTrendPrevSafe = fTrendPrev.exceptionally(e -> { log.warn("[NaverSearch] fTrendPrev 실패: {}", e.getMessage()); return null; });
-        var fKeywordsSafe  = fKeywords.exceptionally(e -> { log.warn("[NaverSearch] fKeywords 실패: {}", e.getMessage()); return null; });
+        var fKeywordsSafe  = fKeywords.exceptionally(e  -> { log.warn("[NaverSearch] fKeywords 실패: {}",  e.getMessage()); return null; });
 
         List<CompletableFuture<?>> allFutures = new ArrayList<>();
         allFutures.add(fTrendSafe);
@@ -140,13 +135,10 @@ public class NaverSearchService {
         allFutures.add(fMaleCur);
         allFutures.add(fFemalePrev);
         allFutures.add(fMalePrev);
-        allFutures.addAll(fAgeCur);
-        allFutures.addAll(fAgePrev);
         allFutures.addAll(fCombosCur);
         allFutures.addAll(fCombosPrev);
 
-        // ── 2. 전체 대기 (타임아웃 없음 - 모든 데이터를 반드시 수신)
-        // 네이버 서버 무응답 시에는 HTTP 타임아웃(30초)이 상한선
+        // ── 2. 전체 대기 (HTTP 타임아웃 30초가 상한선) ──────────
         try {
             CompletableFuture.allOf(allFutures.toArray(new CompletableFuture[0])).get();
         } catch (Exception e) {
@@ -155,7 +147,7 @@ public class NaverSearchService {
 
         // ── 3. 결과 수집 ─────────────────────────────────────────
 
-        // 검색 추이: ratio는 이미 0~100 스케일 → * 100 제거
+        // 검색 추이: ratio는 이미 0~100 스케일
         List<NaverSearchTrendDto> trends;
         try {
             trends = fTrend.get().results().get(0).data().stream()
@@ -191,34 +183,32 @@ public class NaverSearchService {
             keywords = List.of();
         }
 
-        // 성별 비율: 여성지수 / (여성지수 + 남성지수) * 100
+        // 성별 비율: 여성/(여성+남성)*100
         double femaleCur  = safeGetDone(fFemaleCur);
         double maleCur    = safeGetDone(fMaleCur);
         double femalePrev = safeGetDone(fFemalePrev);
         double malePrev   = safeGetDone(fMalePrev);
         double totalCur   = femaleCur  + maleCur;
         double totalPrev  = femalePrev + malePrev;
-        // 둘 다 0이면 50:50 폴백
         int gFemaleCur  = totalCur  > 0 ? (int) Math.round(femaleCur  / totalCur  * 100) : 50;
         int gMaleCur    = 100 - gFemaleCur;
         int gFemalePrev = totalPrev > 0 ? (int) Math.round(femalePrev / totalPrev * 100) : 50;
         int gMalePrev   = 100 - gFemalePrev;
 
-        // 연령대 분포
-        List<Integer> ageCur  = normalizeAge(fAgeCur);
-        List<Integer> agePrev = normalizeAge(fAgePrev);
+        // 연령대 분포: 콤보에서 나이별 여성+남성 합산 후 정규화 (fAgeCur/fAgePrev 대체)
+        List<Integer> ageCur  = normalizeAgeFromCombos(fCombosCur);
+        List<Integer> agePrev = normalizeAgeFromCombos(fCombosPrev);
 
-        // 주요 사용자 요약 — 12개 조합 중 ratio 최고값 조합 선택
-        String topUser = getTopCombo(fCombosCur);
+        // 주요 사용자: 12개 조합 중 ratio 최고값 조합
+        String topUser     = getTopCombo(fCombosCur);
         String prevTopUser = getTopCombo(fCombosPrev);
 
-        // 차트용 topAge / topGender (기존 유지)
-        boolean ageHasData    = ageCur.stream().anyMatch(v -> v > 0);
-        String topAge         = ageHasData ? getTopAge(ageCur) : null;
-        String topGender      = totalCur > 0 ? (gFemaleCur >= gMaleCur ? "여성" : "남성") : null;
+        // 차트용 topAge / topGender
+        boolean ageHasData = ageCur.stream().anyMatch(v -> v > 0);
+        String topAge      = ageHasData ? getTopAge(ageCur) : null;
+        String topGender   = totalCur > 0 ? (gFemaleCur >= gMaleCur ? "여성" : "남성") : null;
 
-        // 검색 활동량: DataLab 지수(ratio) 는 이미 0~100 스케일
-        // → * 100 하면 최대 10,000까지 뻥튀기되므로 ratio 그대로 평균
+        // 검색 활동량: ratio 평균 (0~100)
         int activityScore;
         try {
             activityScore = (int) Math.round(
@@ -231,7 +221,7 @@ public class NaverSearchService {
         }
         String activityStatus = getActivityStatus(activityScore);
 
-        // 전기간 증감률 (동일하게 ratio 그대로 평균)
+        // 전기간 증감률
         int prevActivityScore = 0;
         try {
             prevActivityScore = (int) Math.round(
@@ -245,8 +235,9 @@ public class NaverSearchService {
                 ? Math.round((activityScore - prevActivityScore) / (double) prevActivityScore * 1000.0) / 10.0
                 : 0.0;
 
-        log.info("[NaverSearch] 대시보드 완성 — brandId: {}, period: {}, activityScore: {}, activityStatus: {}, topAge: {}, topGender: {}",
-                brandId, period, activityScore, activityStatus, topAge, topGender);
+        log.info("[NaverSearch] 대시보드 완성 — brandId: {}, period: {}, activityScore: {}, activityStatus: {}, topUser: {}, topAge: {}, topGender: {}",
+                brandId, period, activityScore, activityStatus, topUser, topAge, topGender);
+
         return NaverSearchResponseDto.builder()
                 .summary(NaverSearchSummaryDto.builder()
                         .totalSearchCount(activityScore)
@@ -254,8 +245,8 @@ public class NaverSearchService {
                         .searchGrowthPct(growthPct)
                         .topAgeGroup(topAge)
                         .topGender(topGender)
-                        .topUser(topUser)           // "30대 여성" 형태
-                        .prevTopUser(prevTopUser)   // 이전 기간 최고 조합
+                        .topUser(topUser)
+                        .prevTopUser(prevTopUser)
                         .build())
                 .trends(trends)
                 .keywords(keywords)
@@ -275,10 +266,9 @@ public class NaverSearchService {
         return List.of("강남 카페 추천", "카페 신메뉴", "디저트 맛집", "브런치 카페", "아메리카노");
     }
 
-    // ── 최대 3회 재시도 + Semaphore 동시 호출 제한 ──────────────
-    // Connection reset / timeout 은 일시적 차단이므로 2초 대기 후 재시도하면 대부분 성공
-    private static final int    MAX_RETRY       = 3;
-    private static final long   RETRY_DELAY_MS  = 5000; // 재시도 전 대기 5초 (네이버 차단 해제 대기)
+    // ── 최대 3회 재시도 + Semaphore 순차 호출 ────────────────────
+    private static final int  MAX_RETRY      = 3;
+    private static final long RETRY_DELAY_MS = 5000; // 재시도 전 5초 대기
 
     private NaverDatalabResponseDto searchWithSemaphore(NaverDatalabRequestDto request) {
         Exception lastException = null;
@@ -298,13 +288,12 @@ public class NaverSearchService {
                 throw new RuntimeException("Semaphore 대기 중 인터럽트", e);
             } catch (Exception e) {
                 lastException = e;
-                log.warn("[NaverSearch] 호출 실패 ({}회/{} 회): {}", attempt, MAX_RETRY, e.getMessage());
+                log.warn("[NaverSearch] 호출 실패 ({}회/{}회): {}", attempt, MAX_RETRY, e.getMessage());
                 if (attempt < MAX_RETRY) {
                     try { Thread.sleep(RETRY_DELAY_MS); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
                 }
             }
         }
-        // 3회 모두 실패 시 예외 → exceptionally에서 잡아서 로그만 남기고 null 반환
         throw new RuntimeException("네이버 API " + MAX_RETRY + "회 재시도 모두 실패", lastException);
     }
 
@@ -320,7 +309,8 @@ public class NaverSearchService {
                             gender, ages));
                     double result = resp.results().get(0).data().stream()
                             .mapToDouble(d -> d.ratio()).average().orElse(0);
-                    log.info("[NaverSearch] 호출 성공 — keyword: {}, gender: {}, ages: {}, ratio: {}", keyword, gender, ages, result);
+                    log.info("[NaverSearch] 호출 성공 — keyword: {}, gender: {}, ages: {}, ratio: {}",
+                            keyword, gender, ages, result);
                     Thread.sleep(500);
                     return result;
                 } finally {
@@ -331,7 +321,7 @@ public class NaverSearchService {
                 return 0.0;
             } catch (Exception e) {
                 lastException = e;
-                log.warn("[NaverSearch] getRatioAvg 실패 ({}회/{} 회, gender={}, ages={}): {}",
+                log.warn("[NaverSearch] getRatioAvg 실패 ({}회/{}회, gender={}, ages={}): {}",
                         attempt, MAX_RETRY, gender, ages, e.getMessage());
                 if (attempt < MAX_RETRY) {
                     try { Thread.sleep(RETRY_DELAY_MS); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
@@ -345,35 +335,34 @@ public class NaverSearchService {
 
     // ── allOf 이후 완료된 Future 값 꺼내기 ───────────────────────
     private double safeGetDone(CompletableFuture<Double> f) {
-        try {
-            return f.get();  // allOf 이후이므로 항상 완료 상태
-        } catch (Exception e) {
-            return 0.0;
-        }
+        try { return f.get(); } catch (Exception e) { return 0.0; }
     }
 
-    // ── 연령대 비율 정규화 → 합계 100% ───────────────────────────
-    private List<Integer> normalizeAge(List<CompletableFuture<Double>> futures) {
-        List<Double> ratios = futures.stream().map(f -> {
-            try { return f.get(); }  // allOf 이후이므로 항상 완료 상태
-            catch (Exception e) { return 0.0; }
-        }).collect(Collectors.toList());
-
-        double total = ratios.stream().mapToDouble(Double::doubleValue).sum();
+    // ── 콤보 결과에서 연령대 분포 역산 ────────────────────────────
+    // 콤보 순서: [0]=10대f, [1]=10대m, [2]=20대f ... (짝=f, 홀=m)
+    // 나이 인덱스(0~5) = 콤보 인덱스 / 2  →  여성+남성 합산 = 해당 나이대 활동량
+    private List<Integer> normalizeAgeFromCombos(List<CompletableFuture<Double>> combos) {
+        List<Double> ageRatios = new ArrayList<>();
+        for (int i = 0; i < 6; i++) {
+            double female = safeGetDone(combos.get(i * 2));
+            double male   = safeGetDone(combos.get(i * 2 + 1));
+            ageRatios.add(female + male);
+        }
+        double total = ageRatios.stream().mapToDouble(Double::doubleValue).sum();
         if (total == 0) return List.of(0, 0, 0, 0, 0, 0);
 
         List<Integer> result = new ArrayList<>();
         int sum = 0;
-        for (int i = 0; i < ratios.size() - 1; i++) {
-            int pct = (int) Math.round(ratios.get(i) / total * 100);
+        for (int i = 0; i < ageRatios.size() - 1; i++) {
+            int pct = (int) Math.round(ageRatios.get(i) / total * 100);
             result.add(pct);
             sum += pct;
         }
-        result.add(Math.max(0, 100 - sum));
+        result.add(Math.max(0, 100 - sum)); // 반올림 오차 보정
         return result;
     }
 
-    // ── 나이+성별 조합 중 ratio 최고값 그룹 반환 ────────────────────
+    // ── 나이+성별 조합 중 ratio 최고값 그룹 반환 ─────────────────
     private String getTopCombo(List<CompletableFuture<Double>> futures) {
         double maxRatio = -1;
         int maxIdx = -1;
@@ -387,7 +376,6 @@ public class NaverSearchService {
     }
 
     // ── 검색 활동 상태 분류 ────────────────────────────────────────
-    // DataLab 지수 평균(0~100) 기준
     // 임계값은 실제 데이터 누적 후 튜닝 권장
     private String getActivityStatus(int avgScore) {
         if (avgScore >= 70) return "폭발적";
@@ -400,7 +388,7 @@ public class NaverSearchService {
         return brand.get("brand_name").toString();
     }
 
-    // ── 최다 연령대 추출 ──────────────────────────────────────────
+    // ── 최다 연령대 추출 (차트용) ─────────────────────────────────
     private String getTopAge(List<Integer> ageCur) {
         int maxIdx = 0;
         for (int i = 1; i < ageCur.size(); i++) {
@@ -422,7 +410,7 @@ public class NaverSearchService {
         int day = parts.length > 2 ? Integer.parseInt(parts[2]) : 1;
         return switch (periodType) {
             case "year"  -> mon + "월";
-            case "month" -> mon + "/" + day;  // 일별 포인트이므로 월/일 표기
+            case "month" -> mon + "/" + day;
             default      -> mon + "/" + day;
         };
     }
