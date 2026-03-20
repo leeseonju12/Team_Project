@@ -1720,7 +1720,7 @@
       if (naverCache[period]) {
         if (overlay) overlay.style.display = 'none';
         if (content) content.style.opacity = '1';
-        renderNaverAll(naverCache[period]);
+        renderNaverAll(naverCache[period], period);
         return;
       }
 
@@ -1733,7 +1733,7 @@
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         naverCache[period] = data;
-        renderNaverAll(data);
+        renderNaverAll(data, period);
 
       } catch (err) {
         console.error('네이버 데이터 로드 실패:', err);
@@ -1746,7 +1746,7 @@
       }
     }
 
-    function renderNaverAll(data) {
+    function renderNaverAll(data, period) {
       const noData       = !data.trends || data.trends.length === 0;
       const detailEmpty  = document.getElementById('naverDetailEmpty');
       const trendCanvas  = document.getElementById('naverTrendChart');
@@ -1774,7 +1774,7 @@
         prevTopGender = data.genderFemalePrev >= data.genderMalePrev ? '여성' : '남성';
       }
 
-      renderNaverSummary(data.summary, prevTopAge, prevTopGender);
+      renderNaverSummary(data.summary, period);
       renderNaverKeywords(data.keywords);
       if (!noData) {
         renderNaverTrendChart(data.trends);
@@ -1787,19 +1787,18 @@
     }
 
  // ── 요약 카드 ─────────────────────────────────────────
-function renderNaverSummary(summary, prevTopAge, prevTopGender, period) {
+function renderNaverSummary(summary, period) {
   if (!summary) return;
   const sEl   = document.getElementById('naverSearchVal');
   const sSub  = document.getElementById('naverSearchSub');
   const uEl   = document.getElementById('naverUserStat');
   const uSub  = document.getElementById('naverUserStatSub');
 
-  // period가 안 넘어올 경우 전역변수 또는 활성 탭에서 직접 읽기
   const currentPeriod = period
-    ?? window.currentNaverPeriod
     ?? document.querySelector('[data-period].active')?.dataset.period
     ?? 'month';
 
+  // ── 검색 활성도 ──────────────────────────────────────
   if (sEl) {
     const score  = summary.totalSearchCount ?? 0;
     const status = summary.searchActivityStatus ?? '';
@@ -1818,20 +1817,21 @@ function renderNaverSummary(summary, prevTopAge, prevTopGender, period) {
     sSub.innerHTML  = `전월 대비 <span style="color:${up ? 'var(--green)' : 'var(--red)'};font-weight:700;">${up ? '▲' : '▼'} ${Math.abs(ptDiff)}pt</span>`;
   }
 
+  // ── 주요 검색 사용자 ──────────────────────────────────
   if (uEl) {
     if (currentPeriod === 'week') {
       uEl.textContent = '주간 데이터는 제공하지 않습니다';
-    } else if (!summary.topAgeGroup || !summary.topGender) {
-      uEl.textContent = '데이터가 없습니다';
+    } else if (summary.topUser) {
+      uEl.textContent = summary.topUser + '이 가장 많이 검색';
     } else {
-      uEl.textContent = summary.topAgeGroup + ' ' + summary.topGender + '이 가장 많이 검색';
+      uEl.textContent = '데이터가 없습니다';
     }
   }
   if (uSub) {
     if (currentPeriod === 'week') {
       uSub.textContent = '';
-    } else if (prevTopAge && prevTopGender) {
-      uSub.textContent = '전월: ' + prevTopAge + ' ' + prevTopGender + '이 가장 많이 검색';
+    } else if (summary.prevTopUser) {
+      uSub.textContent = '전월: ' + summary.prevTopUser + '이 가장 많이 검색';
     } else {
       uSub.textContent = '';
     }

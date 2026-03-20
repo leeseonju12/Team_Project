@@ -32,6 +32,23 @@ public class NaverSearchService {
     private static final List<String> AGE_CODES  = List.of("1", "2", "3", "4", "5", "6");
     private static final List<String> AGE_LABELS = List.of("10대", "20대", "30대", "40대", "50대", "60대+");
 
+    // 나이+성별 12개 조합 — DataLab API에 gender + ages 동시 지정
+    private record AgeGenderCombo(String ageCode, String ageLabel, String gender, String genderLabel) {}
+    private static final List<AgeGenderCombo> AGE_GENDER_COMBOS = List.of(
+        new AgeGenderCombo("1", "10대",  "f", "여성"),
+        new AgeGenderCombo("1", "10대",  "m", "남성"),
+        new AgeGenderCombo("2", "20대",  "f", "여성"),
+        new AgeGenderCombo("2", "20대",  "m", "남성"),
+        new AgeGenderCombo("3", "30대",  "f", "여성"),
+        new AgeGenderCombo("3", "30대",  "m", "남성"),
+        new AgeGenderCombo("4", "40대",  "f", "여성"),
+        new AgeGenderCombo("4", "40대",  "m", "남성"),
+        new AgeGenderCombo("5", "50대",  "f", "여성"),
+        new AgeGenderCombo("5", "50대",  "m", "남성"),
+        new AgeGenderCombo("6", "60대+", "f", "여성"),
+        new AgeGenderCombo("6", "60대+", "m", "남성")
+    );
+
     // 캐시 키: brandId + period만 사용
     // → 같은 브랜드·기간 단위는 1시간 내 재호출 시 캐시에서 반환 (API 미호출)
     // → from/to를 키에 넣으면 LocalDate.now()가 매번 달라져 캐시가 무의미해짐
@@ -98,6 +115,17 @@ public class NaverSearchService {
                         () -> getRatioAvg(prevFromStr, prevToStr, storeName, null, List.of(age)), POOL))
                 .toList();
 
+        // 나이+성별 12개 조합: 정확한 "30대 여성" 같은 최고 그룹 판별용
+        List<CompletableFuture<Double>> fCombosCur = AGE_GENDER_COMBOS.stream()
+                .map(c -> CompletableFuture.supplyAsync(
+                        () -> getRatioAvg(fromStr, toStr, storeName, c.gender(), List.of(c.ageCode())), POOL))
+                .toList();
+
+        List<CompletableFuture<Double>> fCombosPrev = AGE_GENDER_COMBOS.stream()
+                .map(c -> CompletableFuture.supplyAsync(
+                        () -> getRatioAvg(prevFromStr, prevToStr, storeName, c.gender(), List.of(c.ageCode())), POOL))
+                .toList();
+
         // 각 Future가 예외를 던져도 allOf가 중단되지 않도록 exceptionally로 감쌈
         // → 하나가 Connection reset 나도 나머지 16개는 계속 진행
         var fTrendSafe    = fTrend.exceptionally(e -> { log.warn("[NaverSearch] fTrend 실패: {}", e.getMessage()); return null; });
@@ -114,6 +142,8 @@ public class NaverSearchService {
         allFutures.add(fMalePrev);
         allFutures.addAll(fAgeCur);
         allFutures.addAll(fAgePrev);
+        allFutures.addAll(fCombosCur);
+        allFutures.addAll(fCombosPrev);
 
         // ── 2. 전체 대기 (타임아웃 없음 - 모든 데이터를 반드시 수신)
         // 네이버 서버 무응답 시에는 HTTP 타임아웃(30초)이 상한선
@@ -178,7 +208,11 @@ public class NaverSearchService {
         List<Integer> ageCur  = normalizeAge(fAgeCur);
         List<Integer> agePrev = normalizeAge(fAgePrev);
 
-        // 주요 사용자 요약
+        // 주요 사용자 요약 — 12개 조합 중 ratio 최고값 조합 선택
+        String topUser = getTopCombo(fCombosCur);
+        String prevTopUser = getTopCombo(fCombosPrev);
+
+        // 차트용 topAge / topGender (기존 유지)
         boolean ageHasData    = ageCur.stream().anyMatch(v -> v > 0);
         String topAge         = ageHasData ? getTopAge(ageCur) : null;
         String topGender      = totalCur > 0 ? (gFemaleCur >= gMaleCur ? "여성" : "남성") : null;
@@ -215,11 +249,13 @@ public class NaverSearchService {
                 brandId, period, activityScore, activityStatus, topAge, topGender);
         return NaverSearchResponseDto.builder()
                 .summary(NaverSearchSummaryDto.builder()
-                        .totalSearchCount(activityScore)       // 평균 활동 지수 (0~100)
-                        .searchActivityStatus(activityStatus)  // 폭발적 / 안정적 / 침체기  ← DTO에 필드 추가 필요
+                        .totalSearchCount(activityScore)
+                        .searchActivityStatus(activityStatus)
                         .searchGrowthPct(growthPct)
                         .topAgeGroup(topAge)
                         .topGender(topGender)
+                        .topUser(topUser)           // "30대 여성" 형태
+                        .prevTopUser(prevTopUser)   // 이전 기간 최고 조합
                         .build())
                 .trends(trends)
                 .keywords(keywords)
@@ -335,6 +371,19 @@ public class NaverSearchService {
         }
         result.add(Math.max(0, 100 - sum));
         return result;
+    }
+
+    // ── 나이+성별 조합 중 ratio 최고값 그룹 반환 ────────────────────
+    private String getTopCombo(List<CompletableFuture<Double>> futures) {
+        double maxRatio = -1;
+        int maxIdx = -1;
+        for (int i = 0; i < futures.size(); i++) {
+            double v = safeGetDone(futures.get(i));
+            if (v > maxRatio) { maxRatio = v; maxIdx = i; }
+        }
+        if (maxIdx < 0 || maxRatio == 0) return null;
+        AgeGenderCombo c = AGE_GENDER_COMBOS.get(maxIdx);
+        return c.ageLabel() + " " + c.genderLabel(); // 예: "30대 여성"
     }
 
     // ── 검색 활동 상태 분류 ────────────────────────────────────────
