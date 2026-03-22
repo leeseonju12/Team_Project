@@ -37,8 +37,8 @@ ai:
 
 naver:
   api:
-    client-id: 
-    client-secret: 
+    client-id: kAgrRRheyjbpn4cZVPvr
+    client-secret: 4qeaQP269D
     datalab-url: https://openapi.naver.com/v1/datalab/search
 
 
