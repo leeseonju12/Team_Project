@@ -40,6 +40,9 @@ public class InstagramApiService {
     
     @Value("${instagram.api.access-token}")
     private String accessToken;
+    
+    @Value("${instagram.api.account-ids}")
+    private String accountId;
 
  // 🌟 yml에 적어둔 여러 개의 계정 ID를 한 번에 불러옵니다.
     @Value("${instagram.api.account-ids}")
@@ -309,6 +312,47 @@ public class InstagramApiService {
             System.err.println("게시물(" + mediaId + ") 댓글 수집 에러: " + e.getMessage());
         }
         return count;
+    }
+    
+    public String publishPost(String imageUrl, String caption) {
+        RestTemplate restTemplate = new RestTemplate();
+        ObjectMapper mapper = new ObjectMapper();
+
+        try {
+            // ==========================================
+            // 1단계: 미디어 컨테이너 생성 (임시 업로드)
+            // ==========================================
+            String containerUrl = "https://graph.facebook.com/v18.0/" + accountId + "/media";
+            
+            MultiValueMap<String, String> containerParams = new LinkedMultiValueMap<>();
+            containerParams.add("image_url", imageUrl);
+            containerParams.add("caption", caption);
+            containerParams.add("access_token", accessToken);
+
+            // 무식하지만 가장 안전하게 String으로 받아서 까기!
+            ResponseEntity<String> containerResponse = restTemplate.postForEntity(containerUrl, containerParams, String.class);
+            JsonNode containerNode = mapper.readTree(containerResponse.getBody());
+            String containerId = containerNode.get("id").asText();
+
+            // ==========================================
+            // 2단계: 실제 피드에 게시 (Publish)
+            // ==========================================
+            String publishUrl = "https://graph.facebook.com/v18.0/" + accountId + "/media_publish";
+            
+            MultiValueMap<String, String> publishParams = new LinkedMultiValueMap<>();
+            publishParams.add("creation_id", containerId);
+            publishParams.add("access_token", accessToken);
+
+            ResponseEntity<String> publishResponse = restTemplate.postForEntity(publishUrl, publishParams, String.class);
+            JsonNode publishNode = mapper.readTree(publishResponse.getBody());
+            
+            // 최종적으로 생성된 인스타그램 게시물 ID 반환
+            return publishNode.get("id").asText();
+
+        } catch (Exception e) {
+            // 에러가 나면 날것 그대로의 에러 메시지를 프론트로 던져서 원인 파악!
+            throw new RuntimeException("인스타그램 API 에러: " + e.getMessage());
+        }
     }
     
     

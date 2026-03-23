@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.dto.ContentRequest;
+import com.example.demo.dto.PublishRequest;
 import com.example.demo.dto.SnsResult;
 import com.example.demo.service.ContentService;
 import com.example.demo.service.ImgbbService;
@@ -52,32 +53,39 @@ public class ContentController {
 
     // 추가된 API 메서드 (게시하기 버튼에서 호출
     
+//    @PostMapping("/publish/instagram")
+//    @ResponseBody // 🌟 매우 중요: HTML 페이지 이동이 아니라 JSON 데이터를 반환하게 해줌!
+//    public ResponseEntity<?> publishToInstagram(@RequestBody Map<String, String> requestData) {
+//        try {
+//            // 프론트에서 보내준 텍스트 내용, 임시 이미지 URL, 토큰
+//            String caption = requestData.get("caption");
+//
+//            // 1. 인스타그램 계정 ID 조회
+//            String igAccountId = instagramApiService.getInstagramAccountId();
+//            
+//            // 2. 피드 발행 (한글 깨짐 해결된 버전 호출)
+//            String publishedId = instagramApiService.publishInstagramPost(igAccountId, imageUrl, caption);
+//
+//            // 성공 응답 (JSON)
+//            Map<String, String> result = new HashMap<>();
+//            result.put("message", "success");
+//            result.put("publishedId", publishedId);
+//            return ResponseEntity.ok(result);
+//
+//        } catch (Exception e) {
+//            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
+//        }
+//    }
+    
     @PostMapping("/publish/instagram")
-    @ResponseBody // 🌟 매우 중요: HTML 페이지 이동이 아니라 JSON 데이터를 반환하게 해줌!
-    public ResponseEntity<?> publishToInstagram(@RequestBody Map<String, String> requestData) {
+    @ResponseBody
+    public ResponseEntity<?> publishToInstagram(@RequestBody PublishRequest request) {
         try {
-            // 프론트에서 보내준 텍스트 내용, 임시 이미지 URL, 토큰
-            String caption = requestData.get("caption");
-            String imageUrl = requestData.get("imageUrl");
-            /*
-            String accessToken = requestData.get("accessToken");
-
-            if (accessToken == null || accessToken.isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("message", "액세스 토큰이 없습니다."));
-            }*/
-
-            // 1. 인스타그램 계정 ID 조회
-            String igAccountId = instagramApiService.getInstagramAccountId();
+            // 서비스 호출해서 발행 완료 후 게시물 ID 받아오기
+            String postId = instagramApiService.publishPost(request.getImageUrl(), request.getCaption());
             
-            // 2. 피드 발행 (한글 깨짐 해결된 버전 호출)
-            String publishedId = instagramApiService.publishInstagramPost(igAccountId, imageUrl, caption);
-
-            // 성공 응답 (JSON)
-            Map<String, String> result = new HashMap<>();
-            result.put("message", "success");
-            result.put("publishedId", publishedId);
-            return ResponseEntity.ok(result);
-
+            // 프론트엔드에 성공 메시지 던져주기
+            return ResponseEntity.ok(Map.of("message", "성공적으로 게시되었습니다!", "postId", postId));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
         }
@@ -112,5 +120,6 @@ public class ContentController {
             return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
         }
     }
+
     
 }

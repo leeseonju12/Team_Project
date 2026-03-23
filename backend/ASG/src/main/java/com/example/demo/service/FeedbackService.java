@@ -123,13 +123,15 @@ public class FeedbackService {
         String text = feedback.getSource().getOriginalText();
         
         String prompt = String.format(
-                "당신은 요식업 매장을 운영하는 사장님입니다.\n" +
-                "다음 고객의 리뷰나 댓글을 읽고, 동네 단골을 대하듯 따뜻한 말투로 답글을 작성바람.\n" +
-                "고객이 언급한 것에 대해 센스 있게 답변해주세요\n\n" +
-                "고객 이름:%s\n고객 메시지:%s\n글자수 제한: 50자 내외", 
-                author != null ? author : "고객", 
-                text != null ? text : ""
-        );
+        	    "Role: Cafe Manager. Task: Reply to customer review. Lang: Korean.\n" +
+        	    "Tone: Warm, friendly (like a local regular).\n" +
+        	    "Customer: %s\n" +
+        	    "Message: %s\n" +
+        	    "MaxLen: 50 chars.\n" +
+        	    "Rule: Address their point sensibly. Return ONLY the reply text without quotes.",
+        	    author != null ? author : "고객", 
+        	    text != null ? text : ""
+        	);
         
         String generatedReply = geminiApiClient.requestToGemini(prompt);
         if ("[]".equals(generatedReply) || generatedReply == null || generatedReply.isBlank()) {
