@@ -12,26 +12,33 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableCaching
 public class CacheConfig {
-
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-
-        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofHours(24))                          // TTL 24시간
+        // 기본 설정 (24시간) - 기존 그대로
+        RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(Duration.ofHours(24))
                 .serializeKeysWith(
                         RedisSerializationContext.SerializationPair
                                 .fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(
                         RedisSerializationContext.SerializationPair
                                 .fromSerializer(new GenericJackson2JsonRedisSerializer()))
-                .disableCachingNullValues();                              // null은 캐시하지 않음
+                .disableCachingNullValues();
+
+        // 캐시 이름별 개별 TTL 설정
+        Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
+        cacheConfigurations.put("related-keywords",
+                defaultConfig.entryTtl(Duration.ofDays(180)));  // 6개월
 
         return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(config)
+                .cacheDefaults(defaultConfig)
+                .withInitialCacheConfigurations(cacheConfigurations)  // 여기서 이름별로 덮어씌움
                 .build();
     }
 }

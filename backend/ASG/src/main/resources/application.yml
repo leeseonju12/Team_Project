@@ -41,4 +41,6 @@ naver:
     client-secret: 4qeaQP269D
     datalab-url: https://openapi.naver.com/v1/datalab/search
 
-
+serpapi:
+  base-url: https://serpapi.com
+  api-key: 47534858ba995ebc00717b007a6de1cd5ffee4c1e565cc83665cc82bc0188789

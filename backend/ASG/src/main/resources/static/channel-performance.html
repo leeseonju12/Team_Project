@@ -2303,9 +2303,131 @@ function renderNaverSummary(summary, period) {
         { id:'gn', label:'공통검색', platform:'general', clAngle:125, clDist:128, size:22, desc:'전 플랫폼에서 고르게 검색되는 키워드 그룹.',
           leaves:[ {id:'l12',label:'대전맛집',weight:5,angle:108,dist:245,platform:'general',desc:'대전 방문 시 필수 검색어. 지도·SNS 공통.'}, {id:'l13',label:'가성비',weight:4,angle:128,dist:245,platform:'general',desc:"'갓성비'로 불릴 만큼 합리적 가격."}, {id:'l14',label:'대전역점',weight:3,angle:150,dist:245,platform:'general',desc:'KTX 이용객 접근. 전 플랫폼 공통 키워드.'} ] },
       ];
-      const RELATED = ['성심당 본점 영업시간','성심당 튀김소보로 가격','성심당 대전역 위치','성심당 택배 주문 방법','성심당 케이크 예약','성심당 딸기시루 가격','성심당 주차 팁','성심당 메뉴 추천 2026','성심당 오픈런 시간','성심당 근처 맛집','성심당 선물 세트','성심당 KTX 픽업'];
+      
       const blocksEl = document.getElementById('mm-rel-blocks');
-      RELATED.forEach((q, i) => { const el = document.createElement('div'); el.className = 'mm-rel-block'; el.innerHTML = `<span class="mm-rel-block-num ${i < 3 ? 'hi' : ''}">${String(i+1).padStart(2,'0')}</span>${q}`; el.onclick = () => window.open(`https://search.naver.com/search.naver?query=${encodeURIComponent(q)}`, '_blank'); blocksEl.appendChild(el); });
+
+      const popup = document.createElement('div');
+      popup.style.cssText = `
+        position:fixed; z-index:9999; background:#fff;
+        border:1.5px solid var(--border); border-radius:var(--radius-sm);
+        box-shadow:var(--shadow-lg); padding:6px;
+        display:none; flex-direction:column; gap:4px; min-width:140px;
+      `;
+      document.body.appendChild(popup);
+
+      // 클릭 팝업 열려있는지 추적 (열려있으면 hover 팝업 무시)
+      let isClickPopupOpen = false;
+
+      document.addEventListener('click', (e) => {
+        if (!popup.contains(e.target)) {
+          popup.style.display = 'none';
+          isClickPopupOpen = false; // 바깥 클릭 시 플래그 초기화
+        }
+      });
+      popup.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+
+      async function loadRelatedKeywords(brandId) {
+        try {
+          const res  = await fetch(`/api/mindmap?brandId=${brandId}`);
+          const data = await res.json();
+
+          const countEl = document.querySelector('.mm-bar-count');
+          if (countEl) countEl.textContent = data.totalCount + '개';
+
+          blocksEl.innerHTML = '';
+          data.keywords.forEach((item, i) => {
+            const el = document.createElement('div');
+            el.className = 'mm-rel-block';
+            el.innerHTML = `<span class="mm-rel-block-num ${i < 3 ? 'hi' : ''}">${String(i+1).padStart(2,'0')}</span>${item.keyword}`;
+
+            // hover → 출처 표시 (클릭 팝업 열려있으면 무시)
+            el.onmouseenter = () => {
+              if (isClickPopupOpen) return;
+
+              const sourceLabel =
+                item.source === 'BOTH'   ? '🌐 구글 + 네이버 공통' :
+                item.source === 'GOOGLE' ? '🔴 구글 검색어' :
+                                           '🟢 네이버 검색어';
+              popup.innerHTML = `
+                <div style="
+                  padding:7px 12px; font-size:12px; font-weight:600;
+                  color:var(--text2); white-space:nowrap; pointer-events:none;
+                ">${sourceLabel}</div>
+              `;
+              popup.style.pointerEvents = 'none';
+
+              const rect = el.getBoundingClientRect();
+              popup.style.left = rect.left + 'px';
+              popup.style.top  = (rect.top - 44) + 'px';
+              popup.style.display = 'flex';
+            };
+
+            // 블럭 벗어나면 닫기 (클릭 팝업 열려있으면 무시)
+            el.onmouseleave = () => {
+              if (isClickPopupOpen) return;
+              popup.style.display = 'none';
+            };
+
+            // 클릭 → GOOGLE/NAVER 바로 이동, BOTH 는 선택 팝업
+            el.onclick = (e) => {
+              e.stopPropagation();
+
+              if (item.source === 'GOOGLE') {
+                window.open(item.googleUrl, '_blank');
+                return;
+              }
+              if (item.source === 'NAVER') {
+                window.open(item.naverUrl, '_blank');
+                return;
+              }
+
+              // BOTH → 선택 팝업
+              isClickPopupOpen = true;
+              popup.style.pointerEvents = 'auto';
+              popup.innerHTML = `
+                <div id="popup-naver" style="
+                  display:flex; align-items:center; gap:8px; padding:7px 12px;
+                  border-radius:6px; cursor:pointer; font-size:12px; font-weight:600; color:#03C75A;
+                " onmouseover="this.style.background='#F0FDF4'" onmouseout="this.style.background='transparent'">
+                  <span style="font-size:14px;">N</span> 네이버로 검색
+                </div>
+                <div id="popup-google" style="
+                  display:flex; align-items:center; gap:8px; padding:7px 12px;
+                  border-radius:6px; cursor:pointer; font-size:12px; font-weight:600; color:#EA4335;
+                " onmouseover="this.style.background='#FEF2F2'" onmouseout="this.style.background='transparent'">
+                  <span style="font-size:14px;">G</span> 구글로 검색
+                </div>
+              `;
+
+              popup.querySelector('#popup-naver').addEventListener('click', () => {
+                window.open(item.naverUrl, '_blank');
+                isClickPopupOpen = false;
+                popup.style.display = 'none';
+              });
+              popup.querySelector('#popup-google').addEventListener('click', () => {
+                window.open(item.googleUrl, '_blank');
+                isClickPopupOpen = false;
+                popup.style.display = 'none';
+              });
+
+              const rect = el.getBoundingClientRect();
+              popup.style.left = rect.left + 'px';
+              popup.style.top  = (rect.top - 90) + 'px';
+              popup.style.display = 'flex';
+            };
+
+            blocksEl.appendChild(el);
+          });
+
+        } catch (err) {
+          console.error('연관 키워드 로드 실패:', err);
+        }
+      }
+
+      loadRelatedKeywords(18);
+
       const canvas=document.getElementById('mm-canvas'), ctx=canvas.getContext('2d'), tip=document.getElementById('mm-tip');
       let mmW=0,mmH=0,mmCx=0,mmCy=0,mmHovered=null,mmPulse=0,mmPos={};
       const D2R=d=>d*Math.PI/180;
@@ -2324,6 +2446,7 @@ function renderNaverSummary(summary, period) {
       canvas.addEventListener('mouseleave',()=>{mmHovered=null;tip.classList.remove('on');});
       window.addEventListener('resize',mmResize);
       mmResize();
+
     })();
   </script>
 </body>
