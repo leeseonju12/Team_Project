@@ -20,6 +20,7 @@ import com.example.demo.dto.ContentRequest;
 import com.example.demo.dto.PublishRequest;
 import com.example.demo.dto.SnsResult;
 import com.example.demo.service.ContentService;
+import com.example.demo.service.FacebookApiService;
 import com.example.demo.service.ImgbbService;
 import com.example.demo.service.InstagramApiService; // 추가됨
 import com.fasterxml.jackson.databind.JsonNode;
@@ -33,7 +34,8 @@ public class ContentController {
 
     private final ContentService geminiService;
     private final InstagramApiService instagramApiService;
-    private final ImgbbService imgbbService; 
+    private final ImgbbService imgbbService;
+    private final FacebookApiService facebookApiService;
     
     @GetMapping("/generate")
     public String showGeneratePage() {
@@ -121,5 +123,15 @@ public class ContentController {
         }
     }
 
+    @PostMapping("/publish/facebook")
+    @ResponseBody
+    public ResponseEntity<?> publishToFacebook(@RequestBody PublishRequest request) {
+        try {
+            String postId = facebookApiService.publishPost(request.getImageUrl(), request.getCaption());
+            return ResponseEntity.ok(Map.of("message", "페이스북에 성공적으로 게시되었습니다!", "postId", postId));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
+        }
+    }
     
 }

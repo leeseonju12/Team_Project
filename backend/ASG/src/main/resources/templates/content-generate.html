@@ -546,8 +546,8 @@
 
     // 7. SNS 발행 로직
     async function publishToSns(evt, platform) {
-      if (platform !== 'instagram') {
-        alert(platform + ' 게시는 아직 준비 중입니다. 인스타그램만 가능합니다!');
+      if (platform !== 'instagram' && platform !== 'facebook') {
+        alert(platform + '현재 플랫폼의 게시는 아직 준비 중입니다');
         return;
       }
 
@@ -555,9 +555,8 @@
       const originalText = btn.textContent;
       const contentText = document.getElementById('text-' + platform).innerText;
 
-      // 🌟 [최적화] 화면에 업로드된 첫 번째 이미지 URL을 찾아서 보냅니다!
       const uploadedImgInput = document.querySelector('.uploaded-img-url');
-      const finalImageUrl = uploadedImgInput ? uploadedImgInput.value : "https://images.unsplash.com/photo-1505628346881-b72b27e84530?w=500&auto=format&fit=crop"; // 이미지가 없으면 임시 이미지 사용
+      const finalImageUrl = uploadedImgInput ? uploadedImgInput.value : "https://ibb.co/WCtwW4N"; // 이미지가 없으면 임시 이미지 사용
 
       if(!confirm("이 내용으로 인스타그램에 게시하시겠습니까?")) return;
 
@@ -565,13 +564,12 @@
       btn.disabled = true;
 
       try {
-        const response = await fetch('/content/publish/instagram', {
+        const response = await fetch('/content/publish/' + platform, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             caption: contentText,
-            imageUrl: finalImageUrl // 🌟 업로드된 진짜 URL 전송!
-            // accessToken은 보통 백엔드에서 환경 변수로 관리하므로 여기서 안 보내는 것이 안전합니다. (서버 코드가 어떻게 되어있는지 확인 필요)
+            imageUrl: finalImageUrl
           })
         });
 

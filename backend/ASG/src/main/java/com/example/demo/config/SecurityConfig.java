@@ -29,7 +29,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 // 1. CSRF 보안 기능을 끕니다 (이게 범인입니다!)
-                // .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable())
 
                 .authorizeHttpRequests(auth -> auth
                         // 2. 아까 고민하신 "무한 페이지" 해결책:
