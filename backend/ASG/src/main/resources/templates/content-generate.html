@@ -556,9 +556,29 @@
       const contentText = document.getElementById('text-' + platform).innerText;
 
       const uploadedImgInput = document.querySelector('.uploaded-img-url');
-      const finalImageUrl = uploadedImgInput ? uploadedImgInput.value : "https://ibb.co/WCtwW4N"; // 이미지가 없으면 임시 이미지 사용
+      //const finalImageUrl = uploadedImgInput ? uploadedImgInput.value : "https://i.ibb.co/Q0dRF37/unnamed-27.jpg"; // 이미지가 없으면 임시 이미지 사용
+      let finalImageUrl = "";
 
-      if(!confirm("이 내용으로 인스타그램에 게시하시겠습니까?")) return;
+      // 값이 정상적으로 들어있는 경우
+      if (uploadedImgInput && uploadedImgInput.value.trim() !== '') {
+        finalImageUrl = uploadedImgInput.value;
+      } else {
+        // 올리지 않았거나, 업로드 중 오류가 나서 값이 없는 경우
+        const fallbackMsg = platform === 'instagram' 
+            ? "인스타그램은 사진이 필수입니다! 기본(대체) 이미지로 게시하시겠습니까?" 
+            : "업로드된 이미지가 없습니다. 기본(대체) 이미지와 함께 게시하시겠습니까?";
+        
+        const useFallback = confirm(fallbackMsg);
+        
+        if (useFallback) {
+          finalImageUrl = "https://i.ibb.co/Q0dRF37/unnamed-27.jpg"; 
+        } else {
+          // 취소하면 발행 자체를 중단하고 함수 탈출
+          return; 
+        }
+      }
+      
+      if(!confirm("이 내용으로 게시하시겠습니까?")) return;
 
       btn.textContent = '게시 중...';
       btn.disabled = true;

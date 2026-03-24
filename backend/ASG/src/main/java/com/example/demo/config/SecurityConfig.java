@@ -40,6 +40,7 @@ public class SecurityConfig {
                         
                         .requestMatchers("/feedback.html", "/api/feedbacks/**", "/feedback").permitAll()
                         .requestMatchers("/content/**", "/content/publish/**").permitAll()
+                        .requestMatchers("/api/analytics/**").permitAll()
 
                         .requestMatchers("/admin/**", "/mypage/**").authenticated()
                         .anyRequest().authenticated()
