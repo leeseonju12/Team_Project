@@ -10,5 +10,4 @@ public class AsgApplication {
 		SpringApplication.run(AsgApplication.class, args);
 	} 
 
-}
-  
+}  
