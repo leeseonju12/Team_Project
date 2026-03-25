@@ -1,7 +1,7 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.channel.MindmapResponseDto;
-import com.example.demo.service.MindmapService;
+import com.example.demo.dto.channel.MindmapSearchResponseDto;
+import com.example.demo.service.MindmapSearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class MindmapController {
 
-    private final MindmapService mindmapService;
+    private final MindmapSearchService mindmapService;
 
     /**
      * 연관 키워드 조회
@@ -18,7 +18,7 @@ public class MindmapController {
      * Redis 캐시 있으면 바로 반환, 없으면 SerpAPI 호출 후 캐시 저장
      */
     @GetMapping
-    public MindmapResponseDto getRelatedKeywords(
+    public MindmapSearchResponseDto getRelatedKeywords(
             @RequestParam(defaultValue = "18") Long brandId) {
         return mindmapService.getRelatedKeywords(brandId);
     }
@@ -29,7 +29,7 @@ public class MindmapController {
      * Redis 캐시 삭제 후 SerpAPI 재호출 (6개월마다 또는 수동 갱신 시 사용)
      */
     @PostMapping("/refresh")
-    public MindmapResponseDto refreshRelatedKeywords(
+    public MindmapSearchResponseDto refreshRelatedKeywords(
             @RequestParam(defaultValue = "18") Long brandId) {
         return mindmapService.refreshRelatedKeywords(brandId);
     }

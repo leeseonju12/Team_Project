@@ -1,7 +1,7 @@
 package com.example.demo.service;
 
-import com.example.demo.dto.channel.MindmapKeywordDto;
-import com.example.demo.dto.channel.MindmapResponseDto;
+import com.example.demo.dto.channel.MindmapSearchKeywordDto;
+import com.example.demo.dto.channel.MindmapSearchResponseDto;
 import com.example.demo.dto.channel.SerpApiResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -13,7 +13,7 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-public class MindmapService {
+public class MindmapSearchService {
 
     private final SerpApiClient serpApiClient;
     private final JdbcTemplate jdbcTemplate;  // brand 테이블에서 브랜드명 조회용
@@ -25,7 +25,7 @@ public class MindmapService {
      * key = brandId 로 캐시 구분
      */
     @Cacheable(value = "related-keywords", key = "#brandId")
-    public MindmapResponseDto getRelatedKeywords(Long brandId) {
+    public MindmapSearchResponseDto getRelatedKeywords(Long brandId) {
 
         // 1. brand 테이블에서 브랜드명 조회
         Map<String, Object> brand = jdbcTemplate.queryForMap(
@@ -41,10 +41,10 @@ public class MindmapService {
         SerpApiResponseDto naverResult  = results[1];
 
         // 3. 구글 + 네이버 결과 병합 및 점수 계산
-        List<MindmapKeywordDto> merged = mergeAndScore(googleResult, naverResult);
+        List<MindmapSearchKeywordDto> merged = mergeAndScore(googleResult, naverResult);
 
         // 4. 최종 응답 반환 (캐시에 자동 저장됨)
-        return new MindmapResponseDto(
+        return new MindmapSearchResponseDto(
                 brandId,
                 brandName,
                 merged.size(),
@@ -57,7 +57,7 @@ public class MindmapService {
      * Redis 에서 해당 brandId 캐시 삭제 → 재조회
      */
     @CacheEvict(value = "related-keywords", key = "#brandId")
-    public MindmapResponseDto refreshRelatedKeywords(Long brandId) {
+    public MindmapSearchResponseDto refreshRelatedKeywords(Long brandId) {
         return getRelatedKeywords(brandId);  // 캐시 삭제 후 재조회
     }
 
@@ -76,7 +76,7 @@ public class MindmapService {
      * BOTH는 두 백분위 평균이라 자연스럽게 유리하지만 무조건 앞에 오지는 않음
      * 낮은 점수일수록 상위
      */
-    private List<MindmapKeywordDto> mergeAndScore(
+    private List<MindmapSearchKeywordDto> mergeAndScore(
             SerpApiResponseDto googleResult,
             SerpApiResponseDto naverResult) {
 
@@ -119,7 +119,7 @@ public class MindmapService {
         }
 
         // ── 3. 백분위 변환 및 최종 점수 계산 ───────────────────────────
-        List<MindmapKeywordDto> list = new ArrayList<>();
+        List<MindmapSearchKeywordDto> list = new ArrayList<>();
         for (Map.Entry<String, double[]> entry : scoreMap.entrySet()) {
             String keyword   = entry.getKey();
             double googlePos = entry.getValue()[0];
@@ -156,11 +156,11 @@ public class MindmapService {
                     googlePos == -1 ? 999 : googlePos,
                     naverPos  == -1 ? 999 : naverPos);
 
-            list.add(new MindmapKeywordDto(keyword, source, minPos, finalScore, googleUrl, naverUrl));
+            list.add(new MindmapSearchKeywordDto(keyword, source, minPos, finalScore, googleUrl, naverUrl));
         }
 
         // ── 4. 점수 오름차순 정렬 (낮을수록 상위) ──────────────────────
-        list.sort(Comparator.comparingDouble(MindmapKeywordDto::getScore));
+        list.sort(Comparator.comparingDouble(MindmapSearchKeywordDto::getScore));
 
         return list;
     }

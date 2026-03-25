@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class MindmapKeywordDto {
+public class MindmapSearchKeywordDto {
 
     private String keyword;   // 키워드 텍스트
     private String source;    // "GOOGLE" or "NAVER"

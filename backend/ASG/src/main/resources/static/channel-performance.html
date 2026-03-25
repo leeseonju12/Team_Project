@@ -2292,7 +2292,7 @@ function renderNaverSummary(summary, period) {
     /* ── KEYWORD MINDMAP ── */
     (function(){
       const MM_PC = { center:{color:'#0F172A'}, instagram:{color:'#E1306C'}, youtube:{color:'#EF4444'}, naver:{color:'#059669'}, general:{color:'#0891B2'} };
-      const MM_PLT_NAME = { instagram:'Instagram', youtube:'YouTube', naver:'네이버', general:'공통' };
+      const MM_PLT_NAME = { instagram:'Instagram', youtube:'YouTube', naver:'네이버', general:'구글' };
       const MM_DATA = [
         { id:'ig', label:'인스타그램', platform:'instagram', clAngle:205, clDist:130, size:22, desc:'#성심당 태그 게시물 40만+. 비주얼 특화 콘텐츠 허브.',
           leaves:[ {id:'l1',label:'딸기시루',weight:5,angle:170,dist:245,platform:'instagram',desc:'2023 SNS 바이럴 1위. 2kg 케이크로 화제.'}, {id:'l2',label:'말차시루',weight:4,angle:196,dist:245,platform:'instagram',desc:'2026 주목 신제품. 감성 색감으로 피드 인기.'}, {id:'l3',label:'빵지순례',weight:4,angle:222,dist:245,platform:'instagram',desc:'성심당이 빵지순례 성지 1순위.'}, {id:'l4',label:'순수롤',weight:3,angle:248,dist:245,platform:'instagram',desc:'순우유 생크림 롤케이크. 선물 포스팅 인기.'} ] },
@@ -2300,7 +2300,7 @@ function renderNaverSummary(summary, period) {
           leaves:[ {id:'l5',label:'튀김소보로',weight:5,angle:295,dist:245,platform:'youtube',desc:'유튜브 오픈런·리뷰 영상 압도적 1위 메뉴.'}, {id:'l6',label:'오픈런',weight:4,angle:330,dist:245,platform:'youtube',desc:'오픈 전 줄 서기. 브이로그·챌린지 폭발.'}, {id:'l7',label:'대전브이로그',weight:3,angle:5,dist:245,platform:'youtube',desc:'대전 여행 필수 코스. 유튜브 여행 브이로그.'} ] },
         { id:'nv', label:'네이버', platform:'naver', clAngle:55, clDist:130, size:22, desc:'네이버 지도·블로그 리뷰 수 압도적 1위 베이커리.',
           leaves:[ {id:'l8',label:'부추빵',weight:5,angle:28,dist:245,platform:'naver',desc:'튀김소보로와 양대 산맥. 블로그 방문 후기 단골.'}, {id:'l9',label:'명란바게트',weight:4,angle:52,dist:245,platform:'naver',desc:'숨겨진 베스트셀러. 짭조름한 맛 블로그 단골.'}, {id:'l10',label:'케익부띠끄',weight:4,angle:74,dist:245,platform:'naver',desc:'본점 맞은편 케이크 전문. 예약 후기 키워드.'}, {id:'l11',label:'택배주문',weight:3,angle:90,dist:245,platform:'naver',desc:'일부 상품 온라인 택배 판매.'} ] },
-        { id:'gn', label:'공통검색', platform:'general', clAngle:125, clDist:128, size:22, desc:'전 플랫폼에서 고르게 검색되는 키워드 그룹.',
+        { id:'gn', label:'구글', platform:'general', clAngle:125, clDist:128, size:22, desc:'전 플랫폼에서 고르게 검색되는 키워드 그룹.',
           leaves:[ {id:'l12',label:'대전맛집',weight:5,angle:108,dist:245,platform:'general',desc:'대전 방문 시 필수 검색어. 지도·SNS 공통.'}, {id:'l13',label:'가성비',weight:4,angle:128,dist:245,platform:'general',desc:"'갓성비'로 불릴 만큼 합리적 가격."}, {id:'l14',label:'대전역점',weight:3,angle:150,dist:245,platform:'general',desc:'KTX 이용객 접근. 전 플랫폼 공통 키워드.'} ] },
       ];
       
