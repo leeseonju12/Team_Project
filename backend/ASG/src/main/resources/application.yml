@@ -37,17 +37,17 @@ ai:
 
 naver:
   api:
-    client-id: 
-    client-secret: 
+    client-id: kAgrRRheyjbpn4cZVPvr
+    client-secret: 4qeaQP269D
     datalab-url: https://openapi.naver.com/v1/datalab/search
 
 serpapi:
   base-url: https://serpapi.com
-  api-key: 
+  api-key: 47534858ba995ebc00717b007a6de1cd5ffee4c1e565cc83665cc82bc0188789
 
 google:
-  api-key: 
-  cx: 
+  api-key: AIzaSyDSIGzXu_aCC07ZamOmG800N-b-SFs6hgE
+  cx: 82237a10f1f474083
 
 youtube:
-  api-key: 
+  api-key: AIzaSyDSIGzXu_aCC07ZamOmG800N-b-SFs6hgE
