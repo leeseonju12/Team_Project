@@ -15,11 +15,11 @@ public class PlatformKeywordController {
 
     private final PlatformKeywordService platformKeywordService;
 
-    @PostMapping("/keywords")
+    @GetMapping("/keywords")
     public ResponseEntity<PlatformKeywordResponseDto> getKeywords(
-            @RequestBody BrandSearchRequestDto request) {
+            @RequestParam Long brandId) {  // RequestBody → RequestParam으로 변경
 
-        PlatformKeywordResponseDto response = platformKeywordService.getKeywords(request);
+        PlatformKeywordResponseDto response = platformKeywordService.getKeywords(brandId);
         return ResponseEntity.ok(response);
     }
 }

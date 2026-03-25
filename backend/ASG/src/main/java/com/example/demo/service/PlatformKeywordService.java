@@ -6,9 +6,13 @@ import com.example.demo.service.apiConnect.GoogleSearchService;
 import com.example.demo.service.apiConnect.NaverSearchMService;
 import com.example.demo.service.apiConnect.YoutubeService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import org.springframework.jdbc.core.JdbcTemplate;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -18,24 +22,32 @@ public class PlatformKeywordService {
     private final YoutubeService youtubeService;
     private final NaverSearchMService naverSearchMService;
     private final KeywordAnalysisService keywordAnalysisService;
+    private final JdbcTemplate jdbcTemplate;  // 추가
 
-    public PlatformKeywordResponseDto getKeywords(BrandSearchRequestDto request) {
+    public PlatformKeywordResponseDto getKeywords(Long brandId) {
 
-        // 1. 각 플랫폼 데이터 수집
+        // 1. brandId로 브랜드명 조회 (MindmapService와 동일한 방식)
+        Map<String, Object> brand = jdbcTemplate.queryForMap(
+                "SELECT brand_name FROM brand WHERE brand_id = ?", brandId);
+        String brandName = brand.get("brand_name").toString();
+
+        // 2. DTO 생성
+        BrandSearchRequestDto request = new BrandSearchRequestDto(brandName, "month");
+
+        // 3. 각 플랫폼 데이터 수집
         List<String> instagramRaw = googleSearchService.getGoogleData(request, true);
         List<String> googleRaw    = googleSearchService.getGoogleData(request, false);
         List<String> youtubeRaw   = youtubeService.getYoutubeData(request);
         String       naverRaw     = naverSearchMService.getNaverBlogData(request);
 
-        // 2. Komoran 키워드 분석 (Naver는 List로 감싸서 전달)
+        // 4. Komoran 키워드 분석
         List<String> instagramKeywords = keywordAnalysisService.analyzeKeywords(instagramRaw);
         List<String> googleKeywords    = keywordAnalysisService.analyzeKeywords(googleRaw);
         List<String> youtubeKeywords   = keywordAnalysisService.analyzeKeywords(youtubeRaw);
         List<String> naverKeywords     = keywordAnalysisService.analyzeKeywords(List.of(naverRaw));
 
-        // 3. 응답 반환
         return new PlatformKeywordResponseDto(
-                request.getBrandName(),
+                brandName,
                 instagramKeywords,
                 youtubeKeywords,
                 naverKeywords,

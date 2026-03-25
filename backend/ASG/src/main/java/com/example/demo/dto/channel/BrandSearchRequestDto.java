@@ -8,7 +8,13 @@ import java.util.List;
 
 @Getter
 public class BrandSearchRequestDto {
-    private Long brandId;      // DB 식별용
-    private String brandName;  // 실제 검색어 (성심당 등)
-    private String period;     // "week", "month", "year" (토글 값)
+    private Long brandId;
+    private String brandName;
+    private String period;
+
+    // Service에서 직접 생성할 때 사용
+    public BrandSearchRequestDto(String brandName, String period) {
+        this.brandName = brandName;
+        this.period = period;
+    }
 }

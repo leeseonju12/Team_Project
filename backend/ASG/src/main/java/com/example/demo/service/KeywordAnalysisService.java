@@ -7,6 +7,10 @@ import kr.co.shineware.nlp.komoran.core.Komoran;
 import kr.co.shineware.nlp.komoran.model.KomoranResult;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
+import java.util.Set;
+import java.util.HashSet;
+import kr.co.shineware.nlp.komoran.model.Token;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,32 +31,64 @@ public class KeywordAnalysisService {
      * @return: 가장 많이 등장한 명사 상위 4개
      */
     public List<String> analyzeKeywords(List<String> jsonResponses) {
-        // 1. 모든 JSON에서 텍스트(제목, 설명)만 추출해서 하나로 합치기
         StringBuilder combinedText = new StringBuilder();
-        
         for (String json : jsonResponses) {
             combinedText.append(extractTextFromJson(json));
         }
 
-        // 2. KOMORAN으로 명사 추출하기
-        KomoranResult analyzeResultList = komoran.analyze(combinedText.toString());
-        List<String> nouns = analyzeResultList.getNouns(); // 명사만 쏙 뽑기
+        String text = combinedText.toString();
+        if (text.isBlank()) return new ArrayList<>();  // 빈 텍스트 방어
 
-        // 3. 단어별 빈도수 계산하기
         Map<String, Integer> wordCounts = new HashMap<>();
-        for (String noun : nouns) {
-            // 2글자 이상인 단어만 필터링 (의미 없는 한 글자 단어 제외)
-            if (noun.length() > 1) {
-                wordCounts.put(noun, wordCounts.getOrDefault(noun, 0) + 1);
+
+        // 1. 해시태그 직접 추출 (가중치 3배)
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("#([\\w가-힣]{2,})").matcher(text);
+        while (matcher.find()) {
+            String tag = matcher.group(1);
+            if (!isStopWord(tag)) {
+                wordCounts.put(tag, wordCounts.getOrDefault(tag, 0) + 3);
             }
         }
 
-        // 4. 빈도수 기준 내림차순 정렬 후 상위 4개 선정
+        // 2. Komoran getNouns() 로 명사 추출
+        try {
+            List<String> nouns = komoran.analyze(text).getNouns();
+            for (int i = 0; i < nouns.size(); i++) {
+                String noun = nouns.get(i);
+                if (noun.length() < 2 || isStopWord(noun)) continue;
+
+                // 연속된 명사 이어붙이기
+                if (i + 1 < nouns.size()) {
+                    String compound = noun + nouns.get(i + 1);
+                    if (!isStopWord(compound)) {
+                        wordCounts.put(compound, wordCounts.getOrDefault(compound, 0) + 2);
+                    }
+                }
+                wordCounts.put(noun, wordCounts.getOrDefault(noun, 0) + 1);
+            }
+        } catch (Exception e) {
+            // Komoran 오류 시 해시태그 결과만 반환
+        }
+
         return wordCounts.entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                .limit(4) // 💡 마인드맵 가지 수에 맞춰 4개로 제한
+                .limit(4)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
+    }
+
+    private boolean isStopWord(String word) {
+        Set<String> stopWords = new HashSet<>(Arrays.asList(
+            "성심", "성심당", "sungsimdang",
+            "여행", "방문", "소개", "추천", "리뷰", "영상", "동영상",
+            "이번", "오늘", "최근", "정말", "진짜", "너무", "매우",
+            "가게", "매장", "브랜드", "제품", "상품", "구매", "판매",
+            "블로그", "인스타", "유튜브", "네이버", "구글",
+            "사진", "포스팅", "게시물", "댓글", "좋아요",
+            "이용", "서비스", "이벤트", "할인", "쿠폰"
+        ));
+        return stopWords.contains(word);
     }
 
     /**
