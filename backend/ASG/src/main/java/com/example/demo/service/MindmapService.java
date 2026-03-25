@@ -64,53 +64,68 @@ public class MindmapService {
     /**
      * 구글 + 네이버 결과 병합 및 점수 계산 (백분위 기반)
      *
+     * 전처리:
+     * - 구글/네이버 각각 최대 8개로 제한 → 동일한 모수로 공정 비교
+     *
      * 점수 계산 방식:
-     * - BOTH  → 구글백분위 + 네이버백분위 (낮을수록 상위)
-     * - GOOGLE만 → 구글백분위 + 0.5 페널티
-     * - NAVER만  → 네이버백분위 + 0.5 페널티
+     * - BOTH   → 두 백분위 평균 (구글과 네이버 둘 다 인정한 키워드)
+     * - GOOGLE → 구글 백분위 그대로
+     * - NAVER  → 네이버 백분위 그대로
+     *
+     * 모수가 동일(8개)하므로 별도 페널티 없이 백분위만으로 공정하게 비교
+     * BOTH는 두 백분위 평균이라 자연스럽게 유리하지만 무조건 앞에 오지는 않음
+     * 낮은 점수일수록 상위
      */
     private List<MindmapKeywordDto> mergeAndScore(
             SerpApiResponseDto googleResult,
             SerpApiResponseDto naverResult) {
 
-        // 구글 전체 개수, 네이버 전체 개수 먼저 구하기
-        int googleTotal = (googleResult.getRelatedSearches() != null) ? googleResult.getRelatedSearches().size() : 1;
-        int naverTotal  = (naverResult.getRelatedResults()   != null) ? naverResult.getRelatedResults().size()   : 1;
+        // ── 1. 구글/네이버 각각 8개로 제한 ──────────────────────────
+        // 모수를 동일하게 맞춰서 백분위 비교를 공정하게 만든다
+        List<SerpApiResponseDto.GoogleRelatedSearch> googleList =
+            googleResult.getRelatedSearches() != null
+                ? googleResult.getRelatedSearches().stream().limit(8).collect(java.util.stream.Collectors.toList())
+                : new ArrayList<>();
 
-        // 키워드별 [구글순위, 네이버순위] 저장 (-1 = 해당 엔진에 없음)
+        List<SerpApiResponseDto.NaverRelatedResult> naverList =
+            naverResult.getRelatedResults() != null
+                ? naverResult.getRelatedResults().stream().limit(8).collect(java.util.stream.Collectors.toList())
+                : new ArrayList<>();
+
+        // 0으로 나누기 방지 (결과가 없으면 1로 설정)
+        int googleTotal = googleList.isEmpty() ? 1 : googleList.size();
+        int naverTotal  = naverList.isEmpty()  ? 1 : naverList.size();
+
+        // ── 2. 키워드별 [구글순위, 네이버순위] 임시 저장 ───────────────
+        // -1 = 해당 엔진에 없음
         Map<String, double[]> scoreMap = new LinkedHashMap<>();
 
         // 구글 결과 처리 (배열 인덱스 기반 순위)
-        if (googleResult.getRelatedSearches() != null) {
-            List<SerpApiResponseDto.GoogleRelatedSearch> googleList = googleResult.getRelatedSearches();
-            for (int idx = 0; idx < googleList.size(); idx++) {
-                String keyword = googleList.get(idx).getQuery().trim();
-                scoreMap.put(keyword, new double[]{idx + 1, -1});
-            }
+        for (int idx = 0; idx < googleList.size(); idx++) {
+            String keyword = googleList.get(idx).getQuery().trim();
+            scoreMap.put(keyword, new double[]{idx + 1, -1});
         }
 
         // 네이버 결과 처리
-        if (naverResult.getRelatedResults() != null) {
-            for (SerpApiResponseDto.NaverRelatedResult item : naverResult.getRelatedResults()) {
-                String keyword = item.getTitle().trim();
-                if (scoreMap.containsKey(keyword)) {
-                    // 양쪽 다 있는 키워드 → 네이버 순위 추가
-                    scoreMap.get(keyword)[1] = item.getPosition();
-                } else {
-                    // 네이버에만 있는 키워드
-                    scoreMap.put(keyword, new double[]{-1, item.getPosition()});
-                }
+        // 이미 구글에 있는 키워드면 네이버 순위 추가 → BOTH
+        // 없는 키워드면 새로 추가 → NAVER 단독
+        for (SerpApiResponseDto.NaverRelatedResult item : naverList) {
+            String keyword = item.getTitle().trim();
+            if (scoreMap.containsKey(keyword)) {
+                scoreMap.get(keyword)[1] = item.getPosition();
+            } else {
+                scoreMap.put(keyword, new double[]{-1, item.getPosition()});
             }
         }
 
-        // 최종 점수 계산 (백분위 기반)
+        // ── 3. 백분위 변환 및 최종 점수 계산 ───────────────────────────
         List<MindmapKeywordDto> list = new ArrayList<>();
         for (Map.Entry<String, double[]> entry : scoreMap.entrySet()) {
             String keyword   = entry.getKey();
             double googlePos = entry.getValue()[0];
             double naverPos  = entry.getValue()[1];
 
-            // 백분위 변환 (-1 이면 해당 엔진에 없음)
+            // 순위를 백분위로 변환 (-1이면 해당 엔진에 없는 키워드)
             double googleScore = (googlePos != -1) ? googlePos / googleTotal : -1;
             double naverScore  = (naverPos  != -1) ? naverPos  / naverTotal  : -1;
 
@@ -118,16 +133,17 @@ public class MindmapService {
             String source;
 
             if (googleScore != -1 && naverScore != -1) {
-                // BOTH → 두 백분위 합산
-                finalScore = googleScore + naverScore;
+                // BOTH → 두 백분위 평균
+                // 두 플랫폼 모두 인정한 키워드로 자연스럽게 유리
+                finalScore = (googleScore + naverScore) / 2.0;
                 source = "BOTH";
             } else if (googleScore != -1) {
-                // 구글만 → 백분위 + 0.5 페널티
-                finalScore = googleScore + 0.5;
+                // 구글 단독 → 백분위 그대로
+                finalScore = googleScore;
                 source = "GOOGLE";
             } else {
-                // 네이버만 → 백분위 + 0.5 페널티
-                finalScore = naverScore + 0.5;
+                // 네이버 단독 → 백분위 그대로
+                finalScore = naverScore;
                 source = "NAVER";
             }
 
@@ -136,19 +152,14 @@ public class MindmapService {
             String naverUrl  = "https://search.naver.com/search.naver?query=" +
                     java.net.URLEncoder.encode(keyword, java.nio.charset.StandardCharsets.UTF_8);
 
-            int minPos = (int) Math.min(googlePos == -1 ? 999 : googlePos, naverPos == -1 ? 999 : naverPos);
+            int minPos = (int) Math.min(
+                    googlePos == -1 ? 999 : googlePos,
+                    naverPos  == -1 ? 999 : naverPos);
 
-            list.add(new MindmapKeywordDto(
-                    keyword,
-                    source,
-                    minPos,
-                    finalScore,
-                    googleUrl,
-                    naverUrl
-            ));
+            list.add(new MindmapKeywordDto(keyword, source, minPos, finalScore, googleUrl, naverUrl));
         }
 
-        // 점수 오름차순 정렬 (낮을수록 상위)
+        // ── 4. 점수 오름차순 정렬 (낮을수록 상위) ──────────────────────
         list.sort(Comparator.comparingDouble(MindmapKeywordDto::getScore));
 
         return list;
