@@ -38,20 +38,21 @@ public class PlatformKeywordService {
         List<String> instagramRaw = googleSearchService.getGoogleData(request, true);
         List<String> googleRaw    = googleSearchService.getGoogleData(request, false);
         List<String> youtubeRaw   = youtubeService.getYoutubeData(request);
-        String       naverRaw     = naverSearchMService.getNaverBlogData(request);
+        List<String>       naverRaw     = naverSearchMService.getNaverBlogData(request);
 
         // 4. Komoran 키워드 분석
         List<String> instagramKeywords = keywordAnalysisService.analyzeKeywords(instagramRaw);
         List<String> googleKeywords    = keywordAnalysisService.analyzeKeywords(googleRaw);
         List<String> youtubeKeywords   = keywordAnalysisService.analyzeKeywords(youtubeRaw);
-        List<String> naverKeywords     = keywordAnalysisService.analyzeKeywords(List.of(naverRaw));
+        List<String> naverKeywords     = keywordAnalysisService.analyzeKeywords(naverRaw);
 
+     // PlatformKeywordService.java
         return new PlatformKeywordResponseDto(
                 brandName,
-                instagramKeywords,
-                youtubeKeywords,
-                naverKeywords,
-                googleKeywords
+                instagramKeywords, // 인스타
+                youtubeKeywords,   // 유튜브
+                naverKeywords,     // 네이버
+                googleKeywords     // 구글
         );
     }
 }

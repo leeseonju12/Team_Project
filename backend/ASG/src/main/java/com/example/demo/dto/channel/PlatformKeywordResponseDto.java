@@ -8,8 +8,8 @@ import java.util.List;
 @AllArgsConstructor
 public class PlatformKeywordResponseDto {
     private String brand;
-    private List<String> instagram;
-    private List<String> youtube;
-    private List<String> naver;
-    private List<String> google;
+    private List<String> instagramKeywords; // 프론트 변수명과 맞출 것
+    private List<String> youtubeKeywords;
+    private List<String> naverKeywords;
+    private List<String> googleKeywords;
 }

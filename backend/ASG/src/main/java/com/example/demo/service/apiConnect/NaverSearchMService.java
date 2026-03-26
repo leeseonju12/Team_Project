@@ -1,18 +1,17 @@
 package com.example.demo.service.apiConnect;
 
 import com.example.demo.dto.channel.BrandSearchRequestDto;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor // final 필드 생성자 주입
@@ -29,8 +28,10 @@ public class NaverSearchMService {
 
     /**
      * @param request: DTO를 통해 브랜드명과 기간 정보를 받습니다.
+     * @return: 분석 서비스 규격에 맞게 List<String> 형태로 반환합니다.
      */
-    public String getNaverBlogData(BrandSearchRequestDto request) {
+    public List<String> getNaverBlogData(BrandSearchRequestDto request) {
+        List<String> responses = new ArrayList<>(); // 💡 결과를 담을 리스트 생성
         
         // 1. 검색어 인코딩 (brand_name 사용)
         String encodedQuery = URLEncoder.encode(request.getBrandName(), StandardCharsets.UTF_8);
@@ -57,12 +58,16 @@ public class NaverSearchMService {
                     String.class
             );
 
-            // 5. 결과 반환 (이후 KeywordAnalysisService에서 기간별 필터링 진행)
-            return response.getBody();
+            // 5. 결과 리스트에 추가 (KeywordAnalysisService 규격 맞춤)
+            if (response.getBody() != null) {
+                responses.add(response.getBody());
+            }
 
         } catch (Exception e) {
-            // 실제 서비스에서는 로그를 남기는 것이 좋습니다.
-            return "{\"error\":\"API 호출 실패\"}";
+            // 실패 시 에러 메시지를 포함한 JSON을 리스트에 추가
+            responses.add("{\"error\":\"네이버 API 호출 실패: " + e.getMessage() + "\"}");
         }
+        
+        return responses; // 💡 최종적으로 리스트 반환
     }
 }

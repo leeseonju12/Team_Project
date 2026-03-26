@@ -2308,7 +2308,13 @@ function renderNaverSummary(summary, period) {
           const weights = [5, 4, 4, 3];
           MM_DATA = ['instagram','youtube','naver','google'].map(platform => {
               const cfg = config[platform];
-              const keywords = apiData[platform] || [];
+              const keyMap = {
+            		    instagram: 'instagramKeywords',
+            		    youtube:   'youtubeKeywords',
+            		    naver:     'naverKeywords',
+            		    google:    'googleKeywords'
+            		};
+            		const keywords = apiData[keyMap[platform]] || [];
               return {
                   id: cfg.id, label: cfg.label, platform: cfg.platform,
                   clAngle: cfg.clAngle, clDist: cfg.clDist, size: cfg.size,
