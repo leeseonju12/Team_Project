@@ -143,18 +143,28 @@ public class InstagramApiService {
         
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
+        //String testUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Image_created_with_a_mobile_phone.png/1200px-Image_created_with_a_mobile_phone.png";
+        String testUrl = "https://upload.wikimedia.org/wikipedia/commons/a/a3/June_odd-eyed-cat.jpg";
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("image_url", imageUrl);
+        //map.add("image_url", imageUrl);
+        map.add("image_url", testUrl);
         map.add("caption", caption);
         map.add("access_token", accessToken);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
         try {
+            System.out.println(">>> 인스타그램 JSON 방식 테스트 전송 시작");
             ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
             JsonNode rootNode = objectMapper.readTree(response.getBody());
+            
+            System.out.println(">>> 컨테이너 생성 성공! ID: " + rootNode.get("id").asText());
             return rootNode.get("id").asText();
+            
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            String errorDetail = e.getResponseBodyAsString();
+            System.err.println("인스타그램 Step 1 에러 상세: " + errorDetail);
+            throw new RuntimeException("인스타그램 API 에러: " + errorDetail);
         } catch (Exception e) {
             throw new RuntimeException("게시물 임시 저장 실패: " + e.getMessage());
         }
@@ -177,6 +187,12 @@ public class InstagramApiService {
             ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
             JsonNode rootNode = objectMapper.readTree(response.getBody());
             return rootNode.get("id").asText();
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            // 인스타그램 API가 리턴한 상세 에러 바디 확인
+            String errorDetail = e.getResponseBodyAsString();
+            System.err.println("게시물 최종 발행 실패 상세: " + errorDetail);
+            throw new RuntimeException("인스타그램 발행 실패: " + errorDetail);
+            
         } catch (Exception e) {
             throw new RuntimeException("게시물 최종 발행 실패: " + e.getMessage());
         }
@@ -314,6 +330,7 @@ public class InstagramApiService {
         return count;
     }
     
+    /*
     public String publishPost(String imageUrl, String caption) {
         RestTemplate restTemplate = new RestTemplate();
         ObjectMapper mapper = new ObjectMapper();
@@ -349,11 +366,81 @@ public class InstagramApiService {
             // 최종적으로 생성된 인스타그램 게시물 ID 반환
             return publishNode.get("id").asText();
 
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            // 인스타그램 API가 응답한 실제 JSON 에러 바디 추출
+            String errorBody = e.getResponseBodyAsString();
+            
+            // 콘솔에 상세 에러 출력
+            System.err.println("인스타그램 API 상세 에러: " + errorBody);
+            
+            // 프론트엔드로 상세 에러 전달
+            throw new RuntimeException("인스타그램 API 에러 상세: " + errorBody);
         } catch (Exception e) {
-            // 에러가 나면 날것 그대로의 에러 메시지를 프론트로 던져서 원인 파악!
-            throw new RuntimeException("인스타그램 API 에러: " + e.getMessage());
+        	e.printStackTrace();
+            throw new RuntimeException("서버 내부 시스템 에러: " + e.getMessage());
         }
     }
+    */
     
+    public String publishPost(String imageUrl, String caption) {
+        RestTemplate restTemplate = new RestTemplate();
+        ObjectMapper mapper = new ObjectMapper();
+
+        try {
+            // 🌟 1. 앞뒤 혹시 모를 공백이나 엔터값 완벽 제거
+            String cleanImageUrl = imageUrl.trim();
+            System.out.println(">>> [최종 확인] 인스타그램으로 보낼 이미지 URL: " + cleanImageUrl);
+
+            // ==========================================
+            // 1단계: 미디어 컨테이너 생성 (가장 안정적인 Form 전송 방식)
+            // ==========================================
+            String containerUrl = "https://graph.facebook.com/v18.0/" + accountId + "/media";
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            MultiValueMap<String, String> containerParams = new LinkedMultiValueMap<>();
+            // 🔥 절대 수동 인코딩(URLEncoder)을 하지 마세요! 스프링이 알아서 합니다.
+            containerParams.add("image_url", cleanImageUrl); 
+            containerParams.add("caption", caption);
+            containerParams.add("access_token", accessToken);
+
+            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(containerParams, headers);
+
+            ResponseEntity<String> containerResponse = restTemplate.postForEntity(containerUrl, request, String.class);
+            JsonNode containerNode = mapper.readTree(containerResponse.getBody());
+            String containerId = containerNode.get("id").asText();
+
+            System.out.println(">>> 1단계 성공! 컨테이너 ID: " + containerId + " (3초 대기 중...)");
+            Thread.sleep(3000); // 🌟 다운로드 시간 필수 대기
+
+            // ==========================================
+            // 2단계: 실제 피드에 게시 (Publish)
+            // ==========================================
+            String publishUrl = "https://graph.facebook.com/v18.0/" + accountId + "/media_publish";
+            
+            MultiValueMap<String, String> publishParams = new LinkedMultiValueMap<>();
+            publishParams.add("creation_id", containerId);
+            publishParams.add("access_token", accessToken);
+
+            HttpEntity<MultiValueMap<String, String>> publishRequest = new HttpEntity<>(publishParams, headers);
+            
+            ResponseEntity<String> publishResponse = restTemplate.postForEntity(publishUrl, publishRequest, String.class);
+            JsonNode publishNode = mapper.readTree(publishResponse.getBody());
+            
+            String finalMediaId = publishNode.get("id").asText();
+            System.out.println(">>> 2단계 성공! 인스타그램 최종 게시물 ID: " + finalMediaId);
+            
+            return finalMediaId;
+
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            String errorBody = e.getResponseBodyAsString();
+            System.err.println("인스타그램 API 상세 에러: " + errorBody);
+            throw new RuntimeException("인스타그램 API 에러 상세: " + errorBody);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("서버 내부 시스템 에러: " + e.getMessage());
+        }
+    }
     
 }

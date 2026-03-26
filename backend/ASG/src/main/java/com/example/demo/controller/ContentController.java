@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.demo.dto.ContentRequest;
 import com.example.demo.dto.PublishRequest;
 import com.example.demo.dto.SnsResult;
+import com.example.demo.service.CloudinaryService;
 import com.example.demo.service.ContentService;
 import com.example.demo.service.FacebookApiService;
 import com.example.demo.service.ImgbbService;
@@ -33,13 +34,12 @@ import lombok.RequiredArgsConstructor;
 public class ContentController {
 
     private final ContentService geminiService;
-    private final InstagramApiService instagramApiService;
-    private final ImgbbService imgbbService;
-    private final FacebookApiService facebookApiService;
+
     
     @GetMapping("/generate")
     public String showGeneratePage() {
         return "content-generate";
+    	//return "content-generate-new";
     }
 
     @PostMapping("/generate")
@@ -53,85 +53,5 @@ public class ContentController {
         return "content-generate";
     }
 
-    // 추가된 API 메서드 (게시하기 버튼에서 호출
-    
-//    @PostMapping("/publish/instagram")
-//    @ResponseBody // 🌟 매우 중요: HTML 페이지 이동이 아니라 JSON 데이터를 반환하게 해줌!
-//    public ResponseEntity<?> publishToInstagram(@RequestBody Map<String, String> requestData) {
-//        try {
-//            // 프론트에서 보내준 텍스트 내용, 임시 이미지 URL, 토큰
-//            String caption = requestData.get("caption");
-//
-//            // 1. 인스타그램 계정 ID 조회
-//            String igAccountId = instagramApiService.getInstagramAccountId();
-//            
-//            // 2. 피드 발행 (한글 깨짐 해결된 버전 호출)
-//            String publishedId = instagramApiService.publishInstagramPost(igAccountId, imageUrl, caption);
-//
-//            // 성공 응답 (JSON)
-//            Map<String, String> result = new HashMap<>();
-//            result.put("message", "success");
-//            result.put("publishedId", publishedId);
-//            return ResponseEntity.ok(result);
-//
-//        } catch (Exception e) {
-//            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
-//        }
-//    }
-    
-    @PostMapping("/publish/instagram")
-    @ResponseBody
-    public ResponseEntity<?> publishToInstagram(@RequestBody PublishRequest request) {
-        try {
-            // 서비스 호출해서 발행 완료 후 게시물 ID 받아오기
-            String postId = instagramApiService.publishPost(request.getImageUrl(), request.getCaption());
-            
-            // 프론트엔드에 성공 메시지 던져주기
-            return ResponseEntity.ok(Map.of("message", "성공적으로 게시되었습니다!", "postId", postId));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
-        }
-    }
-  
-    
-    @GetMapping("/instagram/sync-comments")
-    @ResponseBody
-    public ResponseEntity<?> syncInstagramComments() {
-        try {
-            int newCommentCount = instagramApiService.syncAllInstagramComments();
-
-            Map<String, Object> result = new HashMap<>();
-            result.put("message", "success");
-            result.put("newCommentCount", newCommentCount);
-            
-            return ResponseEntity.ok(result);
-
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
-        }
-    }
-
-    @PostMapping("/upload-image")
-    @ResponseBody
-    public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file) {
-        try {
-            // Imgur 대신 ImgBB 서비스 호출
-            String imageUrl = imgbbService.uploadImage(file);
-            return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
-        }
-    }
-
-    @PostMapping("/publish/facebook")
-    @ResponseBody
-    public ResponseEntity<?> publishToFacebook(@RequestBody PublishRequest request) {
-        try {
-            String postId = facebookApiService.publishPost(request.getImageUrl(), request.getCaption());
-            return ResponseEntity.ok(Map.of("message", "페이스북에 성공적으로 게시되었습니다!", "postId", postId));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
-        }
-    }
-    
+   
 }

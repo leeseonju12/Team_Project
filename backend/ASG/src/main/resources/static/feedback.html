@@ -1660,7 +1660,7 @@
 
       try {
         // 백엔드 컨트롤러에 만들어둔 API 호출!
-        const response = await fetch('/content/instagram/sync-comments');
+        const response = await fetch('/api/sns/sync-comments/instagram');
         if (!response.ok) throw new Error('동기화 실패');
         
         const result = await response.json();

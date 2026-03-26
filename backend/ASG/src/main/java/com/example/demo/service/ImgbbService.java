@@ -15,7 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper; // 🌟 이거 필수!
 
 @Service
 public class ImgbbService {
-
+/*
     @Value("${imgbb.api.key}")
     private String apiKey;
 
@@ -40,12 +40,14 @@ public class ImgbbService {
             // 🌟 2. 받아온 문자열을 ObjectMapper한테 던져서 JSON 구조로 분석하라고 시킵니다.
             JsonNode rootNode = objectMapper.readTree(response.getBody());
 
-            // 3. 예쁘게 파싱된 데이터에서 url만 쏙 빼서 돌려줍니다.
-            return rootNode.get("data").get("url").asText();
+            String directImageUrl = rootNode.get("data").get("url").asText();
+            System.out.println("인스타그램으로 보내는 img 링크: " + directImageUrl);
+            
+            return directImageUrl;
 
         } catch (Exception e) {
             // 만약 여기서 에러가 나면 e.getMessage()에 원본 에러 원인이 텍스트로 다 찍힙니다!
             throw new RuntimeException("ImgBB 업로드 중 오류 발생: " + e.getMessage());
         }
-    }
+    }*/
 }

@@ -32,6 +32,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+
         .csrf(csrf -> csrf
                 .ignoringRequestMatchers("/signup/complete") 
             )
@@ -41,7 +42,7 @@ public class SecurityConfig {
         	    .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
         	    .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
         	    .requestMatchers("/feedback.html", "/api/feedbacks/**", "/feedback").permitAll()
-        	    .requestMatchers("/content/**", "/content/publish/**").permitAll()
+        	    .requestMatchers("/content/**", "/api/sns/**").permitAll()
                 .requestMatchers("/api/analytics/**").permitAll()
         	    .requestMatchers("/signup", "/signup/complete").permitAll()
         	    .requestMatchers("/signup_form").authenticated() // ← 추가 (로그인 후에만 접근)
@@ -70,6 +71,7 @@ public class SecurityConfig {
             )
             .addFilterBefore(entryPointSaveFilter, SecurityContextHolderFilter.class)
             .addFilterAfter(noCacheHeaderFilter, SecurityContextHolderFilter.class);
+
         return http.build();
     }
 }

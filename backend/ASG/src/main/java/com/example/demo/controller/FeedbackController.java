@@ -44,11 +44,12 @@ public class FeedbackController {
     public List<FeedbackDto> getFeedbacks() {
         return feedbackService.getAllFeedbacks();
     }
-    
+    /*
     @PutMapping("/{id}/ai-reply")
     public FeedbackDto generateAiReply(@PathVariable Long id) {
         return feedbackService.generateAiReply(id);
     }
+    */
     
     //개별 답변 전송 API
     @PutMapping("/{id}/send")

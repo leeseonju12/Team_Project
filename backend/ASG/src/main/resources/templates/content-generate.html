@@ -584,7 +584,7 @@
       btn.disabled = true;
 
       try {
-        const response = await fetch('/content/publish/' + platform, {
+        const response = await fetch('/api/sns/publish/' + platform, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -651,7 +651,7 @@
           formData.append('file', file);
 
           try {
-            const response = await fetch('/content/upload-image', {
+            const response = await fetch('/api/sns/upload-image', {
               method: 'POST',
               body: formData
             });

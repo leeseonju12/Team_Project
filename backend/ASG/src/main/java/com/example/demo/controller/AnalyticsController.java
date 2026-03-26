@@ -16,7 +16,7 @@ public class AnalyticsController {
 
     private final SocialAnalyticsService analyticsService;
 
-    // 🌟 버튼 하나로 모든 피드 지표 동기화!
+    // 페이스북 지표 동기화
     @GetMapping("/sync/facebook/all")
     public ResponseEntity<String> syncAllFacebookMetrics() {
         Long testUserId = 1L; // 임시 유저 ID
@@ -29,14 +29,16 @@ public class AnalyticsController {
         }
     }
     
- // 🌟 프론트엔드에서 호출할 '게시물 목록 조회' API
-    @GetMapping("/posts/facebook")
-    public ResponseEntity<?> getFacebookPosts() {
+    // 인스타그램 전체 피드 지표 동기화
+    @GetMapping("/sync/instagram/all")
+    public ResponseEntity<String> syncAllInstagramMetrics() {
+        Long testUserId = 1L;
+
         try {
-            List<Map<String, String>> posts = analyticsService.getFacebookPostList();
-            return ResponseEntity.ok(posts);
+            analyticsService.syncAllInstagramPosts(testUserId);
+            return ResponseEntity.ok("인스타그램 전체 피드 지표 동기화 성공");
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("목록 조회 실패: " + e.getMessage());
+            return ResponseEntity.internalServerError().body("인스타그램 동기화 실패: " + e.getMessage());
         }
     }
 }
