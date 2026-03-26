@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>ASG Dashboard</title>
+</head>
+<body>
+<h1>ASG Dashboard</h1>
+<p>현재 로그인 사용자: <strong th:text="${loginUser.name}"></strong> (<span th:text="${loginUser.email}"></span>)</p>
+<p>로그인 방식: <span th:text="${loginUser.provider}"></span></p>
+
+<form sec:authorize="isAuthenticated()" method="post" action="/logout">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+    <button type="submit">로그아웃</button>
+</form>
+</body>
+</html>
