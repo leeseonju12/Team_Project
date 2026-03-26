@@ -2299,22 +2299,28 @@ function renderNaverSummary(summary, period) {
       let MM_DATA = [];
 
       function buildMmData(apiData) {
+          const keyMap = {
+              instagram: 'instagramKeywords',
+              youtube:   'youtubeKeywords',
+              naver:     'naverKeywords',
+              google:    'googleKeywords'
+          };
           const config = {
-              instagram: { id:'ig', label:'인스타그램', platform:'instagram', clAngle:205, clDist:130, size:22, leafStartAngle:170, leafSpread:26 },
-              youtube:   { id:'yt', label:'유튜브',     platform:'youtube',   clAngle:330, clDist:130, size:22, leafStartAngle:295, leafSpread:35 },
-              naver:     { id:'nv', label:'네이버',     platform:'naver',     clAngle:55,  clDist:130, size:22, leafStartAngle:28,  leafSpread:22 },
-              google:    { id:'gn', label:'구글',       platform:'general',   clAngle:125, clDist:128, size:22, leafStartAngle:108, leafSpread:22 },
+              instagram: { id:'ig', label:'인스타그램', platform:'instagram', clAngle:205, clDist:130, size:22 },
+              youtube:   { id:'yt', label:'유튜브',     platform:'youtube',   clAngle:330, clDist:130, size:22 },
+              naver:     { id:'nv', label:'네이버',     platform:'naver',     clAngle:55,  clDist:130, size:22 },
+              google:    { id:'gn', label:'구글',       platform:'general',   clAngle:125, clDist:128, size:22 },
           };
           const weights = [5, 4, 4, 3];
+          const LEAF_SPREAD = 18;  // 리프 간 각도 간격 (°)
+          const LEAF_DIST   = 245; // 리프 노드 거리 (원본 유지)
           MM_DATA = ['instagram','youtube','naver','google'].map(platform => {
               const cfg = config[platform];
-              const keyMap = {
-            		    instagram: 'instagramKeywords',
-            		    youtube:   'youtubeKeywords',
-            		    naver:     'naverKeywords',
-            		    google:    'googleKeywords'
-            		};
-            		const keywords = apiData[keyMap[platform]] || [];
+              const keywords = apiData[keyMap[platform]] || [];
+              const count = keywords.length;
+              // 가지 각도 기준으로 좌우 대칭 분산
+              // 예: 4개 → -27°, -9°, +9°, +27°
+              const totalSpan = (count - 1) * LEAF_SPREAD;
               return {
                   id: cfg.id, label: cfg.label, platform: cfg.platform,
                   clAngle: cfg.clAngle, clDist: cfg.clDist, size: cfg.size,
@@ -2322,8 +2328,8 @@ function renderNaverSummary(summary, period) {
                   leaves: keywords.map((keyword, i) => ({
                       id: `${cfg.id}_l${i}`, label: keyword,
                       weight: weights[i] || 3,
-                      angle: cfg.leafStartAngle + (cfg.leafSpread * i),
-                      dist: 245, platform: cfg.platform,
+                      angle: cfg.clAngle - (totalSpan / 2) + (LEAF_SPREAD * i),
+                      dist: LEAF_DIST, platform: cfg.platform,
                       desc: `${cfg.label} 검색 결과 키워드`
                   }))
               };
