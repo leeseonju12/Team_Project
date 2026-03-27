@@ -13,5 +13,4 @@ public class ContentRequest {
     private String tones;
     private String emojiLevel;
     private int maxLength;
-    private List<String> uploadedImgUrls;
 }

@@ -325,27 +325,13 @@
       transition: width .35s ease;
     }
 
-.toolbar {
+    .toolbar {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       gap: 14px;
       flex-wrap: wrap;
-
-      /* 스크롤 시 화면 상단에 고정 */
-      position: sticky;
-      top: 64px;
-      z-index: 100;
-
-      padding: 14px 22px 32px 22px; 
-      margin-bottom: -12px; /* 꼬리가 길어진 만큼 바깥 여백을 당겨서 레이아웃 유지 */
-
-      background: rgba(248, 250, 252, 0.75);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-
-      -webkit-mask-image: linear-gradient(to bottom, black 0%, black 75%, transparent 100%);
-      mask-image: linear-gradient(to bottom, black 0%, black 75%, transparent 100%);
+      margin-bottom: 16px;
     }
 
     .toolbar-left {
@@ -390,7 +376,7 @@
       font-family: 'Noto Sans KR', sans-serif;
     }
 
-    .btn-main, .btn-sync,
+    .btn-main,
     .btn-send {
       display: inline-flex;
       align-items: center;
@@ -406,15 +392,10 @@
       transition: all .18s;
       white-space: nowrap;
     }
-    
-	.btn-sync {
-      background: linear-gradient(135deg, var(--blue), var(--indigo));
-      box-shadow: 0 4px 12px rgba(59, 130, 246, .28);
-    }
 
     .btn-main {
       background: linear-gradient(135deg, var(--indigo), var(--teal-dark));
-      box-shadow: 0 4px 12px rgba(99, 102, 241, .20);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, .28);
     }
 
     .btn-send {
@@ -423,14 +404,12 @@
     }
 
     .btn-main:hover,
-    .btn-send:hover,
-    .btn-sync:hover {
+    .btn-send:hover {
       transform: translateY(-1px);
     }
 
     .btn-main:disabled,
-    .btn-send:disabled
-    .btn-sync:disabled {
+    .btn-send:disabled {
       opacity: .45;
       cursor: not-allowed;
       transform: none;
@@ -790,15 +769,6 @@
     .reply-edit:focus {
       box-shadow: 0 0 0 3px rgba(20, 184, 166, .1);
     }
-    
-	.origin-link {
-	    color: inherit;
-	    text-decoration: none;
-	}
-	
-	.origin-link:hover {
-	    text-decoration: underline;
-	}
 
     .btn-row-ai,
     .btn-row-regen,
@@ -1086,10 +1056,6 @@
       </div>
 
       <div class="toolbar-right">
-      	<button class="btn-sync" onclick="syncInstagramData()" id="btnSync">
-          <span class="spin" id="spinSync"></span>
-          🔄 최신 데이터 불러오기
-        </button>
         <button class="btn-main" id="btnAIAll" onclick="generateAllAI()">
           <span class="spin" id="spinAll"></span>
           ✦ 선택 항목 AI 답변 생성
@@ -1291,7 +1257,6 @@
         const isSending = it.status === 'sending';
         const isReview = it.type === 'review';
         const isComment = it.type === 'comment';
-        console.log("현재 아이템 데이터: ", it);
         html += `
         <tr style="${isSent ? 'opacity:.82;' : ''}">
           <td class="center">
@@ -1312,19 +1277,19 @@
 
           <td>${typeLabel(it)}</td>
 
-          <td>
-          <div class="review-cell"><a href="${it.originUrl}" target="_blank" class="origin-link">${it.text}</a></div>
-        </td>
+          <td><div class="review-cell">${it.text}</div></td>
 
-        <td>
-        <div id="replyDisp-${it.id}" class="${hasReply ? 'reply-full' : 'reply-empty'}"
-             onclick="startEdit(${it.id})"
-             style="cursor:${isSent || !hasReply ? 'default' : 'pointer'};">${hasReply ? it.aiReply : '아직 생성된 AI 답변이 없습니다.'}</div>
-        <textarea class="reply-edit" id="replyEdit-${it.id}"
-          onblur="saveEdit(${it.id})"
-          onkeydown="if(event.key==='Escape') cancelEdit(${it.id})">${it.aiReply || ''}</textarea>
-        ${!isSent && hasReply ? `<div style="font-size:10px;color:var(--text3);margin-top:4px;">✎ 클릭하여 수정</div>` : ``}
-      </td>
+          <td>
+            <div id="replyDisp-${it.id}" class="${hasReply ? 'reply-full' : 'reply-empty'}"
+                 onclick="startEdit(${it.id})"
+                 style="cursor:${isSent || !hasReply ? 'default' : 'pointer'};">
+              ${hasReply ? it.aiReply : '아직 생성된 AI 답변이 없습니다.'}
+            </div>
+            <textarea class="reply-edit" id="replyEdit-${it.id}"
+              onblur="saveEdit(${it.id})"
+              onkeydown="if(event.key==='Escape') cancelEdit(${it.id})">${it.aiReply || ''}</textarea>
+            ${!isSent && hasReply ? `<div style="font-size:10px;color:var(--text3);margin-top:4px;">✎ 클릭하여 수정</div>` : ``}
+          </td>
 
           <td class="center">
             ${isSending
@@ -1570,18 +1535,13 @@
       updateKPIs();
       
       
-      
-      //const myRealToken = "EAAemf
-      
-      try {    	  
-    	  const response = await fetch(`/api/feedbacks/${id}/send`, {
-    		    method: 'PUT'
-    		});
+      try {
+          // 백엔드로 전송 확정 API 호출
+          const response = await fetch(`/api/feedbacks/${id}/send`, {
+            method: 'PUT'
+          });
           
-        	if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || '알 수 없는 서버 에러 발생');
-            }
+          if (!response.ok) throw new Error('API 호출 실패');
           
           // 백엔드에서 업데이트된 최신 데이터 덮어쓰기 (status가 completed로 변경됨)
           const updatedData = await response.json();
@@ -1599,8 +1559,6 @@
           showToast('전송 중 오류가 발생했습니다.', 'error');
           item.status = 'unresolved'; // 에러 시 원래 상태로 롤백
         } finally {
-        	if (btn) btn.disabled = false;
-            if (spin) spin.style.display = 'none';
           renderTable();
           updateKPIs();
         }
@@ -1648,37 +1606,6 @@
     }
     
     init();
-    
- // 🌟 인스타그램 댓글 전체 동기화 함수
-    async function syncInstagramData() {
-      const btn = document.getElementById('btnSync');
-      const spin = document.getElementById('spinSync');
-      
-      btn.disabled = true;
-      spin.style.display = 'inline-block';
-      showToast('최신 데이터를 불러오는 중입니다... (최대 1~2분 소요)', '');
-
-      try {
-        // 백엔드 컨트롤러에 만들어둔 API 호출!
-        const response = await fetch('/api/sns/sync-comments/instagram');
-        if (!response.ok) throw new Error('동기화 실패');
-        
-        const result = await response.json();
-        
-        showToast(`${result.newCommentCount}개의 새로운 댓글을 가져왔습니다!`, 'success');
-        
-        // 동기화가 끝나면 화면의 데이터를 다시 불러와서 표를 새로고침!
-        fetchFeedbackData(); 
-
-      } catch (error) {
-        console.error(error);
-        showToast('데이터 동기화 중 오류가 발생했습니다.', 'error');
-      } finally {
-        btn.disabled = false;
-        spin.style.display = 'none';
-      }
-    }
-
   </script>
 </body>
 

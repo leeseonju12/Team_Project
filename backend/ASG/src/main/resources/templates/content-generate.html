@@ -37,7 +37,11 @@
       --radius-sm: 12px;
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     body {
       background:
@@ -68,202 +72,909 @@
       animation: drift 18s ease-in-out infinite alternate;
     }
 
-    .blob-1 { width: 480px; height: 480px; background: rgba(20, 184, 166, 0.08); top: -110px; right: -90px; }
-    .blob-2 { width: 420px; height: 420px; background: rgba(99, 102, 241, 0.08); bottom: -20px; left: -80px; animation-delay: -6s; }
-    .blob-3 { width: 280px; height: 280px; background: rgba(99, 102, 241, 0.05); top: 45%; right: 15%; animation-delay: -11s; }
+    .blob-1 {
+      width: 480px;
+      height: 480px;
+      background: rgba(20, 184, 166, 0.08);
+      top: -110px;
+      right: -90px;
+    }
+
+    .blob-2 {
+      width: 420px;
+      height: 420px;
+      background: rgba(99, 102, 241, 0.08);
+      bottom: -20px;
+      left: -80px;
+      animation-delay: -6s;
+    }
+
+    .blob-3 {
+      width: 280px;
+      height: 280px;
+      background: rgba(99, 102, 241, 0.05);
+      top: 45%;
+      right: 15%;
+      animation-delay: -11s;
+    }
 
     @keyframes drift {
-      from { transform: translate(0, 0) scale(1); }
-      to { transform: translate(24px, 38px) scale(1.08); }
+      from {
+        transform: translate(0, 0) scale(1);
+      }
+
+      to {
+        transform: translate(24px, 38px) scale(1.08);
+      }
     }
 
-    .wrapper { position: relative; z-index: 1; max-width: 1140px; margin: 0 auto; padding: 0 24px 80px; }
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
 
-    header { display: flex; align-items: center; justify-content: space-between; padding: 28px 0 20px; border-bottom: 1px solid var(--border); }
-    .logo { display: flex; align-items: center; gap: 12px; }
-    .logo-mark { width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; font-weight: 900; box-shadow: 0 0 24px rgba(20, 184, 166, 0.35); }
-    .logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
-    .logo-text span { color: var(--text2); font-weight: 400; font-size: 13px; margin-left: 6px; }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 0 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 900;
+      box-shadow: 0 0 24px rgba(20, 184, 166, 0.35);
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .logo-text span {
+      color: var(--text2);
+      font-weight: 400;
+      font-size: 13px;
+      margin-left: 6px;
+    }
 
     .header-badge {
-      background: rgba(20, 184, 166, 0.08); border: 1px solid rgba(20, 184, 166, 0.18); border-radius: 999px;
-      padding: 7px 14px; font-size: 12px; color: #0F766E; display: flex; align-items: center; gap: 6px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      background: rgba(20, 184, 166, 0.08);
+      border: 1px solid rgba(20, 184, 166, 0.18);
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 12px;
+      color: #0F766E;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
     }
-    .header-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--primary); display: inline-block; animation: pulse 2s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
 
-    .page-title { padding: 42px 0 34px; }
-    .page-title h1 { font-family: 'DM Serif Display', serif; font-size: clamp(30px, 4vw, 44px); font-weight: 400; line-height: 1.12; letter-spacing: -0.5px; background: linear-gradient(135deg, #0F172A 28%, #475569 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .page-title h1 em { font-style: italic; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .page-title p { margin-top: 12px; color: var(--text2); font-size: 14px; font-weight: 300; }
+    .header-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: inline-block;
+      animation: pulse 2s infinite;
+    }
 
-    .main-grid { display: grid; grid-template-columns: 1.04fr 1fr; gap: 24px; align-items: start; }
-    @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.45;
+      }
+    }
+
+    .page-title {
+      padding: 42px 0 34px;
+    }
+
+    .page-title h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(30px, 4vw, 44px);
+      font-weight: 400;
+      line-height: 1.12;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #0F172A 28%, #475569 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .page-title h1 em {
+      font-style: italic;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .page-title p {
+      margin-top: 12px;
+      color: var(--text2);
+      font-size: 14px;
+      font-weight: 300;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.04fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
 
     .panel {
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 251, 252, 0.98));
-      border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow:
+        0 18px 40px rgba(15, 23, 42, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
       backdrop-filter: blur(12px);
     }
-    .panel-header { padding: 18px 22px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-    .panel-header h2 { font-size: 14px; font-weight: 700; letter-spacing: 0.1px; }
-    .panel-icon { width: 30px; height: 30px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; background: rgba(20, 184, 166, 0.16); box-shadow: inset 0 0 0 1px rgba(20, 184, 166, 0.12); }
-    .panel-body { padding: 20px 22px 22px; }
 
-    label { display: block; font-size: 12px; color: var(--text2); font-weight: 600; margin-bottom: 7px; letter-spacing: 0.22px; }
-    input[type=text], textarea, select {
-      width: 100%; background: rgba(241, 245, 249, 0.92); border: 1px solid var(--border2); border-radius: var(--radius-sm);
-      color: var(--text); font-family: 'Noto Sans KR', sans-serif; font-size: 13px; padding: 11px 14px; outline: none;
-      transition: border-color .2s, box-shadow .2s, transform .2s; resize: none;
+    .panel-header {
+      padding: 18px 22px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
-    input[type=text]:focus, textarea:focus, select:focus { border-color: rgba(20, 184, 166, 0.45); box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.10); }
-    textarea { min-height: 90px; }
-    .field { margin-bottom: 18px; }
-    .field:last-child { margin-bottom: 0; }
-    .required { color: var(--primary); }
 
-    .chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip { padding: 7px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border2); background: rgba(241, 245, 249, 0.96); color: var(--text2); transition: all .2s ease; user-select: none; }
-    .chip:hover { transform: translateY(-1px); color: var(--text); }
-    .chip.active { color: #fff; }
-    .chip-ig.active { background: var(--accent-ig); border-color: var(--accent-ig); box-shadow: 0 0 14px var(--glow-ig); }
-    .chip-fb.active { background: var(--accent-fb); border-color: var(--accent-fb); box-shadow: 0 0 14px var(--glow-fb); }
-    .chip-nv.active { background: var(--accent-nv); border-color: var(--accent-nv); box-shadow: 0 0 14px var(--glow-nv); color: #062714; }
-    .chip-kk.active { background: var(--accent-kk); border-color: var(--accent-kk); color: var(--accent-kk-text); box-shadow: 0 0 14px var(--glow-kk); }
+    .panel-header h2 {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.1px;
+    }
 
-    .keyword-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-    @media (max-width: 620px) { .keyword-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    .keyword-item { position: relative; }
-    .keyword-item input { position: absolute; opacity: 0; pointer-events: none; }
-    .keyword-label { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; min-height: 44px; border-radius: 12px; border: 1px solid var(--border2); background: rgba(241, 245, 249, 0.92); color: var(--text2); cursor: pointer; font-size: 12px; font-weight: 600; transition: all .2s ease; text-align: center; padding: 0 10px; }
-    .keyword-label:hover { border-color: rgba(20, 184, 166, 0.22); color: var(--text); }
-    .keyword-item input:checked+.keyword-label { border-color: rgba(20, 184, 166, 0.48); background: linear-gradient(135deg, rgba(20, 184, 166, 0.20), rgba(99, 102, 241, 0.14)); color: #0F172A; box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.08), 0 8px 20px rgba(20, 184, 166, 0.10); }
+    .panel-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+      background: rgba(20, 184, 166, 0.16);
+      box-shadow: inset 0 0 0 1px rgba(20, 184, 166, 0.12);
+    }
 
-    .tone-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
-    @media (max-width: 820px) { .tone-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-    @media (max-width: 560px) { .tone-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    .tone-item { background: rgba(241, 245, 249, 0.96); border: 1px solid var(--border2); border-radius: 12px; padding: 11px 10px; cursor: pointer; text-align: center; transition: all .2s; font-size: 12px; color: var(--text2); }
-    .tone-item .icon { font-size: 18px; margin-bottom: 5px; }
-    .tone-item.active { border-color: rgba(99, 102, 241, 0.45); background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(20, 184, 166, 0.12)); color: var(--text); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08); }
+    .panel-body {
+      padding: 20px 22px 22px;
+    }
 
-    .range-wrap { display: flex; align-items: center; gap: 12px; }
-    input[type=range] { flex: 1; -webkit-appearance: none; height: 5px; background: linear-gradient(to right, var(--primary) var(--pct, 50%), rgba(71, 85, 105, 0.6) var(--pct, 50%)); border-radius: 999px; outline: none; }
-    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); cursor: pointer; box-shadow: 0 0 10px var(--primary-glow); }
-    .range-val { font-size: 13px; font-weight: 700; color: var(--text); min-width: 42px; text-align: right; }
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--text2);
+      font-weight: 600;
+      margin-bottom: 7px;
+      letter-spacing: 0.22px;
+    }
 
-    .btn-generate { width: 100%; padding: 15px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border: none; border-radius: 14px; color: #fff; font-family: 'Noto Sans KR', sans-serif; font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all .25s; margin-top: 22px; box-shadow: 0 10px 28px rgba(20, 184, 166, 0.22); letter-spacing: 0.18px; }
-    .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(20, 184, 166, 0.28); }
-    .btn-generate:active { transform: translateY(0); }
-    .btn-generate .spinner { display: none; width: 16px; height: 16px; border: 2px solid rgba(255, 255, 255, 0.32); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
-    .btn-generate.loading .spinner { display: inline-block; }
-    .btn-generate.loading .btn-text { opacity: .62; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    input[type=text],
+    textarea,
+    select {
+      width: 100%;
+      background: rgba(241, 245, 249, 0.92);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 13px;
+      padding: 11px 14px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s, transform .2s;
+      resize: none;
+    }
 
-    .tab-bar { display: flex; padding: 16px 22px 0; gap: 4px; border-bottom: 1px solid var(--border); overflow-x: auto; }
-    .tab-btn { padding: 8px 16px; border-radius: 10px 10px 0 0; font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid transparent; border-bottom: none; background: transparent; color: var(--text3); transition: all .2s; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
-    .tab-btn .dot { width: 7px; height: 7px; border-radius: 50%; }
-    .tab-btn.active { background: rgba(255, 255, 255, 0.98); color: var(--text); font-weight: 600; }
-    .tab-btn[data-tab=instagram].active .dot { background: var(--accent-ig); }
-    .tab-btn[data-tab=facebook].active .dot { background: var(--accent-fb); }
-    .tab-btn[data-tab=naver].active .dot { background: var(--accent-nv); }
-    .tab-btn[data-tab=kakao].active .dot { background: var(--accent-kk); }
+    input[type=text]:focus,
+    textarea:focus,
+    select:focus {
+      border-color: rgba(20, 184, 166, 0.45);
+      box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.10);
+    }
 
-    .output-pane { display: none; padding: 20px 22px 22px; }
-    .output-pane.active { display: block; }
-    .output-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 10px; }
-    .platform-badge { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; }
-    .platform-badge .badge-dot { width: 9px; height: 9px; border-radius: 50%; }
-    .output-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .btn-sm { padding: 7px 12px; border-radius: 9px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border2); background: rgba(241, 245, 249, 0.96); color: var(--text2); transition: all .15s; }
-    .btn-sm:hover { background: var(--surface3); color: var(--text); }
-    .btn-sm.primary { color: #fff; }
-    .output-text { background: rgba(241, 245, 249, 0.96); border: 1px solid var(--border); border-radius: 14px; padding: 16px; font-size: 13px; line-height: 1.85; color: var(--text); min-height: 150px; white-space: pre-wrap; word-break: break-word; position: relative; }
+    textarea {
+      min-height: 90px;
+    }
 
-    .hashtag-section { margin-top: 14px; }
-    .hashtag-label { font-size: 11px; color: var(--text3); font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.75px; }
-    .hashtag-list { display: flex; flex-wrap: wrap; gap: 6px; }
-    .hashtag-pill { padding: 5px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid var(--border2); background: rgba(255, 255, 255, 0.95); color: var(--text2); cursor: pointer; transition: all .15s; }
-    .hashtag-pill:hover { color: var(--text); border-color: rgba(241, 245, 249, 0.2); }
+    .field {
+      margin-bottom: 18px;
+    }
 
-    .guide-box { margin-top: 14px; padding: 13px 14px; background: rgba(20, 184, 166, 0.05); border-left: 3px solid; border-radius: 0 12px 12px 0; font-size: 12px; color: var(--text2); line-height: 1.65; }
-    .guide-box.ig { border-color: var(--accent-ig); }
-    .guide-box.fb { border-color: var(--accent-fb); }
-    .guide-box.nv { border-color: var(--accent-nv); }
-    .guide-box.kk { border-color: var(--accent-kk); }
-    .guide-box strong { color: var(--text); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px; }
+    .field:last-child {
+      margin-bottom: 0;
+    }
 
-    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 54px 20px; color: var(--text3); text-align: center; }
-    .empty-state .icon { font-size: 38px; margin-bottom: 12px; opacity: .6; }
-    .empty-state p { font-size: 13px; line-height: 1.7; }
+    .field-hint {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--text3);
+      line-height: 1.55;
+    }
 
-    .field-footer { display: flex; justify-content: space-between; margin-top: 5px; gap: 12px; }
-    .char-count { font-size: 11px; color: var(--text3); }
-    .char-count.warn { color: #F59E0B; }
-    .divider { height: 1px; background: var(--border); margin: 16px 0; }
+    .required {
+      color: var(--primary);
+    }
 
-    /* 이미지 업로드 영역 CSS */
-    .img-upload { border: 2px dashed var(--border2); border-radius: 14px; padding: 24px; text-align: center; cursor: pointer; transition: all .2s; background: rgba(241, 245, 249, 0.7); }
-    .img-upload:hover, #uploadZone.dragover { border-color: rgba(20, 184, 166, 0.32); background: rgba(20, 184, 166, 0.04); }
-    .img-upload input { display: none; }
-    .img-upload .icon { font-size: 24px; margin-bottom: 8px; }
-    .img-upload p { font-size: 12px; color: var(--text3); }
-    .img-upload span { color: var(--text2); font-weight: 600; }
-	.img-previews {
-	  display: flex;
-	  flex-wrap: wrap;
-	  gap: 12px;
-	  margin-top: 12px;
-	  max-height: 230px; /* 패널이 무한정 커지지 않도록 최대 높이 설정 */
-	  overflow-y: auto;  /* 넘치면 세로 스크롤 생성 */
-	  padding-right: 4px;
-	}
-    .preview-item { position: relative; width: 100px; height: 100px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; background: #f8fafc; }
-    .preview-item img { width: 100%; height: 100%; object-fit: cover; }
-    .btn-remove-img { position: absolute; top: 4px; right: 4px; background: rgba(0, 0, 0, 0.6); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
-    .btn-remove-img:hover { background: rgba(220, 38, 38, 0.9); }
-    .loading-text { font-size: 11px; color: var(--text3); text-align: center; }
+    .chip-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
 
-    .time-tip { display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, 0.92); border: 1px solid var(--border2); border-radius: 999px; padding: 4px 12px; font-size: 11px; color: var(--text2); }
-    .time-tip.ig { border-color: rgba(225, 48, 108, 0.28); }
-    .time-tip.fb { border-color: rgba(24, 119, 242, 0.28); }
-    .time-tip.nv { border-color: rgba(3, 199, 90, 0.28); }
-    .time-tip.kk { border-color: rgba(254, 229, 0, 0.24); }
+    .chip {
+      padding: 7px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border2);
+      background: rgba(241, 245, 249, 0.96);
+      color: var(--text2);
+      transition: all .2s ease;
+      user-select: none;
+    }
+
+    .chip:hover {
+      transform: translateY(-1px);
+      color: var(--text);
+    }
+
+    .chip.active {
+      color: #fff;
+    }
+
+    .chip-ig.active {
+      background: var(--accent-ig);
+      border-color: var(--accent-ig);
+      box-shadow: 0 0 14px var(--glow-ig);
+    }
+
+    .chip-fb.active {
+      background: var(--accent-fb);
+      border-color: var(--accent-fb);
+      box-shadow: 0 0 14px var(--glow-fb);
+    }
+
+    .chip-nv.active {
+      background: var(--accent-nv);
+      border-color: var(--accent-nv);
+      box-shadow: 0 0 14px var(--glow-nv);
+      color: #062714;
+    }
+
+    .chip-kk.active {
+      background: var(--accent-kk);
+      border-color: var(--accent-kk);
+      color: var(--accent-kk-text);
+      box-shadow: 0 0 14px var(--glow-kk);
+    }
+
+    .keyword-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    @media (max-width: 620px) {
+      .keyword-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    .keyword-item {
+      position: relative;
+    }
+
+    .keyword-item input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .keyword-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      width: 100%;
+      min-height: 44px;
+      border-radius: 12px;
+      border: 1px solid var(--border2);
+      background: rgba(241, 245, 249, 0.92);
+      color: var(--text2);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all .2s ease;
+      text-align: center;
+      padding: 0 10px;
+    }
+
+    .keyword-label:hover {
+      border-color: rgba(20, 184, 166, 0.22);
+      color: var(--text);
+    }
+
+    .keyword-item input:checked+.keyword-label {
+      border-color: rgba(20, 184, 166, 0.48);
+      background: linear-gradient(135deg, rgba(20, 184, 166, 0.20), rgba(99, 102, 241, 0.14));
+      color: #0F172A;
+      box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.08), 0 8px 20px rgba(20, 184, 166, 0.10);
+    }
+
+    .tone-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    @media (max-width: 820px) {
+      .tone-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .tone-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    .slider-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .slider-item,
+    .tone-item {
+      background: rgba(241, 245, 249, 0.96);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 11px 10px;
+      cursor: pointer;
+      text-align: center;
+      transition: all .2s;
+      font-size: 12px;
+      color: var(--text2);
+    }
+
+    .slider-item .icon,
+    .tone-item .icon {
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+
+    .slider-item.active,
+    .tone-item.active {
+      border-color: rgba(99, 102, 241, 0.45);
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(20, 184, 166, 0.12));
+      color: var(--text);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
+    }
+
+    .range-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    input[type=range] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 5px;
+      background: linear-gradient(to right, var(--primary) var(--pct, 50%), rgba(71, 85, 105, 0.6) var(--pct, 50%));
+      border-radius: 999px;
+      outline: none;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--primary-glow);
+    }
+
+    .range-val {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      min-width: 42px;
+      text-align: right;
+    }
+
+    .btn-generate {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border: none;
+      border-radius: 14px;
+      color: #fff;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all .25s;
+      margin-top: 22px;
+      box-shadow: 0 10px 28px rgba(20, 184, 166, 0.22);
+      letter-spacing: 0.18px;
+    }
+
+    .btn-generate:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 34px rgba(20, 184, 166, 0.28);
+    }
+
+    .btn-generate:active {
+      transform: translateY(0);
+    }
+
+    .btn-generate .spinner {
+      display: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.32);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    .btn-generate.loading .spinner {
+      display: inline-block;
+    }
+
+    .btn-generate.loading .btn-text {
+      opacity: .62;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .tab-bar {
+      display: flex;
+      padding: 16px 22px 0;
+      gap: 4px;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      padding: 8px 16px;
+      border-radius: 10px 10px 0 0;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-bottom: none;
+      background: transparent;
+      color: var(--text3);
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .tab-btn .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    /*
+    .tab-btn.active {
+      background: rgba(255, 255, 255, 0.98);
+      border-color: var(--border2);
+      color: var(--text);
+      margin-bottom: -1px;
+      padding-bottom: 9px;
+    }
+    */
+    .tab-btn.active {
+background: rgba(255, 255, 255, 0.98);
+  color: var(--text);
+  font-weight: 600;
+    }
+
+    .tab-btn[data-tab=instagram].active .dot {
+      background: var(--accent-ig);
+    }
+
+    .tab-btn[data-tab=facebook].active .dot {
+      background: var(--accent-fb);
+    }
+
+    .tab-btn[data-tab=naver].active .dot {
+      background: var(--accent-nv);
+    }
+
+    .tab-btn[data-tab=kakao].active .dot {
+      background: var(--accent-kk);
+    }
+
+    .output-pane {
+      display: none;
+      padding: 20px 22px 22px;
+    }
+
+    .output-pane.active {
+      display: block;
+    }
+
+    .output-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 10px;
+    }
+
+    .platform-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .platform-badge .badge-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+    }
+
+    .output-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-sm {
+      padding: 7px 12px;
+      border-radius: 9px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border2);
+      background: rgba(241, 245, 249, 0.96);
+      color: var(--text2);
+      transition: all .15s;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    .btn-sm:hover {
+      background: var(--surface3);
+      color: var(--text);
+    }
+
+    .btn-sm.primary {
+      color: #fff;
+    }
+
+    .output-text {
+      background: rgba(241, 245, 249, 0.96);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 13px;
+      line-height: 1.85;
+      color: var(--text);
+      min-height: 150px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      position: relative;
+    }
+
+    .output-text.typing::after {
+      content: '▍';
+      animation: blink .8s step-end infinite;
+      color: var(--primary);
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0;
+      }
+    }
+
+    .hashtag-section {
+      margin-top: 14px;
+    }
+
+    .hashtag-label {
+      font-size: 11px;
+      color: var(--text3);
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.75px;
+    }
+
+    .hashtag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .hashtag-pill {
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border2);
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--text2);
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .hashtag-pill:hover {
+      color: var(--text);
+      border-color: rgba(241, 245, 249, 0.2);
+    }
+
+    .guide-box {
+      margin-top: 14px;
+      padding: 13px 14px;
+      background: rgba(20, 184, 166, 0.05);
+      border-left: 3px solid;
+      border-radius: 0 12px 12px 0;
+      font-size: 12px;
+      color: var(--text2);
+      line-height: 1.65;
+    }
+
+    .guide-box.ig {
+      border-color: var(--accent-ig);
+    }
+
+    .guide-box.fb {
+      border-color: var(--accent-fb);
+    }
+
+    .guide-box.nv {
+      border-color: var(--accent-nv);
+    }
+
+    .guide-box.kk {
+      border-color: var(--accent-kk);
+    }
+
+    .guide-box strong {
+      color: var(--text);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 54px 20px;
+      color: var(--text3);
+      text-align: center;
+    }
+
+    .empty-state .icon {
+      font-size: 38px;
+      margin-bottom: 12px;
+      opacity: .6;
+    }
+
+    .empty-state p {
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .field-footer {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 5px;
+      gap: 12px;
+    }
+
+    .char-count {
+      font-size: 11px;
+      color: var(--text3);
+    }
+
+    .char-count.warn {
+      color: #F59E0B;
+    }
+
+    .validation-msg {
+      font-size: 11px;
+      color: #FB7185;
+      display: none;
+    }
+
+    .validation-msg.show {
+      display: block;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 16px 0;
+    }
+
+    .img-upload {
+      border: 2px dashed var(--border2);
+      border-radius: 14px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      background: rgba(241, 245, 249, 0.7);
+    }
+
+    .img-upload:hover {
+      border-color: rgba(20, 184, 166, 0.32);
+      background: rgba(20, 184, 166, 0.04);
+    }
+
+    .img-upload input {
+      display: none;
+    }
+
+    .img-upload .icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .img-upload p {
+      font-size: 12px;
+      color: var(--text3);
+    }
+
+    .img-upload span {
+      color: var(--text2);
+      font-weight: 600;
+    }
+
+    .img-previews {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .img-thumb {
+      width: 72px;
+      height: 72px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid var(--border2);
+      position: relative;
+      cursor: pointer;
+    }
+
+    .img-thumb-wrap {
+      position: relative;
+      display: inline-block;
+    }
+
+    .img-thumb-wrap .remove-btn {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      width: 18px;
+      height: 18px;
+      background: #E1306C;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #fff;
+      cursor: pointer;
+      border: none;
+      line-height: 1;
+    }
+
+    .time-tip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--border2);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 11px;
+      color: var(--text2);
+    }
+
+    .time-tip.ig {
+      border-color: rgba(225, 48, 108, 0.28);
+    }
+
+    .time-tip.fb {
+      border-color: rgba(24, 119, 242, 0.28);
+    }
+
+    .time-tip.nv {
+      border-color: rgba(3, 199, 90, 0.28);
+    }
+
+    .time-tip.kk {
+      border-color: rgba(254, 229, 0, 0.24);
+    }
 
     @media (max-width: 600px) {
-      .wrapper { padding: 0 16px 60px; }
-      header { gap: 12px; align-items: flex-start; }
-      .output-meta { align-items: flex-start; flex-direction: column; }
-    }
-    
-	/* 🌟 우측 패널 결과창 이미지 갤러리 CSS (풀사이즈 맞춤형) */
-	.output-image-gallery {
-	  display: flex;
-	  gap: 10px;
-	  margin-bottom: 16px;
-	  overflow-x: auto; 
-	  padding-bottom: 8px;
-	  scroll-snap-type: x mandatory; /* ✨ 좌우 스크롤 시 사진이 화면에 딱딱 걸리게 해줌 */
-	}
-	
-	.output-image-gallery img {
-	  flex: 0 0 100%; /* ✨ 핵심: 사진 1장이 패널 가로 너비를 100% 꽉 채우도록 설정 */
-	  width: 100%;
-	  max-height: 400px; /* 세로로 너무 긴 사진이 패널을 뚫고 나가지 않게 방어 */
-	  object-fit: contain; /* 사진이 잘리지 않고 원본 비율대로 다 보이게 설정 (여백 발생 시 배경색으로 채움) */
-	  border-radius: 12px;
-	  border: 1px solid var(--border2);
-	  background: rgba(241, 245, 249, 0.5); /* 사진 비율이 안 맞을 때 남는 여백 배경색 */
-	  scroll-snap-align: center; /* 스크롤 멈출 때 사진이 중앙에 정렬됨 */
-	}
-	
-	/* 얇고 예쁜 가로 스크롤바 디자인 */
-	.output-image-gallery::-webkit-scrollbar { height: 6px; }
-	.output-image-gallery::-webkit-scrollbar-thumb { 
-	  background: rgba(71, 85, 105, 0.2); 
-	  border-radius: 10px; 
-	}
+      .slider-row {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
 
+      .wrapper {
+        padding: 0 16px 60px;
+      }
+
+      header {
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .output-meta {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
   </style>
 </head>
 
@@ -286,7 +997,8 @@
       <p>통일된 메인 테마 위에 플랫폼별 포인트 컬러를 유지해, 각 채널 특성에 맞는 문구를 빠르게 생성합니다.</p>
     </div>
 
-    <form id="contentForm" th:action="@{/content/generate}" method="post">
+<form id="contentForm" th:action="@{/content/generate}" method="post" enctype="multipart/form-data">
+
       <div class="main-grid">
         <div>
           <div class="panel">
@@ -313,50 +1025,41 @@
               <div class="field">
                 <label>추가 정보 키워드 <span class="required">*</span></label>
                 <div class="keyword-grid" id="keywordGroup">
-                  <div class="keyword-item">
-                    <input type="checkbox" name="keywords" id="kw-food" value="맛집" th:checked="${req?.keywords?.contains('맛집') == true}">
-                    <label class="keyword-label" for="kw-food">🍽️ 맛집</label>
-                  </div>
-                  <div class="keyword-item">
-                    <input type="checkbox" name="keywords" id="kw-clean" value="청결" th:checked="${req?.keywords?.contains('청결') == true}">
-                    <label class="keyword-label" for="kw-clean">🧼 청결</label>
-                  </div>
-                  <div class="keyword-item">
-                    <input type="checkbox" name="keywords" id="kw-mood" value="분위기" th:checked="${req?.keywords?.contains('분위기') == true}">
-                    <label class="keyword-label" for="kw-mood">✨ 분위기</label>
-                  </div>
-                  <div class="keyword-item">
-                    <input type="checkbox" name="keywords" id="kw-price" value="가성비" th:checked="${req?.keywords?.contains('가성비') == true}">
-                    <label class="keyword-label" for="kw-price">💸 가성비</label>
-                  </div>
-                  <div class="keyword-item">
-                    <input type="checkbox" name="keywords" id="kw-local" value="지역" th:checked="${req?.keywords?.contains('지역') == true}">
-                    <label class="keyword-label" for="kw-local">📍 지역</label>
-                  </div>
-                  <div class="keyword-item">
-                    <input type="checkbox" name="keywords" id="kw-event" value="이벤트" th:checked="${req?.keywords?.contains('이벤트') == true}">
-                    <label class="keyword-label" for="kw-event">🎁 이벤트</label>
-                  </div>
+					<div class="keyword-item">
+					    <input type="checkbox" name="keywords" id="kw-food" value="맛집" th:checked="${req?.keywords?.contains('맛집') == true}">
+					    <label class="keyword-label" for="kw-food">🍽️ 맛집</label>
+					  </div>
+					  <div class="keyword-item">
+					    <input type="checkbox" name="keywords" id="kw-clean" value="청결" th:checked="${req?.keywords?.contains('청결') == true}">
+					    <label class="keyword-label" for="kw-clean">🧼 청결</label>
+					  </div>
+					  <div class="keyword-item">
+					    <input type="checkbox" name="keywords" id="kw-mood" value="분위기" th:checked="${req?.keywords?.contains('분위기') == true}">
+					    <label class="keyword-label" for="kw-mood">✨ 분위기</label>
+					  </div>
+					  <div class="keyword-item">
+					    <input type="checkbox" name="keywords" id="kw-price" value="가성비" th:checked="${req?.keywords?.contains('가성비') == true}">
+					    <label class="keyword-label" for="kw-price">💸 가성비</label>
+					  </div>
+					  <div class="keyword-item">
+					    <input type="checkbox" name="keywords" id="kw-local" value="지역" th:checked="${req?.keywords?.contains('지역') == true}">
+					    <label class="keyword-label" for="kw-local">📍 지역</label>
+					  </div>
+					  <div class="keyword-item">
+					    <input type="checkbox" name="keywords" id="kw-event" value="이벤트" th:checked="${req?.keywords?.contains('이벤트') == true}">
+					    <label class="keyword-label" for="kw-event">🎁 이벤트</label>
+					  </div>
                 </div>
               </div>
 
               <div class="field">
                 <label>이미지 업로드</label>
                 <div class="img-upload" id="uploadZone">
-                  <input type="file" id="imgInput" accept="image/*" multiple>
+                  <input type="file" id="imgInput" name="imageFiles" accept="image/*" multiple>
                   <div class="icon">🖼️</div>
                   <p><span>클릭</span>하거나 이미지를 드래그하세요</p>
                 </div>
-                
-                <div class="img-previews" id="imgPreviews">
-                  <th:block th:if="${req != null and req.uploadedImgUrls != null}">
-                    <div th:each="url : ${req.uploadedImgUrls}" class="preview-item">
-                      <img th:src="${url}" alt="Uploaded">
-                      <button type="button" class="btn-remove-img" onclick="this.parentElement.remove()" title="삭제">✕</button>
-                      <input type="hidden" class="uploaded-img-url" name="uploadedImgUrls" th:value="${url}">
-                    </div>
-                  </th:block>
-                </div>
+                <div class="img-previews" id="imgPreviews"></div>
               </div>
 
               <div class="divider"></div>
@@ -367,310 +1070,205 @@
 
               <div class="field">
                 <label>게시할 SNS 선택</label>
-                <div class="chip-group">
-                  <div class="chip chip-ig" data-sns="instagram" th:classappend="${req == null or req.platforms?.contains('instagram') == true ? 'active' : ''}">🔴 Instagram</div>
-                  <div class="chip chip-fb" data-sns="facebook" th:classappend="${req?.platforms?.contains('facebook') == true ? 'active' : ''}">🔵 Facebook</div>
-                  <div class="chip chip-nv" data-sns="naver" th:classappend="${req?.platforms?.contains('naver') == true ? 'active' : ''}">🟢 네이버 블로그</div>
-                  <div class="chip chip-kk" data-sns="kakao" th:classappend="${req?.platforms?.contains('kakao') == true ? 'active' : ''}">🟡 카카오 채널</div>
-                </div>
+				<div class="chip-group">
+				  <div class="chip chip-ig" data-sns="instagram" 
+				       th:classappend="${req == null or req.platforms?.contains('instagram') == true ? 'active' : ''}">🔴 Instagram</div>
+				  <div class="chip chip-fb" data-sns="facebook" 
+				       th:classappend="${req?.platforms?.contains('facebook') == true ? 'active' : ''}">🔵 Facebook</div>
+				  <div class="chip chip-nv" data-sns="naver" 
+				       th:classappend="${req == null or req.platforms?.contains('naver') == true ? 'active' : ''}">🟢 네이버 블로그</div>
+				  <div class="chip chip-kk" data-sns="kakao" 
+				       th:classappend="${req == null or req.platforms?.contains('kakao') == true ? 'active' : ''}">🟡 카카오 채널</div>
+				</div>
               </div>
 
               <div class="field">
                 <label>말투 스타일</label>
-                <div class="tone-grid" id="toneGroup">
-                  <div class="tone-item" data-tone="default" th:classappend="${req == null or req.tones?.contains('default') == true ? 'active' : ''}"><div class="icon">💬</div>기본</div>
-                  <div class="tone-item" data-tone="friendly" th:classappend="${req?.tones?.contains('friendly') == true ? 'active' : ''}"><div class="icon">😊</div>친근</div>
-                  <div class="tone-item" data-tone="clean" th:classappend="${req?.tones?.contains('clean') == true ? 'active' : ''}"><div class="icon">✨</div>깔끔</div>
-                  <div class="tone-item" data-tone="formal" th:classappend="${req?.tones?.contains('formal') == true ? 'active' : ''}"><div class="icon">👔</div>격식</div>
-                  <div class="tone-item" data-tone="trendy" th:classappend="${req?.tones?.contains('trendy') == true ? 'active' : ''}"><div class="icon">🔥</div>트렌디</div>
-                </div>
+				<div class="tone-grid" id="toneGroup">
+				  <div class="tone-item" data-tone="default" 
+				       th:classappend="${req == null or req.tones?.contains('default') == true ? 'active' : ''}"><div class="icon">📝</div>기본</div>
+				  <div class="tone-item" data-tone="friendly" 
+				       th:classappend="${req?.tones?.contains('friendly') == true ? 'active' : ''}"><div class="icon">😊</div>친근</div>
+				  <div class="tone-item" data-tone="clean" 
+				       th:classappend="${req?.tones?.contains('clean') == true ? 'active' : ''}"><div class="icon">✨</div>깔끔</div>
+				  <div class="tone-item" data-tone="formal" 
+				       th:classappend="${req?.tones?.contains('formal') == true ? 'active' : ''}"><div class="icon">🎩</div>격식</div>
+				  <div class="tone-item" data-tone="trendy" 
+				       th:classappend="${req?.tones?.contains('trendy') == true ? 'active' : ''}"><div class="icon">🔥</div>트렌디</div>
+				</div>
               </div>
 
               <div class="field">
                 <label>글자 수 제한</label>
                 <div class="range-wrap">
                   <input type="range" id="lengthRange" name="maxLength" min="100" max="500" step="50" th:value="${req?.maxLength ?: 300}">
-                  <span class="range-val" id="rangeVal" th:text="${(req?.maxLength ?: 200) + '자'}">200자</span>
+                  <span class="range-val" id="rangeVal" th:text="${(req?.maxLength ?: 300) + '자'}">300자</span>
                 </div>
               </div>
 
-              <button type="submit" class="btn-generate" id="generateBtn">
-                <div class="spinner"></div>
+              
+				 <button type="submit" class="btn-generate" id="generateBtn">
+				 <div class="spinner"></div>
                 <span class="btn-text">✦ AI 콘텐츠 생성하기</span>
-              </button>
+                </button>
             </div>
           </div>
         </div>
+        
+        
         
         <div>
-          <div class="panel" style="min-height:1190px;">
-            <div class="tab-bar" id="tabBar" style="overflow-y:hidden;" th:if="${results != null}">
-              <button type="button" th:each="res : ${results}" class="tab-btn" th:classappend="${resStat.first} ? 'active'" th:data-tab="${res.platform}">
-                <span class="dot" th:style="'background:' + ${res.color}"></span>
-                <span th:text="${res.platformName}">플랫폼명</span>
-              </button>
-            </div>
+  <div class="panel" style="min-height:1190px;">
+    
+    <div class="tab-bar" id="tabBar" style="overflow-y:hidden;" th:if="${results != null}">
+      <button type="button" th:each="res : ${results}" 
+              class="tab-btn" 
+              th:classappend="${resStat.first} ? 'active'" 
+              th:data-tab="${res.platform}">
+        <span class="dot" th:style="'background:' + ${res.color}"></span>
+        <span th:text="${res.platformName}">플랫폼명</span>
+      </button>
+    </div>
 
-            <div th:if="${results == null}" class="empty-state">
-              <div class="icon">🔮</div>
-              <p>왼쪽에서 정보를 입력하고<br><strong style="color:var(--text2)">AI 콘텐츠 생성하기</strong>를 눌러주세요.</p>
-            </div>
+    <div th:if="${results == null}" class="empty-state">
+      <div class="icon">📷</div>
+      <p>왼쪽에서 정보를 입력하고<br><strong style="color:var(--text2)">AI 콘텐츠 생성하기</strong>를 눌러주세요.</p>
+    </div>
 
-            <div th:if="${results != null}" th:each="res : ${results}" class="output-pane" th:classappend="${resStat.first} ? 'active'" th:id="'pane-' + ${res.platform}">
-              <div th:if="${res.content == null}" class="empty-state">
-                <div class="icon" th:text="${res.platform == 'instagram' ? '📷' : (res.platform == 'facebook' ? '📘' : (res.platform == 'naver' ? '🟢' : '💛'))}"></div>
-                <p>왼쪽에서 정보를 입력하고<br><strong style="color:var(--text2)">AI 콘텐츠 생성하기</strong>를 눌러주세요.</p>
-              </div>
+    <div th:if="${results != null}" th:each="res : ${results}" 
+         class="output-pane" 
+         th:classappend="${resStat.first} ? 'active'" 
+         th:id="'pane-' + ${res.platform}">
+      
+      <div th:if="${res.content == null}" class="empty-state">
+        <div class="icon" th:text="${res.platform == 'instagram' ? '📷' : (res.platform == 'facebook' ? '📘' : (res.platform == 'naver' ? '🟢' : '💛'))}"></div>
+        <p>왼쪽에서 정보를 입력하고<br><strong style="color:var(--text2)">AI 콘텐츠 생성하기</strong>를 눌러주세요.</p>
+      </div>
 
-              <div th:unless="${res.content == null}">
-                <div class="output-meta">
-                  <div class="platform-badge">
-                    <span class="badge-dot" th:style="'background:' + ${res.color}"></span>
-                    <span th:text="${res.platformName}">Platform</span>
-                  </div>
-                  <div class="output-actions">
-                    <button type="button" class="btn-sm" th:onclick="copyText(event, [[${res.platform}]])">복사</button>
-                    <button type="button" class="btn-sm primary" th:style="'background:' + ${res.color} + '; border-color:' + ${res.color}" th:onclick="publishToSns(event, [[${res.platform}]])">게시하기</button>
-                  </div>
-                </div>
-                
-                <div class="output-image-gallery" th:if="${req != null and req.uploadedImgUrls != null and !req.uploadedImgUrls.isEmpty()}">
-				  <img th:each="url : ${req.uploadedImgUrls}" th:src="${url}" alt="첨부 이미지">
-				</div>
-
-                <div class="output-text" th:id="'text-' + ${res.platform}" th:text="${res.content}"></div>
-
-                <div class="hashtag-section" th:if="${res.hashtags != null and !res.hashtags.isEmpty()}">
-                  <div class="hashtag-label" th:text="${res.platform == 'naver' ? '추천 키워드' : '추천 해시태그'}">추천 해시태그</div>
-                  <div class="hashtag-list" th:id="'hash-' + ${res.platform}">
-                    <span th:each="tag : ${res.hashtags}" class="hashtag-pill" th:text="${tag}">#해시태그</span>
-                  </div>
-                </div>
-
-                <div class="guide-box" th:classappend="${res.platformAbbr}">
-                  <strong th:text="'📌 ' + ${res.platformName} + ' 가이드'">📌 가이드</strong>
-                  <span th:text="${res.guideText}">가이드 내용</span>
-                  <br>
-                  <span class="time-tip" th:classappend="${res.platformAbbr}" style="margin-top:8px; display:inline-flex;">
-                    ⏰ 최적 게시 시간: <b th:text="${res.bestTime}" style="color:var(--text)">오전 11시</b>
-                  </span>
-                </div>
-              </div>
-            </div> 
+      <div th:unless="${res.content == null}">
+        <div class="output-meta">
+          <div class="platform-badge">
+            <span class="badge-dot" th:style="'background:' + ${res.color}"></span>
+            <span th:text="${res.platformName}">Platform</span>
+          </div>
+          <div class="output-actions">
+            <button type="button" class="btn-sm" th:onclick="copyText(event, [[${res.platform}]])">복사</button>
+            <button type="button" class="btn-sm primary" th:style="'background:' + ${res.color} + '; border-color:' + ${res.color}">게시하기</button>
           </div>
         </div>
+
+        <div class="output-text" th:id="'text-' + ${res.platform}" th:text="${res.content}"></div>
+
+        <div class="hashtag-section" th:if="${res.hashtags != null and !res.hashtags.isEmpty()}">
+          <div class="hashtag-label" th:text="${res.platform == 'naver' ? '추천 키워드' : '추천 해시태그'}">추천 해시태그</div>
+          <div class="hashtag-list" th:id="'hash-' + ${res.platform}">
+            <span th:each="tag : ${res.hashtags}" class="hashtag-pill" th:text="${tag}">#해시태그</span>
+          </div>
+        </div>
+
+        <div class="guide-box" th:classappend="${res.platformAbbr}">
+          <strong th:text="'📌 ' + ${res.platformName} + ' 가이드'">📌 가이드</strong>
+          <span th:text="${res.guideText}">가이드 내용</span>
+          <br>
+          <span class="time-tip" th:classappend="${res.platformAbbr}" style="margin-top:8px; display:inline-flex;">
+            ⏰ 최적 게시 시간: <b th:text="${res.bestTime}" style="color:var(--text)">오전 11시</b>
+          </span>
+        </div>
       </div>
-    </form>
-  </div>
+    </div> </div>
+</div>
+
+</form>
+</div>
+
 
   <script>
-    // 1. 탭 전환 로직
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const panes = document.querySelectorAll('.output-pane');
-    tabButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        tabButtons.forEach(b => b.classList.remove('active'));
-        panes.forEach(p => p.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('pane-' + btn.dataset.tab).classList.add('active');
-      });
+//1. 탭 전환 로직
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const panes = document.querySelectorAll('.output-pane');
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabButtons.forEach(b => b.classList.remove('active'));
+      panes.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('pane-' + btn.dataset.tab).classList.add('active');
     });
+  });
 
-    // 2. SNS 및 말투 선택 토글
-    document.querySelectorAll('.chip').forEach(chip => {
-      chip.addEventListener('click', () => chip.classList.toggle('active'));
-    });
-    document.querySelectorAll('#toneGroup .tone-item').forEach(item => {
-      item.addEventListener('click', () => {
-        item.classList.toggle('active');
-        if (document.querySelectorAll('#toneGroup .tone-item.active').length === 0) {
-          document.querySelector('#toneGroup .tone-item[data-tone="default"]')?.classList.add('active');
-        }
-      });
-    });
-
-    // 3. 글자 수 슬라이더
-    const rangeEl = document.getElementById('lengthRange');
-    const rangeVal = document.getElementById('rangeVal');
-    function updateRange() {
-      const pct = ((rangeEl.value - rangeEl.min) / (rangeEl.max - rangeEl.min)) * 100;
-      rangeEl.style.setProperty('--pct', pct + '%');
-      rangeVal.textContent = rangeEl.value + '자';
-    }
-    if(rangeEl) {
-      rangeEl.addEventListener('input', updateRange);
-      updateRange();
-    }
-
-    // 4. 글자 수 카운터
-    const menuInput = document.getElementById('menuName');
-    const menuCount = document.getElementById('menuCount');
-    if(menuInput) {
-      menuInput.addEventListener('input', () => {
-        const len = menuInput.value.length;
-        menuCount.textContent = len + '/50';
-        menuCount.classList.toggle('warn', len > 40);
-      });
-    }
-
-    // 5. 텍스트 복사 기능
-    function copyText(evt, sns) {
-      const el = document.getElementById('text-' + sns);
-      if (!el || !el.textContent) return;
-      navigator.clipboard.writeText(el.textContent).then(() => {
-        const btn = evt.currentTarget;
-        const original = btn.textContent;
-        btn.textContent = '✓ 복사됨';
-        setTimeout(() => btn.textContent = original, 1400);
-      });
-    }
-
-    // 6. 폼 제출 시 유효성 검사 및 데이터 세팅
-    document.getElementById('contentForm').addEventListener('submit', function(e) {
-      const keywords = [...document.querySelectorAll('#keywordGroup input:checked')];
-      if (keywords.length === 0) {
-        e.preventDefault();
-        alert('추가 정보 키워드를 1개 이상 선택해주세요.');
-        return;
+  // 2. SNS 및 말투 선택 토글
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => chip.classList.toggle('active'));
+  });
+  document.querySelectorAll('#toneGroup .tone-item').forEach(item => {
+    item.addEventListener('click', () => {
+      item.classList.toggle('active');
+      if (document.querySelectorAll('#toneGroup .tone-item.active').length === 0) {
+        document.querySelector('#toneGroup .tone-item[data-tone="default"]')?.classList.add('active');
       }
-      const activeSNS = [...document.querySelectorAll('.chip.active')].map(c => c.dataset.sns);
-      if (activeSNS.length === 0) {
-        e.preventDefault();
-        alert('게시할 SNS를 1개 이상 선택해 주세요.');
-        return;
-      }
-      document.getElementById('platformsHidden').value = activeSNS.join(',');
-      document.getElementById('tonesHidden').value = [...document.querySelectorAll('.tone-item.active')].map(t => t.dataset.tone).join(',');
-      document.getElementById('generateBtn').classList.add('loading');
     });
+  });
 
-    // 7. SNS 발행 로직
-    async function publishToSns(evt, platform) {
-      if (platform !== 'instagram' && platform !== 'facebook') {
-        alert(platform + '현재 플랫폼의 게시는 아직 준비 중입니다');
-        return;
-      }
+  // 3. 글자 수 슬라이더
+  const rangeEl = document.getElementById('lengthRange');
+  const rangeVal = document.getElementById('rangeVal');
+  function updateRange() {
+    const pct = ((rangeEl.value - rangeEl.min) / (rangeEl.max - rangeEl.min)) * 100;
+    rangeEl.style.setProperty('--pct', pct + '%');
+    rangeVal.textContent = rangeEl.value + '자';
+  }
+  if(rangeEl) {
+    rangeEl.addEventListener('input', updateRange);
+    updateRange();
+  }
 
+  // 4. 글자 수 카운터
+  const menuInput = document.getElementById('menuName');
+  const menuCount = document.getElementById('menuCount');
+  if(menuInput) {
+    menuInput.addEventListener('input', () => {
+      const len = menuInput.value.length;
+      menuCount.textContent = len + '/50';
+      menuCount.classList.toggle('warn', len > 40);
+    });
+  }
+
+  // 5. 텍스트 복사 기능
+  function copyText(evt, sns) {
+    const el = document.getElementById('text-' + sns);
+    if (!el || !el.textContent) return;
+    navigator.clipboard.writeText(el.textContent).then(() => {
       const btn = evt.currentTarget;
-      const originalText = btn.textContent;
-      const contentText = document.getElementById('text-' + platform).innerText;
+      const original = btn.textContent;
+      btn.textContent = '✓ 복사됨';
+      setTimeout(() => btn.textContent = original, 1400);
+    });
+  }
 
-      const uploadedImgInput = document.querySelector('.uploaded-img-url');
-      //const finalImageUrl = uploadedImgInput ? uploadedImgInput.value : "https://i.ibb.co/Q0dRF37/unnamed-27.jpg"; // 이미지가 없으면 임시 이미지 사용
-      let finalImageUrl = "";
-
-      // 값이 정상적으로 들어있는 경우
-      if (uploadedImgInput && uploadedImgInput.value.trim() !== '') {
-        finalImageUrl = uploadedImgInput.value;
-      } else {
-        // 올리지 않았거나, 업로드 중 오류가 나서 값이 없는 경우
-        const fallbackMsg = platform === 'instagram' 
-            ? "인스타그램은 사진이 필수입니다! 기본(대체) 이미지로 게시하시겠습니까?" 
-            : "업로드된 이미지가 없습니다. 기본(대체) 이미지와 함께 게시하시겠습니까?";
-        
-        const useFallback = confirm(fallbackMsg);
-        
-        if (useFallback) {
-          finalImageUrl = "https://i.ibb.co/Q0dRF37/unnamed-27.jpg"; 
-        } else {
-          // 취소하면 발행 자체를 중단하고 함수 탈출
-          return; 
-        }
-      }
-      
-      if(!confirm("이 내용으로 게시하시겠습니까?")) return;
-
-      btn.textContent = '게시 중...';
-      btn.disabled = true;
-
-      try {
-        const response = await fetch('/api/sns/publish/' + platform, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            caption: contentText,
-            imageUrl: finalImageUrl
-          })
-        });
-
-        const result = await response.json();
-        if (response.ok) {
-          alert("성공적으로 게시되었습니다!");
-          btn.textContent = '게시 완료';
-        } else {
-          alert("게시 실패: " + (result.message || "알 수 없는 오류"));
-          btn.textContent = originalText;
-          btn.disabled = false;
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert("서버와 통신하는 중 문제가 발생했습니다.");
-        btn.textContent = originalText;
-        btn.disabled = false;
-      }
+  // 6. 폼 제출 시 (Hidden 태그 세팅 + 로딩 스피너 동작)
+  document.getElementById('contentForm').addEventListener('submit', function(e) {
+    // 선택된 키워드 검증
+    const keywords = [...document.querySelectorAll('#keywordGroup input:checked')];
+    if (keywords.length === 0) {
+      e.preventDefault(); // 제출 막기
+      alert('추가 정보 키워드를 1개 이상 선택해주세요.');
+      return;
     }
 
-    // 8. 이미지 업로드 로직 (ImgBB 연동)
-    document.addEventListener('DOMContentLoaded', () => {
-      const uploadZone = document.getElementById('uploadZone');
-      const imgInput = document.getElementById('imgInput');
-      const imgPreviews = document.getElementById('imgPreviews');
+    // 선택된 SNS 검증
+    const activeSNS = [...document.querySelectorAll('.chip.active')].map(c => c.dataset.sns);
+    if (activeSNS.length === 0) {
+      e.preventDefault(); // 제출 막기
+      alert('게시할 SNS를 1개 이상 선택해 주세요.');
+      return;
+    }
 
-      uploadZone.addEventListener('click', () => imgInput.click());
-      uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
-      uploadZone.addEventListener('dragleave', () => { uploadZone.classList.remove('dragover'); });
-      uploadZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadZone.classList.remove('dragover');
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) handleImageFiles(e.dataTransfer.files);
-      });
-      imgInput.addEventListener('change', (e) => {
-        if (e.target.files && e.target.files.length > 0) {
-          handleImageFiles(e.target.files);
-          imgInput.value = ''; 
-        }
-      });
+    // 숨김 필드에 값 채우기 (Java Controller로 넘길 데이터)
+    document.getElementById('platformsHidden').value = activeSNS.join(',');
+    document.getElementById('tonesHidden').value = [...document.querySelectorAll('.tone-item.active')].map(t => t.dataset.tone).join(',');
 
-      async function handleImageFiles(files) {
-        for (const file of files) {
-          if (!file.type.startsWith('image/')) { alert('이미지 파일만 업로드 가능합니다!'); continue; }
-
-
-			const maxSize = 10 * 1024 * 1024; // 10메가 용량제한
-			if (file.size > maxSize) {
-				alert(`이미지 용량이 너무 큽니다! (최대 10MB)\n현재 파일: ${(file.size / (1024*1024)).toFixed(2)}MB`);
-				continue;
-			}
-                
-          const previewDiv = document.createElement('div');
-          previewDiv.className = 'preview-item';
-          previewDiv.innerHTML = `<span class="loading-text">업로드 중...</span>`;
-          imgPreviews.appendChild(previewDiv);
-
-          const formData = new FormData();
-          formData.append('file', file);
-
-          try {
-            const response = await fetch('/api/sns/upload-image', {
-              method: 'POST',
-              body: formData
-            });
-            const result = await response.json();
-            if (response.ok) {
-              previewDiv.innerHTML = `
-                <img src="${result.imageUrl}" alt="Uploaded">
-                <button type="button" class="btn-remove-img" onclick="this.parentElement.remove()" title="삭제">✕</button>
-                <input type="hidden" class="uploaded-img-url" name="uploadedImgUrls" value="${result.imageUrl}">
-              `;
-            } else { throw new Error(result.message); }
-          } catch (error) {
-            console.error(error);
-            previewDiv.innerHTML = `<span class="loading-text" style="color: red;">실패</span><button type="button" class="btn-remove-img" onclick="this.parentElement.remove()">✕</button>`;
-          }
-        }
-      }
-    });
-    
+    // 로딩 애니메이션 켜기
+    document.getElementById('generateBtn').classList.add('loading');
+  });
   </script>
 </body>
 </html>
