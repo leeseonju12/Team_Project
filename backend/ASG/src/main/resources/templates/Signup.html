@@ -1,0 +1,1594 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="_csrf" th:content="${_csrf.token}"/>
+  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+  <title>소셜다모아 — 회원가입</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;1,9..144,400;1,9..144,700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --teal: #14B8A6;
+      --teal-light: #CCFBF1;
+      --teal-mid: #5EEAD4;
+      --teal-dark: #0D9488;
+      --indigo: #6366F1;
+      --indigo-light: #EEF2FF;
+      --indigo-dark: #4F46E5;
+      --slate: #F8FAFC;
+      --slate2: #E2E8F0;
+      --text: #0F172A;
+      --text2: #475569;
+      --text3: #94A3B8;
+      --white: #FFFFFF;
+      --border: #E2E8F0;
+      --border2: #CBD5E1;
+      --green: #22C55E;
+      --green-light: #DCFCE7;
+      --red: #EF4444;
+      --red-light: #FEE2E2;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, .06);
+      --shadow: 0 4px 16px rgba(15, 23, 42, .08);
+      --brand-grad: linear-gradient(135deg, #14B8A6 0%, #22D3EE 40%, #6366F1 100%);
+      --brand-grad-soft: linear-gradient(135deg, rgba(20, 184, 166, .08) 0%, rgba(99, 102, 241, .08) 100%);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      background: var(--slate);
+    }
+
+    .top-stripe {
+      height: 3px;
+      background: linear-gradient(90deg, var(--teal) 0%, #22D3EE 40%, var(--indigo) 100%);
+      flex-shrink: 0;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+    }
+
+    header {
+      position: fixed;
+      top: 3px; left: 0; right: 0;
+      z-index: 90;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+    }
+
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+    .logo-mark {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--brand-grad);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 900; color: #fff;
+      box-shadow: 0 2px 8px rgba(20,184,166,.3);
+    }
+    .logo-name { font-size: 15px; font-weight: 700; letter-spacing: -.3px; }
+
+    .header-login-link {
+      font-size: 13px; color: var(--text3); text-decoration: none;
+      font-weight: 500; transition: color .2s;
+    }
+    .header-login-link:hover { color: var(--teal-dark); }
+    .header-login-link strong { color: var(--teal-dark); }
+
+    .page-wrapper {
+      padding-top: 63px;
+      flex: 1;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 500px; flex-shrink: 0;
+      position: fixed; top: 63px; left: 0; bottom: 0;
+      background: white;
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      padding: 48px 36px;
+      overflow-y: auto;
+    }
+
+    .sidebar-logo-section { margin-bottom: 48px; }
+    .sidebar-tagline {
+      font-family: 'Fraunces', serif;
+      font-size: 26px; font-weight: 700;
+      line-height: 1.25; letter-spacing: -.5px;
+      color: var(--text); margin-bottom: 10px;
+    }
+    .sidebar-tagline em {
+      font-style: italic;
+      background: var(--brand-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .sidebar-sub { font-size: 13px; color: var(--text3); line-height: 1.7; }
+
+    .sidebar-features {
+      margin-top: auto;
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .sf-item { display: flex; align-items: center; gap: 10px; }
+    .sf-icon {
+      width: 30px; height: 30px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; flex-shrink: 0;
+    }
+    .sf-icon.teal { background: var(--teal-light); }
+    .sf-icon.indigo { background: var(--indigo-light); }
+    .sf-icon.green { background: var(--green-light); }
+    .sf-text { font-size: 12px; color: white; line-height: 1.4; }
+    .sf-text strong { display: block; font-size: 11px; font-weight: 700; color: white; margin-bottom: 1px; }
+
+    .main-content {
+      margin-left: 500px; flex: 1;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 60px 48px 80px;
+      min-height: calc(100vh - 63px);
+    }
+
+    .content-inner { width: 100%; max-width: 580px; }
+
+    /* ── Progress bar (now 4 steps) ── */
+    .progress-bar-wrap {
+      display: flex; justify-content: center;
+      margin-bottom: 28px;
+      animation: fadeUp .3s ease both;
+    }
+
+    /* screen0 전용 진행 바 하단 여백 — 이 값만 조정하세요 */
+    .progress-bar-wrap.screen0-spacing {
+      margin-bottom: 70px;
+    }
+
+    .progress-bar {
+      display: flex; align-items: center; gap: 0;
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: 40px;
+      padding: 6px 14px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .pb-item { display: flex; align-items: center; gap: 7px; position: relative; }
+    .pb-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800;
+      background: white; border: 2px solid var(--border2);
+      color: var(--text3); transition: all .4s; flex-shrink: 0;
+    }
+    .pb-item.done .pb-num { background: var(--teal); border-color: var(--teal); color: white; }
+    .pb-item.active .pb-num {
+      background: var(--brand-grad); border-color: transparent; color: white;
+      box-shadow: 0 0 0 3px rgba(20,184,166,.15);
+    }
+    .pb-label { font-size: 12px; font-weight: 600; color: var(--text3); transition: color .3s; white-space: nowrap; }
+    .pb-item.active .pb-label { color: var(--teal-dark); font-weight: 700; }
+    .pb-item.done .pb-label { color: var(--text2); }
+
+    .pb-connector {
+      width: 28px; height: 2px;
+      background: var(--border);
+      margin: 0 6px; border-radius: 2px;
+      transition: background .4s; flex-shrink: 0;
+    }
+    .pb-connector.done { background: var(--teal); }
+
+    /* ── Page heading ── */
+    .page-heading { margin-bottom: 36px; animation: fadeUp .4s ease both; }
+    .page-heading .step-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 700; letter-spacing: .8px;
+      text-transform: uppercase; color: var(--teal-dark);
+      background: var(--teal-light); padding: 4px 12px;
+      border-radius: 20px; margin-bottom: 12px;
+    }
+    .page-heading h1 {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(22px,3vw,30px); font-weight: 700;
+      line-height: 1.2; letter-spacing: -.5px; color: var(--text);
+    }
+    .page-heading h1 em {
+      font-style: italic;
+      background: var(--brand-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .page-heading p { font-size: 13px; color: var(--text3); margin-top: 8px; line-height: 1.6; }
+
+    .section-sep {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin: 28px 0;
+    }
+
+    .s-title {
+      font-size: 12px; font-weight: 800; color: var(--text2);
+      text-transform: uppercase; letter-spacing: .8px;
+      margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+    }
+    .s-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .screen { display: none; }
+    .screen.active { display: block; animation: fadeUp .35s ease both; }
+
+    /* ── Fields ── */
+    .field { margin-bottom: 18px; }
+    .field-label { display: block; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 7px; }
+    .field-label span { color: var(--red); margin-left: 2px; }
+
+    .input {
+      width: 100%; height: 46px;
+      border: 1.5px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 0 14px;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 13px; color: var(--text); background: white;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+    }
+    .input:focus { border-color: rgba(99,102,241,.4); box-shadow: 0 0 0 3px rgba(99,102,241,.08); }
+    .input::placeholder { color: var(--text3); }
+    .input.error { border-color: var(--red); box-shadow: 0 0 0 3px rgba(239,68,68,.08); }
+    .input.success { border-color: var(--green); box-shadow: 0 0 0 3px rgba(34,197,94,.08); }
+
+    select.input {
+      cursor: pointer; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+      background-color: white; padding-right: 36px;
+    }
+
+    textarea.input { height: auto; padding: 12px 14px; resize: vertical; min-height: 80px; line-height: 1.6; }
+
+    .input-row { display: flex; gap: 8px; }
+    .input-row .input { flex: 1; }
+
+    /* ── Field hint/error messages ── */
+    .field-hint {
+      font-size: 11px; color: var(--text3); margin-top: 5px; line-height: 1.5;
+    }
+    .field-error {
+      font-size: 11px; color: var(--red); margin-top: 5px;
+      display: none; align-items: center; gap: 4px;
+    }
+    .field-error.show { display: flex; }
+    .field-success {
+      font-size: 11px; color: #15803d; margin-top: 5px;
+      display: none; align-items: center; gap: 4px;
+    }
+    .field-success.show { display: flex; }
+
+    /* ── Char counter inline ── */
+    .char-counter {
+      font-size: 11px; color: var(--text3); margin-top: 5px; text-align: right;
+    }
+    .char-counter.warn { color: var(--red); font-weight: 700; }
+    .char-counter.ok { color: #15803d; font-weight: 700; }
+
+    /* ── Social buttons ── */
+    .social-btns { display: flex; flex-direction: column; gap: 10px; }
+    .social-btn {
+      display: flex; align-items: center; gap: 12px;
+      height: 48px; padding: 0 18px;
+      border-radius: var(--radius-sm); border: 1.5px solid var(--border);
+      background: white; cursor: pointer; transition: all .2s;
+      font-family: 'Noto Sans KR', sans-serif; font-size: 13px; font-weight: 600;
+      color: var(--text); text-align: left; width: 100%;
+    }
+    .social-btn:hover {
+      border-color: rgba(99,102,241,.2);
+      background: var(--brand-grad-soft);
+      transform: translateY(-1px); box-shadow: var(--shadow-sm);
+    }
+    .s-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .s-label { flex: 1; }
+    .s-arrow { color: var(--text3); }
+
+    .social-divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 22px 0 18px; color: var(--text3);
+      font-size: 12px; font-weight: 600;
+    }
+    .social-divider::before, .social-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      height: 50px; padding: 0 24px;
+      border-radius: var(--radius-sm);
+      font-family: 'Noto Sans KR', sans-serif; font-size: 14px; font-weight: 700;
+      cursor: pointer; border: none; transition: all .22s; white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--brand-grad); color: white; width: 100%;
+      box-shadow: 0 6px 20px rgba(79,70,229,.18), 0 4px 12px rgba(20,184,166,.14);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 28px rgba(79,70,229,.22), 0 6px 16px rgba(20,184,166,.18); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .btn-outline {
+      background: white; color: var(--indigo-dark);
+      border: 1.5px solid rgba(99,102,241,.2); width: 100%;
+    }
+    .btn-outline:hover { background: var(--brand-grad-soft); border-color: rgba(99,102,241,.3); transform: translateY(-1px); }
+
+    .btn-row { display: flex; gap: 10px; margin-top: 8px; }
+    .btn-row .btn { flex: 1; }
+
+    .verify-btn {
+      height: 46px; padding: 0 16px;
+      border-radius: var(--radius-sm);
+      background: var(--indigo-light); color: var(--indigo-dark);
+      border: 1.5px solid rgba(99,102,241,.15);
+      font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap;
+      transition: all .2s; font-family: 'Noto Sans KR', sans-serif; flex-shrink: 0;
+    }
+    .verify-btn:hover { background: var(--brand-grad); color: white; border-color: transparent; }
+    .verify-btn.sent { background: var(--green-light); color: var(--green); border-color: rgba(34,197,94,.2); cursor: default; }
+
+    /* ── Terms (screen 1 - full terms step) ── */
+    .terms-card {
+      background: white; border: 1.5px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .terms-all-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, rgba(20,184,166,.05), rgba(99,102,241,.05));
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .terms-all-row:hover { background: linear-gradient(135deg, rgba(20,184,166,.09), rgba(99,102,241,.09)); }
+
+    .terms-all-label {
+      flex: 1; font-size: 13px; font-weight: 700; color: var(--text);
+    }
+    .terms-all-label span { font-size: 11px; font-weight: 500; color: var(--text3); display: block; margin-top: 2px; }
+
+    .terms-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 20px; border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+    .terms-item:last-child { border-bottom: none; }
+    .terms-item:hover { background: var(--slate); }
+
+    .terms-item-label {
+      flex: 1; font-size: 13px; color: var(--text2); cursor: pointer;
+    }
+    .terms-badge {
+      font-size: 10px; font-weight: 800; padding: 2px 7px;
+      border-radius: 10px; margin-right: 4px;
+    }
+    .terms-badge.req { background: rgba(239,68,68,.1); color: var(--red); }
+    .terms-badge.opt { background: var(--slate2); color: var(--text3); }
+
+    .terms-view-link {
+      font-size: 11px; color: var(--indigo); font-weight: 600;
+      text-decoration: none; flex-shrink: 0; padding: 4px 8px;
+      border-radius: 6px; border: 1px solid rgba(99,102,241,.15);
+      transition: all .15s;
+    }
+    .terms-view-link:hover { background: var(--indigo-light); }
+
+    /* Custom checkbox */
+    .custom-check {
+      width: 20px; height: 20px; flex-shrink: 0;
+      border-radius: 5px; border: 2px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all .2s; background: white;
+    }
+    .custom-check.checked {
+      background: var(--brand-grad); border-color: transparent;
+    }
+    .custom-check svg { opacity: 0; transition: opacity .2s; }
+    .custom-check.checked svg { opacity: 1; }
+
+    /* Terms notice */
+    .terms-notice {
+      background: rgba(239,68,68,.05); border: 1px solid rgba(239,68,68,.15);
+      border-radius: var(--radius-sm); padding: 10px 14px;
+      margin-top: 12px; font-size: 11px; color: var(--red);
+      display: none; align-items: center; gap: 6px;
+    }
+    .terms-notice.show { display: flex; }
+
+    /* OTP */
+    .otp-wrap { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+    .otp-input { letter-spacing: 6px; font-size: 18px; font-weight: 700; text-align: center; }
+    .verified-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--green-light); color: #15803d;
+      border: 1px solid rgba(34,197,94,.2); border-radius: 20px;
+      padding: 4px 12px; font-size: 11px; font-weight: 700;
+    }
+    .helper { font-size: 11px; color: var(--text3); margin-top: 5px; }
+
+    /* Nav */
+    .nav-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .back-btn {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 13px; color: var(--text3); cursor: pointer;
+      border: none; background: none; font-family: 'Noto Sans KR', sans-serif;
+      transition: color .2s; padding: 0;
+    }
+    .back-btn:hover { color: var(--indigo-dark); }
+
+    /* Address */
+    .address-btn {
+      width: 100%; height: 46px; border-radius: var(--radius-sm);
+      border: 1.5px dashed rgba(99,102,241,.25);
+      background: var(--indigo-light); color: var(--indigo-dark);
+      font-size: 13px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      font-family: 'Noto Sans KR', sans-serif; transition: all .2s;
+    }
+    .address-btn:hover { border-color: rgba(99,102,241,.4); background: rgba(99,102,241,.12); }
+    .address-filled {
+      background: var(--slate); border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px 14px;
+      font-size: 12px; color: var(--text2); line-height: 1.6;
+    }
+
+    /* Biz hours */
+    .biz-hour-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .biz-day { width: 28px; font-size: 12px; font-weight: 700; color: var(--text2); flex-shrink: 0; }
+    .biz-toggle {
+      width: 36px; height: 20px; border-radius: 10px;
+      background: var(--border2); position: relative; cursor: pointer;
+      border: none; transition: background .2s; flex-shrink: 0;
+    }
+    .biz-toggle.on { background: var(--brand-grad); }
+    .biz-toggle::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 16px; height: 16px; border-radius: 50%; background: white;
+      transition: left .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .biz-toggle.on::after { left: 18px; }
+    .biz-time { flex: 1; display: flex; align-items: center; gap: 6px; }
+    .biz-time input {
+      flex: 1; height: 34px; border: 1.5px solid var(--border);
+      border-radius: 7px; padding: 0 8px; font-size: 12px;
+      font-family: 'Noto Sans KR', sans-serif; color: var(--text);
+      outline: none; background: white;
+    }
+    .biz-time input:focus { border-color: var(--indigo); }
+    .biz-time span { font-size: 11px; color: var(--text3); }
+    .biz-time.disabled input { background: var(--slate); color: var(--text3); }
+    .biz-closed { font-size: 12px; color: var(--text3); }
+
+    /* Nickname info box */
+    .info-box {
+      background: linear-gradient(135deg, rgba(20,184,166,.06), rgba(99,102,241,.06));
+      border: 1px solid rgba(99,102,241,.12);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px; margin-bottom: 8px;
+      font-size: 12px; color: var(--text2);
+      display: flex; align-items: flex-start; gap: 8px; line-height: 1.5;
+    }
+    .info-box .info-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+    /* Complete screen */
+    .complete-wrap {
+      text-align: center; padding: 40px 0 20px;
+      animation: fadeUp .5s ease both;
+    }
+    .complete-icon {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: var(--brand-grad);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px; font-size: 36px;
+      box-shadow: 0 0 0 10px rgba(20,184,166,.08), 0 0 0 20px rgba(99,102,241,.05), 0 12px 28px rgba(79,70,229,.15);
+      animation: pulse 2.5s ease infinite;
+    }
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 10px rgba(20,184,166,.08), 0 0 0 20px rgba(99,102,241,.05), 0 12px 28px rgba(79,70,229,.15); }
+      50% { box-shadow: 0 0 0 14px rgba(20,184,166,.06), 0 0 0 28px rgba(99,102,241,.03), 0 16px 32px rgba(79,70,229,.12); }
+    }
+    .complete-title { font-family: 'Fraunces', serif; font-size: 30px; font-weight: 700; color: var(--text); margin-bottom: 12px; letter-spacing: -.5px; }
+    .complete-desc { font-size: 14px; color: var(--text2); line-height: 1.8; margin-bottom: 36px; }
+    .complete-desc strong { background: var(--brand-grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    .next-step-prompt {
+      background: linear-gradient(135deg, rgba(20,184,166,.06), rgba(99,102,241,.06));
+      border: 1.5px solid rgba(99,102,241,.12);
+      border-radius: var(--radius); padding: 22px 24px;
+      margin-bottom: 20px; text-align: left;
+    }
+    .nsp-tag { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--indigo-dark); margin-bottom: 8px; background: var(--indigo-light); display: inline-block; padding: 3px 9px; border-radius: 20px; }
+    .nsp-title { font-size: 15px; font-weight: 800; color: var(--text); margin-bottom: 5px; }
+    .nsp-desc { font-size: 12px; color: var(--text3); line-height: 1.6; margin-bottom: 16px; }
+
+    /* Settings screen */
+    .setting-group { margin-bottom: 24px; }
+    .setting-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .setting-title .badge { font-size: 10px; background: var(--indigo-light); color: var(--indigo-dark); padding: 2px 8px; border-radius: 20px; font-weight: 700; }
+
+    .option-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pill {
+      padding: 7px 14px; border-radius: 20px;
+      border: 1.5px solid var(--border);
+      font-size: 12px; font-weight: 600; color: var(--text2);
+      cursor: pointer; transition: all .2s; background: white;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+    .pill:hover { border-color: rgba(99,102,241,.25); color: var(--indigo-dark); }
+    .pill.active {
+      border-color: rgba(99,102,241,0.45);
+      background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(20,184,166,0.12));
+      color: var(--text); font-weight: 700;
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.08);
+    }
+
+    .range-wrap { padding: 4px 0; }
+    .range-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); margin-bottom: 8px; }
+    .range-value { text-align: center; font-size: 22px; font-weight: 800; color: var(--indigo-dark); margin-bottom: 10px; letter-spacing: -1px; }
+    .range-value span { font-size: 13px; font-weight: 600; color: var(--text3); }
+
+    input[type=range] {
+      -webkit-appearance: none; width: 100%; height: 6px;
+      border-radius: 3px; outline: none; cursor: pointer;
+      background: linear-gradient(to right, var(--teal) 0%, var(--indigo) 50%, var(--border2) 50%, var(--border2) 100%);
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 22px; height: 22px;
+      border-radius: 50%; background: white;
+      border: 2.5px solid var(--indigo);
+      box-shadow: 0 2px 10px rgba(99,102,241,.2);
+      cursor: pointer; transition: transform .15s;
+    }
+    input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+    .template-wrap { position: relative; }
+    .template-wrap .char-count { position: absolute; bottom: 8px; right: 10px; font-size: 11px; color: var(--text3); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Toast notification ── */
+    .toast {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-12px);
+      background: #0F172A;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 40px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      box-shadow: 0 8px 24px rgba(15,23,42,.18);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s ease, transform .3s ease;
+      z-index: 200;
+      white-space: nowrap;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--teal);
+      flex-shrink: 0;
+      animation: blink 1.2s ease infinite;
+    }
+    @keyframes blink {
+      0%,100% { opacity: 1; } 50% { opacity: .3; }
+    }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main-content { margin-left: 0; padding: 40px 24px 60px; }
+      .fields-grid { grid-template-columns: 1fr; }
+      header { padding: 0 20px; }
+      .content-inner { max-width: 100%; }
+    }
+
+    @media (max-width: 480px) {
+      .main-content { padding: 24px 16px 60px; }
+      .pb-label { display: none; }
+      .pb-connector { width: 16px; }
+      .progress-bar { padding: 5px 10px; }
+      .page-heading h1 { font-size: 22px; }
+      .btn { font-size: 13px; height: 46px; }
+      .social-btn { font-size: 12px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="top-stripe"></div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <span class="toast-dot"></span>
+    <span id="toastMsg">확인되었습니다. 약관 동의 페이지로 이동합니다...</span>
+  </div>
+
+  <header>
+    <a href="#" class="logo">
+      <div class="logo-mark">S</div>
+      <span class="logo-name">소셜다모아</span>
+    </a>
+    <div class="header-right">
+      <a href="login.html" class="header-login-link">이미 계정이 있으신가요? <strong>로그인 →</strong></a>
+    </div>
+  </header>
+
+  <div class="page-wrapper">
+
+    <!-- ══════════ SIDEBAR ══════════ -->
+    <aside class="sidebar">
+      <div class="sidebar-logo-section">
+        <div class="sidebar-tagline">모든 SNS를<br /><em>한 곳에서</em></div>
+        <p class="sidebar-sub">간단한 정보 입력만으로<br />SNS 마케팅을 무료로 시작하세요.</p>
+      </div>
+      <div class="sidebar-features">
+        <div class="sf-item">
+          <div class="sf-icon teal">🔒</div>
+          <div class="sf-text"><strong>안전한 정보 보호</strong>모든 정보는 암호화 보관됩니다</div>
+        </div>
+        <div class="sf-item">
+          <div class="sf-icon teal">✨</div>
+          <div class="sf-text"><strong>가입 즉시 무료 이용</strong>별도 결제 없이 모든 기능 이용</div>
+        </div>
+        <div class="sf-item">
+          <div class="sf-icon teal">📊</div>
+          <div class="sf-text"><strong>5개 채널 통합 분석</strong>네이버·카카오·구글·인스타·페이스북</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ══════════ MAIN CONTENT ══════════ -->
+    <main class="main-content">
+      <div class="content-inner">
+
+        <!-- ── Progress Bar: 4 steps ── -->
+        <div class="progress-bar-wrap" id="progressBarWrap">
+          <div class="progress-bar">
+            <div class="pb-item active" id="pb0">
+              <div class="pb-num" id="pbn0">1</div>
+              <span class="pb-label">계정 생성</span>
+            </div>
+            <div class="pb-connector" id="pbc0"></div>
+            <div class="pb-item" id="pb1">
+              <div class="pb-num" id="pbn1">2</div>
+              <span class="pb-label">약관 동의</span>
+            </div>
+            <div class="pb-connector" id="pbc1"></div>
+            <div class="pb-item" id="pb2">
+              <div class="pb-num" id="pbn2">3</div>
+              <span class="pb-label">가게 정보</span>
+            </div>
+            <div class="pb-connector" id="pbc2"></div>
+            <div class="pb-item" id="pb3">
+              <div class="pb-num" id="pbn3">4</div>
+              <span class="pb-label">가입 완료</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════
+             SCREEN 0: 계정 생성 (로그인)
+        ══════════════════════════════════════ -->
+        <div class="screen active" id="screen0">
+          <div class="page-heading">
+            <h1>빠르고 간편하게<br /><em>시작하세요</em></h1>
+            <p>소셜 계정으로 간편하게 가입하거나, 직접 정보를 입력해주세요.</p>
+          </div>
+
+          <div class="s-title">소셜 계정으로 시작</div>
+          <div class="social-btns">
+            <button type="button" class="social-btn" onclick="socialLogin('kakao')">
+              <div class="s-icon" style="background:#FEE500;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.48 3 2 6.58 2 11c0 2.76 1.62 5.2 4.08 6.72L5 21l4.35-2.15C10.22 19.28 11.1 19.4 12 19.4c5.52 0 10-3.58 10-8.4S17.52 3 12 3z"/></svg>
+              </div>
+              <span class="s-label">카카오로 시작하기</span>
+              <svg class="s-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+            <button type="button" class="social-btn" onclick="socialLogin('naver')">
+              <div class="s-icon" style="background:#03C75A;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/></svg>
+              </div>
+              <span class="s-label">네이버로 시작하기</span>
+              <svg class="s-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+            <button type="button" class="social-btn" onclick="socialLogin('google')">
+              <div class="s-icon" style="background:#f5f5f5;">
+                <svg width="14" height="14" viewBox="0 0 24 24">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+              </div>
+              <span class="s-label">Google로 시작하기</span>
+              <svg class="s-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+        </div>
+
+
+        <!-- ══════════════════════════════════════
+             SCREEN 1: 필수 약관 동의 (신규)
+        ══════════════════════════════════════ -->
+        <div class="screen" id="screen1">
+          <div class="nav-row">
+            <button type="button" class="back-btn" onclick="goPrev(1)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+              이전 단계
+            </button>
+          </div>
+
+          <div class="page-heading">
+            <h1>약관에<br /><em>동의해주세요</em></h1>
+            <p>서비스 이용을 위한 약관 동의가 필요합니다. 필수 항목에 동의하셔야 다음 단계로 진행됩니다.</p>
+          </div>
+
+          <!-- 전체 동의 -->
+          <div class="terms-card">
+            <!-- 전체 동의 row -->
+            <div class="terms-all-row" onclick="toggleAllTerms()">
+              <div class="custom-check" id="checkAll">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div class="terms-all-label">
+                모든 약관에 동의합니다
+                <span>필수 및 선택 약관을 모두 포함합니다</span>
+              </div>
+            </div>
+
+            <!-- 서비스 이용약관 [필수] -->
+            <div class="terms-item">
+              <div class="custom-check" id="checkT1" onclick="toggleTerm('checkT1')">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <label class="terms-item-label" onclick="toggleTerm('checkT1')">
+                <span class="terms-badge req">필수</span>서비스 이용약관 동의
+              </label>
+              <a href="#" class="terms-view-link" onclick="return false;">보기</a>
+            </div>
+
+            <!-- 개인정보 처리방침 [필수] -->
+            <div class="terms-item">
+              <div class="custom-check" id="checkT2" onclick="toggleTerm('checkT2')">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <label class="terms-item-label" onclick="toggleTerm('checkT2')">
+                <span class="terms-badge req">필수</span>개인정보 처리방침 동의
+              </label>
+              <a href="#" class="terms-view-link" onclick="return false;">보기</a>
+            </div>
+
+            <!-- 위치정보 이용약관 [필수] -->
+            <div class="terms-item">
+              <div class="custom-check" id="checkT3" onclick="toggleTerm('checkT3')">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <label class="terms-item-label" onclick="toggleTerm('checkT3')">
+                <span class="terms-badge req">필수</span>위치기반 서비스 이용약관 동의
+              </label>
+              <a href="#" class="terms-view-link" onclick="return false;">보기</a>
+            </div>
+
+            <!-- 마케팅 수신 [선택] -->
+            <div class="terms-item">
+              <div class="custom-check" id="checkT4" onclick="toggleTerm('checkT4')">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <label class="terms-item-label" onclick="toggleTerm('checkT4')">
+                <span class="terms-badge opt">선택</span>마케팅 정보 수신 동의 (이메일/문자)
+              </label>
+            </div>
+
+            <!-- 이벤트/혜택 알림 [선택] -->
+            <div class="terms-item">
+              <div class="custom-check" id="checkT5" onclick="toggleTerm('checkT5')">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <label class="terms-item-label" onclick="toggleTerm('checkT5')">
+                <span class="terms-badge opt">선택</span>이벤트 및 혜택 알림 수신 동의
+              </label>
+            </div>
+          </div>
+
+          <!-- 필수 약관 미동의 경고 -->
+          <div class="terms-notice" id="termsNotice">
+            ⚠️ 서비스 이용을 위해 필수 약관 3가지에 모두 동의해주세요.
+          </div>
+
+          <div style="margin-top: 20px;">
+            <button type="button" class="btn btn-primary" onclick="goToStoreInfo()">
+              동의하고 다음으로 →
+            </button>
+          </div>
+        </div>
+
+
+        <!-- ══════════════════════════════════════
+             SCREEN 2: 가게 정보 입력
+        ══════════════════════════════════════ -->
+        <div class="screen" id="screen2">
+          <div class="nav-row">
+            <button type="button" class="back-btn" onclick="goPrev(2)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+              이전 단계
+            </button>
+          </div>
+
+          <div class="page-heading">
+            <h1>가게 정보를<br /><em>알려주세요</em></h1>
+            <p>정확한 정보로 더 나은 AI 콘텐츠를 만들 수 있어요.</p>
+          </div>
+
+          <!-- 닉네임 -->
+          <div class="field">
+            <label class="field-label" for="nickname">닉네임 <span>*</span></label>
+            <div class="info-box">
+              <span class="info-icon">💡</span>
+              <span>서비스에서 활동할 이름을 입력하세요. 단체의 경우 <strong>법인명(단체명)</strong>을 작성하시면 됩니다. SNS 게시물에서 가게를 대표하는 작성자 이름으로 사용됩니다.</span>
+            </div>
+            <input type="text" class="input" id="nickname" placeholder="예) 홍길동 카페, (주)소셜다모아"
+              minlength="2" maxlength="19" oninput="checkNickname(this)" />
+            <div class="char-counter" id="nicknameCounter">0 / 19자</div>
+            <div class="field-error" id="nicknameError">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              2자 이상 20자 미만으로 입력해주세요.
+            </div>
+            <div class="field-success" id="nicknameSuccess">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              사용 가능한 닉네임입니다.
+            </div>
+          </div>
+
+          <!-- 연락 전화번호 -->
+          <div class="field">
+            <label class="field-label" for="contactPhone">연락 전화번호 <span>*</span></label>
+            <input type="tel" class="input" id="contactPhone" placeholder="010-0000-0000" maxlength="13" oninput="formatPhone(this)" />
+          </div>
+
+          <!-- 가게명 + 업종 -->
+          <div class="fields-grid">
+            <div class="field">
+              <label class="field-label" for="companyName">가게명 <span>*</span></label>
+              <input type="text" class="input" id="companyName" placeholder="예) 홍길동 카페" />
+            </div>
+            <div class="field">
+              <label class="field-label" for="businessCategory">업종 <span>*</span></label>
+              <select class="input" id="businessCategory">
+                <option value="">업종 선택</option>
+                <option>카페 / 베이커리</option>
+                <option>음식점 / 식당</option>
+                <option>미용 / 뷰티</option>
+                <option>패션 / 의류</option>
+                <option>숙박 / 펜션</option>
+                <option>피트니스 / 스포츠</option>
+                <option>교육 / 학원</option>
+                <option>의료 / 병원</option>
+                <option>소매 / 쇼핑</option>
+                <option>기타</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 주요 운영 채널 -->
+          <div class="field">
+            <label class="field-label" for="preferredChannel">주요 운영 채널 <span>*</span></label>
+            <select class="input" id="preferredChannel">
+              <option value="">채널 선택</option>
+              <option value="INSTAGRAM">Instagram</option>
+              <option value="FACEBOOK">Facebook</option>
+              <option value="NAVER">Naver</option>
+              <option value="KAKAO">Kakao</option>
+              <option value="YOUTUBE">YouTube</option>
+            </select>
+          </div>
+
+          <!-- 주소 -->
+          <div class="field">
+            <label class="field-label">주소 <span>*</span></label>
+
+            <div id="addressBtn">
+              <button type="button" class="address-btn" onclick="sample3_execDaumPostcode()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.35-4.35" />
+                </svg>
+                주소 검색
+              </button>
+            </div>
+
+            <div id="wrap" style="display:none;border:1px solid #ddd;width:100%;height:300px;margin:5px 0;position:relative">
+              <img src="//t1.kakaocdn.net/postcode/resource/images/close.png" id="btnFoldWrap" style="cursor:pointer;position:absolute;right:0px;top:-1px;z-index:1" onclick="foldDaumPostcode()" alt="접기 버튼">
+            </div>
+
+            <div id="addressFilled" class="address-filled" style="display:none;">
+              <div id="addressText" style="font-weight: bold; margin-bottom: 5px;"></div>
+
+              <input type="hidden" id="sample3_postcode" placeholder="우편번호">
+              <input type="hidden" id="sample3_address" placeholder="주소">
+              <input type="hidden" id="sample3_extraAddress" placeholder="참고항목">
+
+              <div>
+                <input type="text" class="input" id="addressDetail" placeholder="상세 주소 (동, 층, 호수)" style="margin-top:8px; height:40px; font-size:12px; width:100%;" />
+              </div>
+
+              <button type="button" onclick="sample3_execDaumPostcode()" style="font-size:11px; margin-top:5px; background:none; border:none; color:#888; text-decoration:underline; cursor:pointer;">주소 다시 검색</button>
+            </div>
+          </div>
+          
+
+          <script src="//t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+
+          <script>
+          var element_wrap = document.getElementById('wrap');
+
+          function foldDaumPostcode() {
+              element_wrap.style.display = 'none';
+          }
+
+          function sample3_execDaumPostcode() {
+              // 1. 주소 검색 시 기존 결과창은 일단 숨김
+              document.getElementById('addressFilled').style.display = 'none';
+              
+              var currentScroll = Math.max(document.body.scrollTop, document.documentElement.scrollTop);
+              
+              new kakao.Postcode({
+                  oncomplete: function(data) {
+                      // 선택한 주소 타입에 따른 주소 결정
+                      var addr = (data.userSelectedType === 'R') ? data.roadAddress : data.jibunAddress;
+                      
+                      // 참고항목(extraAddr) 생성 로직 (필요 시 화면 표시용으로만 사용)
+                      var extraAddr = '';
+                      if (data.userSelectedType === 'R') {
+                          if (data.bname !== '' && /[동로가]$/.test(data.bname)) extraAddr += data.bname;
+                          if (data.buildingName !== '' && data.apartment === 'Y') {
+                              extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+                          }
+                          extraAddr = (extraAddr !== '' ? ' (' + extraAddr + ')' : '');
+                      }
+
+                      // [수정 핵심] HTML에 존재하는 ID만 찾아 값을 넣습니다.
+                      // 3가지 핵심 데이터 매핑
+                      if(document.getElementById('sample3_postcode')) {
+                          document.getElementById('sample3_postcode').value = data.zonecode; // zipNo
+                      }
+                      if(document.getElementById('sample3_address')) {
+                          document.getElementById("sample3_address").value = addr; // roadAddrPart1
+                      }
+
+                      // 2. 화면 표시 (우편번호 + 주소 + 참고항목)
+                      document.getElementById("addressText").innerText = "[" + data.zonecode + "] " + addr + extraAddr;
+
+                      // 3. UI 전환
+                      document.getElementById('addressBtn').style.display = 'none';
+                      document.getElementById('addressFilled').style.display = 'block';
+                      element_wrap.style.display = 'none';
+
+                      // 4. 상세주소 포커스
+                      document.getElementById("addressDetail").focus();
+                      
+                      document.body.scrollTop = currentScroll;
+                  },
+                  onresize: function(size) {
+                      element_wrap.style.height = size.height + 'px';
+                  },
+                  width: '100%',
+                  height: '100%'
+              }).embed(element_wrap);
+              
+              element_wrap.style.display = 'block';
+          }
+          </script>
+
+          <!-- 전화번호 -->
+          <div class="field">
+            <label class="field-label">가게 전화번호</label>
+            <input type="tel" class="input" id="storeTel" placeholder="02-0000-0000" maxlength="13" oninput="formatPhone(this)" />
+          </div>
+
+          <!-- 영업시간 -->
+          <div class="field">
+            <label class="field-label">영업시간</label>
+            <div id="bizHours"></div>
+          </div>
+
+          <button type="button" class="btn btn-primary" onclick="goComplete()">가입 완료하기 →</button>
+        </div>
+
+
+        <!-- ══════════════════════════════════════
+             SCREEN 3: 가입 완료
+        ══════════════════════════════════════ -->
+        <div class="screen" id="screen3">
+          <div class="complete-wrap">
+            <div class="complete-icon">🎉</div>
+            <div class="complete-title">가입이 완료됐어요!</div>
+            <div class="complete-desc">
+              소셜다모아 회원이 되신 걸 환영해요.<br />
+              이제 <strong>모든 SNS를 한 곳에서</strong> 관리해보세요.
+            </div>
+
+            <div class="next-step-prompt">
+              <div class="nsp-tag">선택사항</div>
+              <div class="nsp-title">🤖 AI 콘텐츠 기본 설정</div>
+              <div class="nsp-desc">
+                말투, 이모지 양, 인트로/아웃트로 템플릿을 미리 설정하면<br />
+                AI가 더 일관성 있는 글을 작성해드립니다.<br />
+                나중에 설정 메뉴에서도 변경할 수 있어요.
+              </div>
+              <button type="button" class="btn btn-outline" onclick="goToSettings()">콘텐츠 설정하고 시작하기 →</button>
+            </div>
+
+            <button type="button" class="btn btn-primary" onclick="goToDashboard()">설정 건너뛰고 대시보드로 이동</button>
+          </div>
+        </div>
+
+
+        <!-- ══════════════════════════════════════
+             SCREEN 4: AI 콘텐츠 설정
+        ══════════════════════════════════════ -->
+        <div class="screen" id="screen4">
+          <div class="nav-row">
+            <button type="button" class="back-btn" onclick="setScreen('screen3')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+              이전
+            </button>
+          </div>
+
+          <div class="page-heading">
+            <h1>AI 콘텐츠<br /><em>기본값 설정</em></h1>
+            <p>AI가 글을 쓸 때 사용할 기본값을 정해주세요. 언제든 변경 가능합니다.</p>
+          </div>
+
+          <div class="setting-group">
+            <div class="setting-title">인트로 템플릿 <div class="badge">선택</div></div>
+            <div class="template-wrap">
+              <textarea class="input" id="introTpl" maxlength="100" placeholder="예) 안녕하세요! ☀️ {가게명}입니다." oninput="updateCount('introTpl','introCount')"></textarea>
+              <div class="char-count"><span id="introCount">0</span>/100</div>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <div class="setting-title">아웃트로 템플릿 <div class="badge">선택</div></div>
+            <div class="template-wrap">
+              <textarea class="input" id="outroTpl" maxlength="100" placeholder="예) 많은 관심과 방문 부탁드립니다! 💚" oninput="updateCount('outroTpl','outroCount')"></textarea>
+              <div class="char-count"><span id="outroCount">0</span>/100</div>
+            </div>
+          </div>
+
+          <div class="section-sep"></div>
+
+          <div class="setting-group">
+            <div class="setting-title">말투</div>
+            <div class="option-pills" id="toneGroup">
+              <button class="pill active" data-val="기본">기본 말투</button>
+              <button class="pill" data-val="친근">친근하게</button>
+              <button class="pill" data-val="깔끔">깔끔하게</button>
+              <button class="pill" data-val="격식">격식있게</button>
+              <button class="pill" data-val="트렌디">트렌디하게</button>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <div class="setting-title">이모지 양</div>
+            <div class="option-pills" id="emojiGroup">
+              <button class="pill" data-val="적게">😐 적게</button>
+              <button class="pill active" data-val="적당히">😊 적당히</button>
+              <button class="pill" data-val="많이">🎉 많이</button>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <div class="setting-title">글자수</div>
+            <div class="range-wrap">
+              <div class="range-value"><span id="rangeVal">300</span><span>자</span></div>
+              <input type="range" id="lengthRange" min="100" max="500" step="50" value="300" oninput="updateRange(this)" />
+              <div class="range-labels"><span>100자</span><span>300자</span><span>500자</span></div>
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-primary" onclick="finishSettings()">설정 저장하고 대시보드로 →</button>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    /* ══════════════════════════════════════════
+       State
+    ══════════════════════════════════════════ */
+    let phoneVerified = false;
+    let otpTimerInterval = null;
+
+    // Terms state: T1~T5, required: T1, T2, T3
+    const termIds = ['checkT1','checkT2','checkT3','checkT4','checkT5'];
+    const requiredTerms = ['checkT1','checkT2','checkT3'];
+    const termState = { checkT1:false, checkT2:false, checkT3:false, checkT4:false, checkT5:false };
+
+    /* ══════════════════════════════════════════
+       Progress Bar (4 steps: 0=계정, 1=약관, 2=가게, 3=완료)
+    ══════════════════════════════════════════ */
+    function updateProgress(stepIdx) {
+      const items = ['pb0','pb1','pb2','pb3'];
+      const connectors = ['pbc0','pbc1','pbc2'];
+      items.forEach((id, i) => {
+        const el = document.getElementById(id);
+        const numEl = document.getElementById('pbn' + i);
+        el.classList.remove('active','done');
+        if (i < stepIdx) {
+          el.classList.add('done');
+          numEl.textContent = '✓';
+        } else if (i === stepIdx) {
+          el.classList.add('active');
+          numEl.textContent = i + 1;
+        } else {
+          numEl.textContent = i + 1;
+        }
+      });
+      connectors.forEach((id, i) => {
+        document.getElementById(id).classList.toggle('done', i < stepIdx);
+      });
+      document.getElementById('progressBarWrap').style.display = 'flex';
+    }
+
+    /* ══════════════════════════════════════════
+       Screen switcher
+    ══════════════════════════════════════════ */
+    function setScreen(id) {
+      document.querySelector('.screen.active').classList.remove('active');
+      document.getElementById(id).classList.add('active');
+      const hide = (id === 'screen3' || id === 'screen4');
+      const wrap = document.getElementById('progressBarWrap');
+      wrap.style.display = hide ? 'none' : 'flex';
+      wrap.classList.toggle('screen0-spacing', id === 'screen0');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* ══════════════════════════════════════════
+       Navigation helpers
+    ══════════════════════════════════════════ */
+    function goToTerms() {
+      updateProgress(1);
+      setScreen('screen1');
+    }
+
+    function goToStoreInfo() {
+      // Validate required terms
+      const allRequired = requiredTerms.every(id => termState[id]);
+      if (!allRequired) {
+        document.getElementById('termsNotice').classList.add('show');
+        return;
+      }
+      document.getElementById('termsNotice').classList.remove('show');
+      updateProgress(2);
+      setScreen('screen2');
+    }
+
+    function goComplete() {
+      // Validate step 2
+      const contactPhone = document.getElementById('contactPhone').value.trim();
+      const nickname = document.getElementById('nickname').value.trim();
+      const companyName = document.getElementById('companyName').value.trim();
+      const businessCategory = document.getElementById('businessCategory').value;
+      const preferredChannel = document.getElementById('preferredChannel').value;
+
+      if (!nickname || nickname.length < 2 || nickname.length > 19) {
+        alert('닉네임을 2자 이상 20자 미만으로 입력해주세요.');
+        document.getElementById('nickname').focus();
+        return;
+      }
+      if (!contactPhone) { alert('연락 전화번호를 입력해주세요.'); return; }
+      if (!companyName) { alert('가게명을 입력해주세요.'); return; }
+      if (!businessCategory) { alert('업종을 선택해주세요.'); return; }
+      if (!preferredChannel) { alert('주요 운영 채널을 선택해주세요.'); return; }
+
+      updateProgress(3);
+      setScreen('screen3');
+    }
+
+    function goPrev(from) {
+      if (from === 1) { updateProgress(0); setScreen('screen0'); }
+      else if (from === 2) { updateProgress(1); setScreen('screen1'); }
+    }
+
+    function goToSettings() { setScreen('screen4'); }
+    function goToDashboard() {
+      sessionStorage.removeItem('signupVisited');
+      submitSignupForm();
+    }
+    function finishSettings() {
+      sessionStorage.removeItem('signupVisited');
+      submitSignupForm();
+    }
+
+    /* ══════════════════════════════════════════
+    	Form submit (영업시간 데이터 포함 버전)
+	 ══════════════════════════════════════════ */
+	function submitSignupForm() {
+	 // 1. 기본 정보 수집
+	 const contactPhone = document.getElementById('contactPhone')?.value.replace(/\D/g,'') || '';
+	 const nickname = document.getElementById('nickname')?.value.trim() || '';
+	 const companyName = document.getElementById('companyName')?.value.trim() || '';
+	 const businessCategory = document.getElementById('businessCategory')?.value || '';
+	 const preferredChannel = document.getElementById('preferredChannel')?.value || '';
+	 const roadAddrPart1 = document.getElementById('addressText')?.textContent.trim() || ''; // DTO 필드명 매핑
+	 const addrDetail = document.getElementById('addressDetail')?.value.trim() || '';
+	 const storePhoneNumber = document.getElementById('storeTel')?.value.replace(/\D/g,'') || '';
+	 
+	 // 2. 영업시간 데이터 수집 (DTO의 List<BusinessHourItem> 구조 생성)
+	 const businessHoursData = [];
+	 for (let i = 0; i < 7; i++) {
+	     const timeWrap = document.getElementById('timeWrap' + i);
+	     const isOpen = !timeWrap.classList.contains('disabled');
+	     const inputs = timeWrap.querySelectorAll('input[type="time"]');
+	     
+	     businessHoursData.push({
+	         dayOfWeek: i,
+	         open: isOpen,
+	         openTime: isOpen ? inputs[0].value : "",
+	         closeTime: isOpen ? inputs[1].value : ""
+	     });
+	 }
+	
+	 // 3. AI 설정 데이터 수집 (Screen 4 영역 - id 확인 필요)
+	 const introTemplate = document.getElementById('introTpl')?.value || '';
+	 const outroTemplate = document.getElementById('outroTpl')?.value || '';
+	 const tone = document.querySelector('#toneGroup .pill.active')?.getAttribute('data-val') || '기본';
+	 const emojiLevel = document.querySelector('#emojiGroup .pill.active')?.getAttribute('data-val') || '적당히';
+	 const targetLength = document.getElementById('lengthRange')?.value || 300;
+	
+	 // 4. CSRF 토큰 준비
+	 const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+	 const csrfParam = '_csrf';
+	
+	 // 5. Form 객체 생성
+	 const form = document.createElement('form');
+	 form.method = 'post';
+	 form.action = '/signup/complete';
+	
+	 // 6. 일반 필드 추가 (address -> roadAddrPart1 로 매핑 변경)
+	 const fields = {
+    contactPhone, nickname, companyName, businessCategory,
+    preferredChannel, roadAddrPart1, addrDetail, storePhoneNumber,
+    // true/false를 1/0으로 명확히 변환
+    termsAgreed: termState.checkT1 ? "true" : "false", 
+    privacyAgreed: termState.checkT2 ? "true" : "false", 
+    locationAgreed: termState.checkT3 ? "true" : "false", 
+    marketingConsent: termState.checkT4 ? "true" : "false", 
+    eventConsent: termState.checkT5 ? "true" : "false",
+    introTemplate, outroTemplate, tone, emojiLevel, targetLength
+};
+	
+	 Object.entries(fields).forEach(([k, v]) => {
+	     form.appendChild(createHiddenInput(k, v));
+	 });
+	
+	 // 7. [중요] 영업시간 리스트 추가 (Spring DTO 바인딩 규칙: name[index].field)
+	 businessHoursData.forEach((item, idx) => {
+	     form.appendChild(createHiddenInput(`businessHours[${idx}].dayOfWeek`, item.dayOfWeek));
+	     form.appendChild(createHiddenInput(`businessHours[${idx}].open`, item.open));
+	     form.appendChild(createHiddenInput(`businessHours[${idx}].openTime`, item.openTime));
+	     form.appendChild(createHiddenInput(`businessHours[${idx}].closeTime`, item.closeTime));
+	 });
+	
+	 // 8. CSRF 토큰 추가
+	 form.appendChild(createHiddenInput(csrfParam, csrfToken));
+	
+	 document.body.appendChild(form);
+	 form.submit();
+	}
+	
+	/** 헬퍼 함수: Hidden Input 생성 **/
+	function createHiddenInput(name, value) {
+	 const input = document.createElement('input');
+	 input.type = 'hidden';
+	 input.name = name;
+	 input.value = (value === null || value === undefined) ? "" : String(value);
+	 return input;
+	}
+
+    /* ══════════════════════════════════════════
+       Social login
+    ══════════════════════════════════════════ */
+    // ★ 백엔드 연결 시 false로 변경하세요
+    const USE_MOCK_LOGIN = false;
+
+    function socialLogin(provider) {
+      const map = {
+        kakao: '/oauth2/authorization/kakao?entry=signup',
+        naver: '/oauth2/authorization/naver?entry=signup',
+        google: '/oauth2/authorization/google?entry=signup'
+      };
+      if (!map[provider]) return;
+
+      if (USE_MOCK_LOGIN) {
+        mockSocialLogin(provider);
+      } else {
+        window.location.href = map[provider];
+      }
+    }
+
+    function mockSocialLogin(provider) {
+      const label = { kakao: '카카오', naver: '네이버', google: 'Google' }[provider];
+      const btn = document.querySelector(`[onclick="socialLogin('${provider}')"]`);
+
+      if (btn) {
+        btn.disabled = true;
+        btn.querySelector('.s-label').textContent = `${label} 로그인 중...`;
+      }
+
+      setTimeout(() => {
+        showToast('확인되었습니다. 약관 동의 페이지로 이동합니다...');
+        if (btn) {
+          btn.disabled = false;
+          btn.querySelector('.s-label').textContent = `${label}로 시작하기`;
+        }
+        setTimeout(() => {
+          updateProgress(1);
+          setScreen('screen1');
+        }, 600);
+      }, 1200);
+    }
+
+    /* ══════════════════════════════════════════
+       Phone / OTP
+    ══════════════════════════════════════════ */
+    function formatPhone(el) {
+      let v = el.value.replace(/\D/g,'');
+      if (v.length > 3 && v.length <= 7) v = v.slice(0,3)+'-'+v.slice(3);
+      else if (v.length > 7) v = v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);
+      el.value = v;
+    }
+
+    function sendCode() {
+      const phone = document.getElementById('inputPhone').value;
+      if (!phone || phone.length < 12) { alert('올바른 휴대폰 번호를 입력해주세요.'); return; }
+      document.getElementById('otpWrap').style.display = 'block';
+      const btn = document.getElementById('sendCodeBtn');
+      btn.textContent = '재발송'; btn.classList.add('sent');
+      startOtpTimer();
+    }
+
+    function startOtpTimer() {
+      if (otpTimerInterval) clearInterval(otpTimerInterval);
+      let sec = 180;
+      const el = document.getElementById('otpTimer');
+      otpTimerInterval = setInterval(() => {
+        sec--;
+        const m = Math.floor(sec/60), s = sec%60;
+        el.textContent = m+':'+String(s).padStart(2,'0');
+        if (sec <= 0) { clearInterval(otpTimerInterval); el.textContent = '만료됨'; }
+      }, 1000);
+    }
+
+    function verifyCode() {
+      const code = document.getElementById('otpInput').value;
+      if (code.length !== 6) { alert('6자리 인증번호를 입력해주세요.'); return; }
+      clearInterval(otpTimerInterval);
+      phoneVerified = true;
+      document.getElementById('otpWrap').style.display = 'none';
+      document.getElementById('verifiedWrap').style.display = 'block';
+      document.getElementById('sendCodeBtn').style.display = 'none';
+      document.getElementById('inputPhone').readOnly = true;
+      document.getElementById('inputPhone').style.background = 'var(--slate)';
+    }
+
+    /* ══════════════════════════════════════════
+       Terms (screen 1)
+    ══════════════════════════════════════════ */
+    function toggleTerm(id) {
+      termState[id] = !termState[id];
+      const el = document.getElementById(id);
+      el.classList.toggle('checked', termState[id]);
+      syncAllCheck();
+      // Hide notice if now all required are checked
+      if (requiredTerms.every(tid => termState[tid])) {
+        document.getElementById('termsNotice').classList.remove('show');
+      }
+    }
+
+    function toggleAllTerms() {
+      const allChecked = termIds.every(id => termState[id]);
+      const newVal = !allChecked;
+      termIds.forEach(id => {
+        termState[id] = newVal;
+        document.getElementById(id).classList.toggle('checked', newVal);
+      });
+      document.getElementById('checkAll').classList.toggle('checked', newVal);
+      if (newVal && requiredTerms.every(id => termState[id])) {
+        document.getElementById('termsNotice').classList.remove('show');
+      }
+    }
+
+    function syncAllCheck() {
+      const allChecked = termIds.every(id => termState[id]);
+      document.getElementById('checkAll').classList.toggle('checked', allChecked);
+    }
+
+    /* ══════════════════════════════════════════
+       Nickname validation (realtime)
+    ══════════════════════════════════════════ */
+    function checkNickname(el) {
+      const val = el.value;
+      const len = val.length;
+      const counter = document.getElementById('nicknameCounter');
+      const errEl = document.getElementById('nicknameError');
+      const okEl = document.getElementById('nicknameSuccess');
+
+      counter.textContent = len + ' / 19자';
+
+      if (len === 0) {
+        counter.className = 'char-counter';
+        errEl.classList.remove('show');
+        okEl.classList.remove('show');
+        el.classList.remove('error','success');
+      } else if (len < 2 || len > 19) {
+        counter.className = 'char-counter warn';
+        errEl.classList.add('show');
+        okEl.classList.remove('show');
+        el.classList.add('error');
+        el.classList.remove('success');
+      } else {
+        counter.className = 'char-counter ok';
+        errEl.classList.remove('show');
+        okEl.classList.add('show');
+        el.classList.remove('error');
+        el.classList.add('success');
+      }
+    }
+
+    /* ══════════════════════════════════════════
+       Address
+    ══════════════════════════════════════════ */
+    function searchAddress() {
+      document.getElementById('addressBtn').style.display = 'none';
+      document.getElementById('addressFilled').style.display = 'block';
+    }
+
+    /* ══════════════════════════════════════════
+       Biz hours builder
+    ══════════════════════════════════════════ */
+    (function buildBizHours() {
+      const days = ['월','화','수','목','금','토','일'];
+      const container = document.getElementById('bizHours');
+      days.forEach((d, i) => {
+        const isWeekend = i >= 5;
+        const row = document.createElement('div');
+        row.className = 'biz-hour-row';
+        row.innerHTML = `
+          <span class="biz-day">${d}</span>
+          <button class="biz-toggle ${isWeekend?'':'on'}" onclick="toggleDay(this,${i})" id="toggle${i}"></button>
+          <div class="biz-time ${isWeekend?'disabled':''}" id="timeWrap${i}">
+            ${isWeekend
+              ? '<span class="biz-closed">휴무</span>'
+              : `<input type="time" value="09:00"><span>~</span><input type="time" value="21:00">`}
+          </div>`;
+        container.appendChild(row);
+      });
+    })();
+
+    function toggleDay(btn, i) {
+      btn.classList.toggle('on');
+      const wrap = document.getElementById('timeWrap'+i);
+      const isOn = btn.classList.contains('on');
+      wrap.classList.toggle('disabled', !isOn);
+      wrap.innerHTML = isOn
+        ? `<input type="time" value="09:00"><span>~</span><input type="time" value="21:00">`
+        : '<span class="biz-closed">휴무</span>';
+    }
+
+    /* ══════════════════════════════════════════
+       Pills
+    ══════════════════════════════════════════ */
+    document.querySelectorAll('.option-pills').forEach(group => {
+      group.querySelectorAll('.pill').forEach(pill => {
+        pill.addEventListener('click', function() {
+          group.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+          this.classList.add('active');
+        });
+      });
+    });
+
+    /* ══════════════════════════════════════════
+       Range slider
+    ══════════════════════════════════════════ */
+    function updateRange(el) {
+      document.getElementById('rangeVal').textContent = el.value;
+      const pct = (el.value-100)/(500-100)*100;
+      el.style.background = `linear-gradient(to right, var(--teal) 0%, var(--indigo) ${pct}%, var(--border2) ${pct}%, var(--border2) 100%)`;
+    }
+
+    /* ══════════════════════════════════════════
+       Char count (textarea)
+    ══════════════════════════════════════════ */
+    function updateCount(inputId, countId) {
+      document.getElementById(countId).textContent = document.getElementById(inputId).value.length;
+    }
+
+    /* ══════════════════════════════════════════
+       Sidebar background
+    ══════════════════════════════════════════ */
+    const SIDEBAR_IMAGE_URL = 'https://i.ifh.cc/S4v5NQ.jpg';
+    (function applySidebarBg() {
+      if (!SIDEBAR_IMAGE_URL || SIDEBAR_IMAGE_URL === '여기에_이미지_경로를_입력하세요') return;
+      const sidebar = document.querySelector('.sidebar');
+      sidebar.style.backgroundImage = `url('${SIDEBAR_IMAGE_URL}')`;
+      sidebar.style.backgroundSize = 'cover';
+      sidebar.style.backgroundPosition = 'center';
+      sidebar.style.backgroundRepeat = 'no-repeat';
+    })();
+
+    /* ══════════════════════════════════════════
+       Toast helper
+    ══════════════════════════════════════════ */
+    function showToast(msg, duration = 2800) {
+      const el = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), duration);
+    }
+
+    /* ══════════════════════════════════════════
+       Init
+    ══════════════════════════════════════════ */
+    updateProgress(0);
+    document.getElementById('progressBarWrap').classList.add('screen0-spacing');
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('error')) alert(params.get('error'));
+
+    // 소셜 로그인 완료 후 리다이렉트 감지
+    // OAuth2LoginSuccessHandler 에서 /signup?social_login=success 로 리다이렉트
+    const isTermsRedirect =
+      params.get('social_login') === 'success' ||
+      params.get('step') === 'terms';
+
+    if (isTermsRedirect) {
+      sessionStorage.removeItem('signupVisited');
+      showToast('확인되었습니다. 약관 동의 페이지로 이동합니다...');
+      setTimeout(() => {
+        updateProgress(1);
+        setScreen('screen1');
+      }, 600);
+    }
+  </script>
+</body>
+</html>
