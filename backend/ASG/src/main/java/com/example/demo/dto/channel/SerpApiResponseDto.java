@@ -46,3 +46,10 @@ public class SerpApiResponseDto {
         private String link;
     }
 }
+
+/*
+
+채널 성과 분석 페이지에서 쓰이고 있음
+마인드맵-연관 검색어
+
+*/

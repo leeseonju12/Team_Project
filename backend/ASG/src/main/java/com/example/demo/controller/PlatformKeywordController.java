@@ -23,3 +23,10 @@ public class PlatformKeywordController {
         return ResponseEntity.ok(response);
     }
 }
+
+/*
+
+채널 성과 분석 페이지에서 쓰이고 있음
+
+
+*/

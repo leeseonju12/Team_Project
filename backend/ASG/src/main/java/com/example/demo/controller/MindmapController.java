@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.*;
 public class MindmapController {
 
     private final MindmapSearchService mindmapService;
-
+    
+ // TODO - 로그인 된 회원의 브랜드 아이디로 바꿔야 함
+    
     /**
      * 연관 키워드 조회
      * GET /api/mindmap?brandId=18
@@ -34,3 +36,11 @@ public class MindmapController {
         return mindmapService.refreshRelatedKeywords(brandId);
     }
 }
+
+/*
+
+채널 성과 분석 페이지에서 쓰이고 있음
+CacheConfig 에서 정의한 시간에 맞게 초기화 중
+
+*/
+ 

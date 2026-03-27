@@ -2410,7 +2410,8 @@ function renderNaverSummary(summary, period) {
         } catch (err) { console.error('플랫폼 키워드 로드 실패:', err); }
       }
 
-      // ✅ 호출
+      // 현재 브랜드 테이블의 브랜드아이디 18번을 지정해서 데이터를 가져오는 중
+      // TODO - 로그인 된 회원 데이터를 가져오는 로직으로 수정해야함
       loadRelatedKeywords(18);
       loadPlatformKeywords(18);
 

@@ -13,6 +13,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+/*
+
+채널 성과 분석 페이지에서 쓰이고 있음
+마인드맵 검색 결과
+네이버 검색어 추출
+네이버 검색 api 사용중
+
+*/
+
 @Service
 @RequiredArgsConstructor // final 필드 생성자 주입
 public class NaverSearchMService {

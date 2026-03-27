@@ -7,6 +7,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+/*
+
+채널 성과 분석 페이지에서 쓰이고 있음
+마인드맵 연관 검색어
+구글이랑 네이버에서 검색어 가져오고있음
+
+*/
+
 @Component
 @RequiredArgsConstructor
 public class SerpApiClient {

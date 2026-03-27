@@ -12,3 +12,10 @@ public record NaverSearchSummaryDto(
     String topUser,             // 예: "30대 여성" — 나이+성별 조합 중 가장 높은 검색 그룹
     String prevTopUser          // 이전 기간 최고 검색 그룹
 ) {}
+
+/*
+
+채널 성과 분석 페이지에서 쓰이고 있음
+네이버 검색 영향 추적
+
+*/

@@ -14,6 +14,13 @@ import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
 import java.util.Map;
 
+/*
+
+채널 성과 분석 페이지에서 쓰이고 있음
+마인드맵 차트
+
+*/
+
 @Service
 @RequiredArgsConstructor
 public class PlatformKeywordService {
@@ -40,7 +47,7 @@ public class PlatformKeywordService {
         List<String> youtubeRaw   = youtubeService.getYoutubeData(request);
         List<String>       naverRaw     = naverSearchMService.getNaverBlogData(request);
 
-        // 4. Komoran 키워드 분석
+        // 4. n-gram 키워드 분석
         List<String> instagramKeywords = keywordAnalysisService.analyzeKeywords(instagramRaw);
         List<String> googleKeywords    = keywordAnalysisService.analyzeKeywords(googleRaw);
         List<String> youtubeKeywords   = keywordAnalysisService.analyzeKeywords(youtubeRaw);

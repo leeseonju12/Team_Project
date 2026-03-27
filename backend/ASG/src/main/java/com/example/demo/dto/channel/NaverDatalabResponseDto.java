@@ -19,3 +19,10 @@ public record NaverDatalabResponseDto(
         double ratio    // 검색량 지수 (0~100)
     ) {}
 }
+
+/*
+
+채널 성과 분석 페이지에서 쓰이고 있음
+네이버 검색 영향 추적
+
+*/

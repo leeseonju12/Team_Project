@@ -15,6 +15,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 
+/*
+
+채널 성과 분석 페이지에서 쓰이고 있음
+네이버 검색 영향 추적
+데이터랩에서 데이터 받아온 후 가공중
+
+*/
+
 @Service
 @RequiredArgsConstructor
 public class NaverSearchService {

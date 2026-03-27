@@ -18,3 +18,11 @@ public record NaverSearchResponseDto(
     int genderFemalePrev,
     int genderMalePrev
 ) {}
+
+/*
+
+채널 성과 분석 페이지에서 쓰이고 있음
+네이버 검색 영향 추적
+
+*/
+

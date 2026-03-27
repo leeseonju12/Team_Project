@@ -17,6 +17,14 @@ import java.time.Duration;
 
 import lombok.RequiredArgsConstructor;
 
+/*
+
+채널 성과 분석 페이지에서 쓰이고 있음
+네이버 검색 영향 추적
+데이터랩 API 호출중
+
+*/
+
 @Service
 @RequiredArgsConstructor
 public class NaverDatalabClient {

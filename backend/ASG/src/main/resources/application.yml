@@ -36,17 +36,18 @@ ai:
 
 naver:
   api:
-    client-id: kAgrRRheyjbpn4cZVPvr
-    client-secret: 4qeaQP269D
+    client-id: # API 키 - 네이버 검색 api 키 넣으면 됨
+    client-secret: #
     datalab-url: https://openapi.naver.com/v1/datalab/search
 
 serpapi:
   base-url: https://serpapi.com
-  api-key: 47534858ba995ebc00717b007a6de1cd5ffee4c1e565cc83665cc82bc0188789
+  api-key: # API 키 - serp api 키 넣으면 됨
 
-# google:
-  # api-key: 검색 결과를 주지 않기 때문에 serp 로 전환
-  # cx: 
 
 youtube:
-  api-key: AIzaSyDSIGzXu_aCC07ZamOmG800N-b-SFs6hgE
+  api-key: # API 키 - youtube 키 넣으면 됨
+
+# google: 검색 결과를 주지 않기 때문에 serp 로 전환
+  # api-key: 
+  # cx: 
