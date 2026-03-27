@@ -44,13 +44,17 @@ public class FeedbackController {
     public List<FeedbackDto> getFeedbacks() {
         return feedbackService.getAllFeedbacks();
     }
-    /*
+
     @PutMapping("/{id}/ai-reply")
-    public FeedbackDto generateAiReply(@PathVariable Long id) {
-        return feedbackService.generateAiReply(id);
+    public ResponseEntity<?> generateAiReply(@PathVariable Long id) {
+    	try {
+    	FeedbackDto response = feedbackService.generateAiReply(id);
+        return ResponseEntity.ok(response);
+    	} catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
+        }
     }
-    */
-    
+
     //개별 답변 전송 API
     @PutMapping("/{id}/send")
     public ResponseEntity<?> sendReply(@PathVariable Long id) {

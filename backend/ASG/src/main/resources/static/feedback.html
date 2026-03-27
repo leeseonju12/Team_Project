@@ -1488,7 +1488,7 @@
         } catch (e) {
         console.error(`ID ${item.id} 생성 실패`, e);
       }
-      await new Promise(resolve => setTimeout(resolve, 5000)); //제미나이 5초 딜레이
+      await new Promise(resolve => setTimeout(resolve, 1000)); //제미나이 1초 딜레이
       
       done++;
       const progress = Math.round((done / targets.length) * 100);
@@ -1606,33 +1606,61 @@
         }
     }
 
+    //다건 전송
     async function sendAllComments() {
-      const toSend = items.filter(v =>
-        v.type === 'comment' &&
-        v.aiStatus === 'done' &&
-        v.status !== 'completed' &&
-        v.aiReply.trim()
-      );
-      if (!toSend.length) {
-        showToast('전송할 댓글 답변이 없습니다.', 'error');
-        return;
+        const toSend = items.filter(v =>
+          v.type === 'comment' &&
+          v.aiStatus === 'done' &&
+          v.status !== 'completed' &&
+          v.aiReply && v.aiReply.trim()
+        );
+        
+        if (!toSend.length) {
+          showToast('전송할 댓글 답변이 없습니다.', 'error');
+          return;
+        }
+
+        toSend.forEach(v => v.status = 'sending');
+        renderTable();
+        updateKPIs();
+        
+        let successCount = 0;
+
+        for (const item of toSend) {
+          try {
+              const response = await fetch(`/api/feedbacks/${item.id}/send`, {
+                  method: 'PUT'
+              });
+
+              if (response.ok) {
+                  const updatedData = await response.json();
+                  Object.assign(item, updatedData); // 전송 성공 시 상태 덮어쓰기
+                  successCount++;
+              } else {
+                  item.status = 'unresolved'; // 실패 시 롤백
+              }
+          } catch (e) {
+              console.error(`ID ${item.id} 전송 실패`, e);
+              item.status = 'unresolved';
+          }
+          
+          // 🌟 인스타그램 API 연속 호출 차단(429 에러) 방지용 1초 딜레이
+          await new Promise(r => setTimeout(r, 1000)); 
+        }
+
+        renderTable();
+        updateKPIs();
+
+        if (successCount > 0) {
+            const banner = document.getElementById('sentBanner');
+            const desc = document.getElementById('sentBannerDesc');
+            desc.textContent = `총 ${successCount}건의 댓글 답변이 전송되었고, 각 항목 아래에 "내 답글"로 표시됩니다.`;
+            banner.classList.add('show');
+            showToast(`${successCount}건 댓글 답변 전송 완료`, 'success');
+        } else {
+            showToast('전송에 성공한 댓글이 없습니다.', 'error');
+        }
       }
-      toSend.forEach(v => v.status = 'sending');
-      renderTable();
-      updateKPIs();
-      await new Promise(r => setTimeout(r, 950));
-      toSend.forEach(v => {
-        v.status = 'completed';
-        v.sentReply = v.aiReply;
-      });
-      renderTable();
-      updateKPIs();
-      const banner = document.getElementById('sentBanner');
-      const desc = document.getElementById('sentBannerDesc');
-      desc.textContent = `총 ${toSend.length}건의 댓글 답변이 전송되었고, 각 항목 아래에 "내 답글"로 표시됩니다.`;
-      banner.classList.add('show');
-      showToast(`${toSend.length}건 댓글 답변 전송 완료`, 'success');
-    }
 
     function showToast(msg, type = '') {
       const toast = document.getElementById('toast');

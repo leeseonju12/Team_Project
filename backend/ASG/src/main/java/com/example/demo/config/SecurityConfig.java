@@ -34,16 +34,23 @@ public class SecurityConfig {
         http
 
         .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/signup/complete") 
+                .ignoringRequestMatchers("/signup/complete",
+                		"/api/feedbacks/**", "/api/sns/**", "/search-test"
+                		
+                		
+                		)
+                
             )
         
         .authorizeHttpRequests(auth -> auth
         	    .requestMatchers("/", "/login_test", "/logout-success", "/error", "/landing-page").permitAll()
         	    .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
         	    .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
-        	    .requestMatchers("/feedback.html", "/api/feedbacks/**", "/feedback").permitAll()
+        	    .requestMatchers("/feedback.html", "/api/feedbacks/**", "/feedback","/feedbacks").permitAll()
         	    .requestMatchers("/content/**", "/api/sns/**").permitAll()
                 .requestMatchers("/api/analytics/**").permitAll()
+                .requestMatchers("/search-test", "/imgSearchTest.html").permitAll()
+               
         	    .requestMatchers("/signup", "/signup/complete").permitAll()
         	    .requestMatchers("/signup_form").authenticated() // ← 추가 (로그인 후에만 접근)
         	    .requestMatchers("/dashboard").authenticated()

@@ -1,0 +1,48 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body>
+  
+		<div>
+		    <h2>임시 검색 창</h2>
+<script async src="https://cse.google.com/cse.js?cx=11f2edb8250d144c7">
+</script>
+<div class="gcse-search"></div>
+<script type="text/javascript">
+  // 화면의 변화를 감시하는 설정
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      // 구글 검색 결과 아이템들이 생성되는 클래스명을 찾습니다 (.gsc-webResult)
+      const results = document.querySelectorAll('.gsc-result');
+      
+      results.forEach((result) => {
+        // 제목이나 텍스트 내에 'YouTube' 혹은 '유튜브'가 포함되어 있는지 확인
+        const textContent = result.innerText || result.textContent;
+        if (textContent.includes('YouTube') || textContent.includes('유튜브')) {
+          result.style.display = 'none'; // 해당 결과 숨기기
+          // 또는 result.remove(); // 아예 삭제하기
+        }
+      });
+    });
+  });
+
+  // body 전체를 감시 대상으로 설정 (결과가 언제 뜰지 모르기 때문)
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+</script>
+
+		</div>
+  
+  </body>
+</html>
+  
+
+
+

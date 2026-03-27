@@ -23,17 +23,29 @@ public class ContentService {
 	
     public List<SnsResult> generateAllSnsContent(ContentRequest request) {
     	
+    	// 커스텀 속성 하드코딩 (추후 request DTO에서 받아오도록 변경 가능)
+    	String industry = "베이커리 카페"; // 업종
+    	String userRequirement = "이번 주말 비가 온다고 하니, 비 오는 날 어울리는 감성적인 분위기를 강조해 주세요. 그리고 주말 방문 고객에게는 아메리카노 1잔 무료 쿠폰을 증정한다는 내용을 꼭 포함해 주세요."; // 사용자 추가 요구사항
+
     	String prompt = String.format(
-//                "너는 카페 매니저야. 메뉴 '%s'에 대해 %s 플랫폼용 홍보 문구를 작성해줘. " +
-//                "추가정보: %s, 키워드: %s, 말투: %s, 이모지 수준: %s, 글자수: %d자 이내. " +
-//                "응답은 반드시 순수한 JSON 배열 형식으로만 해줘. 마크다운 기호(```json)는 절대 쓰지 마. "
-				"Role: Cafe Manager. Task: Promo post. Lang: Korean.\n" +
-				"Menu: %s\nPlatforms: %s\nExtra: %s\nKeywords: %s\nTone: %s\nEmoji: %s\nMaxLen: %d chars.\n" +
-				"Rule: STRICT JSON Array ONLY. NO markdown, " +
-                "form: [{ \"platform\": \"instagram\", \"content\": \"...\", \"hashtags\": [\"#tag1\", \"#tag2\"] }]",
-                request.getMenuName(), request.getPlatforms(), request.getExtraInfo(), 
-                request.getKeywords(), request.getTones(), request.getEmojiLevel(), request.getMaxLength()
-            );
+    	    "Role: %s Marketer. Task: Promo post. Lang: Korean.\n" +
+    	    "Menu/Item: %s\nPlatforms: %s\nExtra: %s\nKeywords: %s\nTone: %s\nEmoji: %s\nMaxLen: %d chars.\n" +
+    	    "User Requirement: %s\n" +
+    	    "Rule: STRICT JSON Array ONLY. NO markdown. " +
+    	    "Create one JSON object for EACH platform listed in 'Platforms'. " +
+    	    "Format: [{ \"platform\": \"<PLATFORM_NAME>\", \"content\": \"...\", \"hashtags\": [\"#tag1\", \"#tag2\"] }]",
+    	    
+    	    // 포맷팅 변수 매핑
+    	    industry,               // %s (Role에 삽입되어 업종별 마케터 역할을 부여)
+    	    request.getMenuName(),  // %s
+    	    request.getPlatforms(), // %s
+    	    request.getExtraInfo(), // %s
+    	    request.getKeywords(),  // %s
+    	    request.getTones(),     // %s
+    	    request.getEmojiLevel(),// %s
+    	    request.getMaxLength()
+    	    ,userRequirement         // %s (사용자 커스텀 요구사항 삽입)
+    	);
     	if (request.getUploadedImgUrls() != null && !request.getUploadedImgUrls().isEmpty()) {
     		prompt += "\n(참고: 사용자가 이미지를 함께 업로드했습니다. 이미지와 어울리는 톤으로 작성해주세요.)";
         }

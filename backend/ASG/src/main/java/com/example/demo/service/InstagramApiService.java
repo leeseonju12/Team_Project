@@ -330,57 +330,6 @@ public class InstagramApiService {
         return count;
     }
     
-    /*
-    public String publishPost(String imageUrl, String caption) {
-        RestTemplate restTemplate = new RestTemplate();
-        ObjectMapper mapper = new ObjectMapper();
-
-        try {
-            // ==========================================
-            // 1단계: 미디어 컨테이너 생성 (임시 업로드)
-            // ==========================================
-            String containerUrl = "https://graph.facebook.com/v18.0/" + accountId + "/media";
-            
-            MultiValueMap<String, String> containerParams = new LinkedMultiValueMap<>();
-            containerParams.add("image_url", imageUrl);
-            containerParams.add("caption", caption);
-            containerParams.add("access_token", accessToken);
-
-            // 무식하지만 가장 안전하게 String으로 받아서 까기!
-            ResponseEntity<String> containerResponse = restTemplate.postForEntity(containerUrl, containerParams, String.class);
-            JsonNode containerNode = mapper.readTree(containerResponse.getBody());
-            String containerId = containerNode.get("id").asText();
-
-            // ==========================================
-            // 2단계: 실제 피드에 게시 (Publish)
-            // ==========================================
-            String publishUrl = "https://graph.facebook.com/v18.0/" + accountId + "/media_publish";
-            
-            MultiValueMap<String, String> publishParams = new LinkedMultiValueMap<>();
-            publishParams.add("creation_id", containerId);
-            publishParams.add("access_token", accessToken);
-
-            ResponseEntity<String> publishResponse = restTemplate.postForEntity(publishUrl, publishParams, String.class);
-            JsonNode publishNode = mapper.readTree(publishResponse.getBody());
-            
-            // 최종적으로 생성된 인스타그램 게시물 ID 반환
-            return publishNode.get("id").asText();
-
-        } catch (org.springframework.web.client.HttpClientErrorException e) {
-            // 인스타그램 API가 응답한 실제 JSON 에러 바디 추출
-            String errorBody = e.getResponseBodyAsString();
-            
-            // 콘솔에 상세 에러 출력
-            System.err.println("인스타그램 API 상세 에러: " + errorBody);
-            
-            // 프론트엔드로 상세 에러 전달
-            throw new RuntimeException("인스타그램 API 에러 상세: " + errorBody);
-        } catch (Exception e) {
-        	e.printStackTrace();
-            throw new RuntimeException("서버 내부 시스템 에러: " + e.getMessage());
-        }
-    }
-    */
     
     public String publishPost(String imageUrl, String caption) {
         RestTemplate restTemplate = new RestTemplate();

@@ -34,4 +34,9 @@ public class PageController {
 	public String channelPerformancePage() {
 		return "forward:/channel-performance.html";
 	}
+	
+	@GetMapping("/search-test")
+	public String searchTestPage() {
+		return "forward:/imgSearchTest.html";
+	}
 }
