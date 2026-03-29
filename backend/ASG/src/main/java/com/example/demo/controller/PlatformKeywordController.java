@@ -17,8 +17,7 @@ public class PlatformKeywordController {
 
     @GetMapping("/keywords")
     public ResponseEntity<PlatformKeywordResponseDto> getKeywords(
-            @RequestParam Long brandId) {  // RequestBody → RequestParam으로 변경
-
+            @RequestParam(defaultValue = "10") Long brandId) {
         PlatformKeywordResponseDto response = platformKeywordService.getKeywords(brandId);
         return ResponseEntity.ok(response);
     }
@@ -28,5 +27,6 @@ public class PlatformKeywordController {
 
 채널 성과 분석 페이지에서 쓰이고 있음
 마인드맵 검색어 노드를 띄우기 위한 호출
+브랜드 아이디 하드코딩 중
 
 */

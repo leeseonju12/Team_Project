@@ -414,23 +414,21 @@ ALTER TABLE `strategy_recommendation_item` ADD FOREIGN KEY (`platform_id`) REFER
 
 -- seed data
 INSERT IGNORE INTO brand (brand_id, brand_name, service_name, industry_type, location_name, created_at, updated_at) VALUES
-(1,  '연남살롱',     '연남살롱 커피',     'CAFE',         '연남점',   NOW(), NOW()),
-(2,  '을지OB베어',   '을지OB베어',        'BAR',          '을지로점', NOW(), NOW()),
-(3,  '황금돼지',     '황금돼지 족발',      'RESTAURANT',   '종로점',   NOW(), NOW()),
-(4,  '맘스터치',     '맘스터치',          'FAST_FOOD',    '홍대점',   NOW(), NOW()),
-(5,  '밀도',        '밀도 식빵',          'BAKERY',       '성수점',   NOW(), NOW()),
-(6,  '옴뇸뇸',      '옴뇸뇸 디저트',      'DESSERT',      '마포점',   NOW(), NOW()),
-(7,  '준오헤어',     '준오헤어',          'HAIR_SALON',   '강남점',   NOW(), NOW()),
-(8,  '네일트리',     '네일트리',          'NAIL',         '신촌점',   NOW(), NOW()),
-(9,  '스파위',       '스파위',            'SPA_MASSAGE',  '이태원점', NOW(), NOW()),
-(10, '짐박스',       '짐박스 크로스핏',    'FITNESS',      '합정점',   NOW(), NOW()),
-(11, '더필라테스',   '더필라테스',         'PILATES_YOGA', '서초점',   NOW(), NOW()),
-(12, '29cm',        '29cm 편집샵',        'RETAIL',       '성수점',   NOW(), NOW()),
-(13, '리버클로젯',   '리버클로젯',         'CLOTHING',     '홍대점',   NOW(), NOW()),
-(14, '크린토피아',   '크린토피아',         'LAUNDRY',      '역삼점',   NOW(), NOW()),
-(15, '바우하우스',   '바우하우스 펫샵',     'PET',          '판교점',   NOW(), NOW()),
-(16, '이투스',       '이투스 학원',        'EDUCATION',    '노량진점', NOW(), NOW()),
-(17, '동네사진관',   '동네사진관',         'ETC',          '삼청점',   NOW(), NOW());
+(1, '오월의종', '오월의종 베이커리', 'CAFE', '합정점', NOW(), NOW()),
+(2, '런던베이글뮤지엄', '런던베이글뮤지엄', 'CAFE', '안국점', NOW(), NOW()),
+(3, '을밀대', '을밀대 평양냉면', 'RESTAURANT', '마포점', NOW(), NOW()),
+(4, '광화문국밥', '광화문국밥', 'RESTAURANT', '광화문점', NOW(), NOW()),
+(5, '살롱 드 헤어', '살롱 드 헤어', 'HAIR_SALON', '연남점', NOW(), NOW()),
+(6, '문네일살롱', '문네일살롱', 'NAIL', '명동점', NOW(), NOW()),
+(7, '레이어드라운지', '레이어드라운지 편집샵', 'CLOTHING', '가로수길점', NOW(), NOW()),
+(8, '달고나게스트하우스', '달고나게스트하우스', 'PENSION', '북촌점', NOW(), NOW()),
+(9, '버핏그라운드', '버핏그라운드 피트니스', 'FITNESS', '광화문점', NOW(), NOW()),
+(10, '그라운드요가', '그라운드요가 스튜디오', 'PILATES_YOGA', '이태원점', NOW(), NOW()),
+(11, '와이모어크래프트', '와이모어 크래프트연구소', 'EDUCATION', '성수점', NOW(), NOW()),
+(12, '서촌한옥한의원', '서촌 한옥한의원', 'MEDICAL', '서촌점', NOW(), NOW()),
+(13, '유어마인드', '유어마인드 독립서점', 'RETAIL', '서촌점', NOW(), NOW()),
+(14, '더북소사이어티', '더북소사이어티', 'RETAIL', '한남점', NOW(), NOW()),
+(15, '론드리프로젝트', '론드리프로젝트 세탁카페', 'ETC', '해방촌점', NOW(), NOW());
 
 INSERT IGNORE INTO platform (platform_id, platform_code, platform_name, brand_color, is_active)
 VALUES

@@ -22,7 +22,7 @@ public class NaverSearchController {
     
     //TODO - 로그인 된 회원의 브랜드아이디로 변경해야함 
     public NaverSearchResponseDto getDashboard(
-            @RequestParam(defaultValue = "18")    Long brandId,
+            @RequestParam(defaultValue = "10")    Long brandId,
             @RequestParam(defaultValue = "month") String period,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -36,7 +36,6 @@ public class NaverSearchController {
 }
 
 /*
-브랜드 테이블의 18번 아이디(=성심당)가 검색 기준
 검색 수 = brand_name 이 검색된 횟수
 주요 검색 사용자 = brand_name 을 검색한 연령대/성별
 업종 인기 검색 키워드 = 각 업종별 인기 검색어 (다소 하드코딩)

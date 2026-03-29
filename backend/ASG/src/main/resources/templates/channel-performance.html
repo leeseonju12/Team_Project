@@ -2297,6 +2297,7 @@ function renderNaverSummary(summary, period) {
       const MM_PLT_NAME = { instagram:'Instagram', youtube:'YouTube', naver:'네이버', general:'구글' };
 
       let MM_DATA = [];
+      let MM_NO_DATA = false;
 
       function buildMmData(apiData) {
           const keyMap = {
@@ -2354,14 +2355,23 @@ function renderNaverSummary(summary, period) {
       });
       popup.addEventListener('click', (e) => { e.stopPropagation(); });
 
-      async function loadRelatedKeywords(brandId) {
-        try {
-          const res  = await fetch(`/api/mindmap?brandId=${brandId}`);
-          const data = await res.json();
-          const countEl = document.querySelector('.mm-bar-count');
-          if (countEl) countEl.textContent = data.totalCount + '개';
-          blocksEl.innerHTML = '';
-          data.keywords.forEach((item, i) => {
+      async function loadRelatedKeywords() {
+    	  try {
+    	    const res  = await fetch(`/api/mindmap`);  // brandId 제거
+    	    const data = await res.json();
+    	    const countEl = document.querySelector('.mm-bar-count');
+    	    if (countEl) countEl.textContent = data.totalCount + '개';
+    	    blocksEl.innerHTML = '';
+
+    	    // ✅ 연관검색어 없을 때 안내 메시지
+    	    if (!data.keywords || data.keywords.length === 0) {
+    	      blocksEl.innerHTML = `<div style="width:100%;padding:14px 16px;font-size:13px;color:var(--text3);background:var(--bg2);border-radius:var(--radius-sm);border:1px dashed var(--border2);">
+    	        🔍 아직 온라인 연관 검색어 데이터가 충분하지 않습니다. 브랜드 온라인 노출이 늘어나면 자동으로 표시됩니다.
+    	      </div>`;
+    	      return;
+    	    }
+
+    	    data.keywords.forEach((item, i) => {
             const el = document.createElement('div');
             el.className = 'mm-rel-block';
             el.innerHTML = `<span class="mm-rel-block-num ${i < 3 ? 'hi' : ''}">${String(i+1).padStart(2,'0')}</span>${item.keyword}`;
@@ -2399,21 +2409,29 @@ function renderNaverSummary(summary, period) {
       }
 
       // ✅ 함수 정의를 호출보다 위로 이동
-      async function loadPlatformKeywords(brandId) {
-        try {
-          const res = await fetch(`/api/platform/keywords?brandId=${brandId}`);
-          const data = await res.json();
-          console.log('플랫폼 키워드 응답:', data);  // ← 응답 확인용
-          buildMmData(data);
-          mmLayout();
-          mmDraw();
-        } catch (err) { console.error('플랫폼 키워드 로드 실패:', err); }
-      }
+      async function loadPlatformKeywords() {
+  try {
+    const res = await fetch(`/api/platform/keywords`);  // brandId 제거
+    const data = await res.json();
+    console.log('플랫폼 키워드 응답:', data);
+    MM_BRAND_NAME = data.brand || '';
+
+    // ✅ 모든 플랫폼 키워드가 비어있는지 확인
+    const allEmpty = ['instagramKeywords','youtubeKeywords','naverKeywords','googleKeywords']
+      .every(k => !data[k] || data[k].length === 0);
+    MM_NO_DATA = allEmpty;
+
+    buildMmData(data);
+    mmLayout();
+    mmDraw();
+  } catch (err) { console.error('플랫폼 키워드 로드 실패:', err); }
+}
 
       // 현재 브랜드 테이블의 브랜드아이디 18번을 지정해서 데이터를 가져오는 중
       // TODO - 로그인 된 회원 데이터를 가져오는 로직으로 수정해야함
-      loadRelatedKeywords(18);
-      loadPlatformKeywords(18);
+      loadRelatedKeywords();
+      loadPlatformKeywords();
+      
 
       /*마인드맵 시각화*/
       const canvas=document.getElementById('mm-canvas'), ctx=canvas.getContext('2d'), tip=document.getElementById('mm-tip');
@@ -2425,7 +2443,21 @@ function renderNaverSummary(summary, period) {
       function drawMmCenter(pa){const p=mmPos['center'],r=54;const pr=r+14+Math.sin(pa)*4;ctx.beginPath();ctx.arc(p.x,p.y,pr,0,Math.PI*2);ctx.strokeStyle=hexA('#0F172A',.06);ctx.lineWidth=1;ctx.stroke();ctx.save();ctx.shadowColor='rgba(15,23,42,.22)';ctx.shadowBlur=22;ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);const grd=ctx.createRadialGradient(p.x-12,p.y-12,0,p.x,p.y,r);grd.addColorStop(0,'#1E293B');grd.addColorStop(1,'#0F172A');ctx.fillStyle=grd;ctx.fill();ctx.restore();ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,.09)';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle='#FFFFFF';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`700 17px 'Noto Sans KR',sans-serif`;ctx.fillText('성심당',p.x,p.y-6);ctx.font=`300 9px 'Noto Sans KR',sans-serif`;ctx.fillStyle='rgba(255,255,255,.40)';ctx.fillText('SUNGSIMDANG',p.x,p.y+9);}
       function drawMmBranch(cl){const p=mmPos[cl.id],pc=MM_PC[cl.platform];const isHov=mmHovered===cl.id,r=cl.size;ctx.save();if(isHov){ctx.shadowColor=hexA(pc.color,.35);ctx.shadowBlur=16;}ctx.beginPath();ctx.arc(p.x,p.y,r+(isHov?2:0),0,Math.PI*2);ctx.fillStyle=pc.color;ctx.fill();ctx.beginPath();ctx.arc(p.x-r*.25,p.y-r*.25,r*.42,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.14)';ctx.fill();ctx.fillStyle='#FFFFFF';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`700 12px 'Noto Sans KR',sans-serif`;if(cl.label.length>4){const h=Math.ceil(cl.label.length/2);ctx.fillText(cl.label.slice(0,h),p.x,p.y-6);ctx.fillText(cl.label.slice(h),p.x,p.y+6);}else ctx.fillText(cl.label,p.x,p.y);ctx.restore();}
       function drawMmLeaf(l){const p=mmPos[l.id],pc=MM_PC[l.platform];const isHov=mmHovered===l.id,dotR=l.weight+(isHov?2:0);ctx.save();if(isHov){ctx.shadowColor=hexA(pc.color,.40);ctx.shadowBlur=14;}ctx.beginPath();ctx.arc(p.x,p.y,dotR,0,Math.PI*2);ctx.fillStyle=pc.color;ctx.fill();if(isHov){ctx.beginPath();ctx.arc(p.x,p.y,dotR+4,0,Math.PI*2);ctx.strokeStyle=hexA(pc.color,.30);ctx.lineWidth=1;ctx.stroke();}const ang=Math.atan2(p.y-mmCy,p.x-mmCx);const lpad=dotR+10,lx=p.x+Math.cos(ang)*lpad,ly=p.y+Math.sin(ang)*lpad;const deg=(ang*180/Math.PI+360)%360;let align;if(deg<60||deg>300)align='left';else if(deg>120&&deg<240)align='right';else align='center';ctx.textAlign=align;ctx.textBaseline=(deg>180&&deg<360)?'bottom':'top';if(deg>60&&deg<120||deg>240&&deg<300)ctx.textBaseline='middle';ctx.font=`${isHov?'600':'500'} 12px 'Noto Sans KR',sans-serif`;ctx.fillStyle=isHov?pc.color:'#334155';ctx.fillText(l.label,lx,ly);ctx.restore();}
-      function mmDraw(){ctx.clearRect(0,0,mmW,mmH);ctx.fillStyle='rgba(248,251,252,.55)';ctx.fillRect(0,0,mmW,mmH);ctx.save();ctx.fillStyle='rgba(100,116,139,.08)';for(let x=28;x<mmW;x+=36)for(let y=28;y<mmH;y+=36){ctx.beginPath();ctx.arc(x,y,.7,0,Math.PI*2);ctx.fill();}ctx.restore();const cP=mmPos['center'];MM_DATA.forEach(cl=>{drawMmLine(cP,mmPos[cl.id],MM_PC[cl.platform].color,1,false);cl.leaves.forEach(l=>drawMmLine(mmPos[cl.id],mmPos[l.id],MM_PC[l.platform].color,1,true));});drawMmCenter(mmPulse);MM_DATA.forEach(cl=>drawMmBranch(cl));MM_DATA.forEach(cl=>cl.leaves.forEach(l=>drawMmLeaf(l)));}
+      function drawMmNoData(){ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`600 15px 'Noto Sans KR',sans-serif`;ctx.fillStyle='#94A3B8';ctx.fillText('아직 키워드 데이터가 충분하지 않습니다.', mmCx, mmCy-20);ctx.font=`400 13px 'Noto Sans KR',sans-serif`;ctx.fillStyle='#CBD5E1';ctx.fillText('브랜드 온라인 노출이 늘어나면 자동으로 표시됩니다.', mmCx, mmCy+12);ctx.restore();}
+      function mmDraw(){ctx.clearRect(0,0,mmW,mmH);ctx.fillStyle='rgba(248,251,252,.55)';ctx.fillRect(0,0,mmW,mmH);ctx.save();ctx.fillStyle='rgba(100,116,139,.08)';for(let x=28;x<mmW;x+=36)for(let y=28;y<mmH;y+=36){ctx.beginPath();ctx.arc(x,y,.7,0,Math.PI*2);ctx.fill();}ctx.restore();
+        // 키워드 데이터가 없으면 중앙에 안내 문구 표시
+        const hasKeywords = MM_DATA.some(cl => cl.leaves && cl.leaves.length > 0);
+        if (!hasKeywords) {
+          drawMmCenter(mmPulse);
+          ctx.fillStyle='#94A3B8';ctx.textAlign='center';ctx.textBaseline='middle';
+          ctx.font=`600 15px 'Noto Sans KR',sans-serif`;
+          ctx.fillText('아직 키워드 데이터가 충분하지 않습니다.', mmCx, mmCy + 70);
+          ctx.font=`400 12px 'Noto Sans KR',sans-serif`;
+          ctx.fillStyle='#CBD5E1';
+          ctx.fillText('브랜드 온라인 노출이 늘어나면 자동으로 표시됩니다.', mmCx, mmCy + 94);
+          return;
+        }
+        const cP=mmPos['center'];MM_DATA.forEach(cl=>{drawMmLine(cP,mmPos[cl.id],MM_PC[cl.platform].color,1,false);cl.leaves.forEach(l=>drawMmLine(mmPos[cl.id],mmPos[l.id],MM_PC[l.platform].color,1,true));});drawMmCenter(mmPulse);MM_DATA.forEach(cl=>drawMmBranch(cl));MM_DATA.forEach(cl=>cl.leaves.forEach(l=>drawMmLeaf(l)));}
       function mmResize(){const wrap=canvas.parentElement;mmW=wrap.clientWidth;mmH=Math.max(520,Math.min(mmW*.62,700));canvas.width=mmW*devicePixelRatio;canvas.height=mmH*devicePixelRatio;canvas.style.height=mmH+'px';ctx.setTransform(1,0,0,1,0,0);ctx.scale(devicePixelRatio,devicePixelRatio);mmCx=mmW/2;mmCy=mmH/2;mmLayout();mmDraw();}
       let mmLastT=0;(function tick(ts){if(ts-mmLastT>40){mmPulse=ts/1000;mmDraw();mmLastT=ts;}requestAnimationFrame(tick);})();
       function allMmNodes(){const out=[];MM_DATA.forEach(cl=>{out.push({id:cl.id,label:cl.label,platform:cl.platform,desc:cl.desc,r:cl.size});cl.leaves.forEach(l=>out.push({id:l.id,label:l.label,platform:l.platform,desc:l.desc,r:l.weight+10}));});return out;}

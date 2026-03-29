@@ -85,7 +85,8 @@ public class GoogleSearchService {
 
     /**
      * 인스타그램 스니펫에서 해시태그를 추출합니다.
-     * 해시태그가 MIN_HASHTAG_COUNT개 미만이면 일반 스니펫 텍스트로 폴백합니다.
+     * 해시태그가 MIN_HASHTAG_COUNT개 미만이면 title 텍스트에서 단어 추출로 보완합니다.
+     * 그래도 부족하면 일반 스니펫 텍스트로 폴백합니다.
      */
     private List<String> extractInstagramKeywords(List<String> snippetTexts) {
         List<String> hashtags = new ArrayList<>();
@@ -93,19 +94,37 @@ public class GoogleSearchService {
         for (String snippet : snippetTexts) {
             Matcher m = HASHTAG_PATTERN.matcher(snippet);
             while (m.find()) {
-                hashtags.add(m.group(1)); // # 제거한 태그명만 추가
+                hashtags.add(m.group(1));
             }
         }
 
         System.out.println("====> [인스타] 해시태그 추출: " + hashtags.size() + "개");
 
-        // 해시태그가 충분하면 해시태그 리스트 반환
         if (hashtags.size() >= MIN_HASHTAG_COUNT) {
             return hashtags;
         }
 
-        // 해시태그 부족 → 일반 스니펫 텍스트로 폴백
-        System.out.println("====> [인스타] 해시태그 부족 (" + hashtags.size() + "개) → 일반 텍스트로 폴백");
+        // ✅ 해시태그 부족 → 스니펫 텍스트에서 한글 단어 추출로 보완
+        // 인스타 스니펫은 짧은 소개글이라 단어 자체가 키워드 역할
+        List<String> wordFallback = new ArrayList<>(hashtags);
+        for (String snippet : snippetTexts) {
+            // #태그 제거 후 남은 텍스트에서 한글 단어 추출
+            String noTag = snippet.replaceAll("#\\S+", " ");
+            String[] words = noTag.split("[\s·|,]+");
+            for (String w : words) {
+                w = w.trim().replaceAll("[^가-힣]", "");
+                if (w.length() >= 2) wordFallback.add(w);
+            }
+        }
+
+        System.out.println("====> [인스타] 단어 보완 후: " + wordFallback.size() + "개");
+
+        if (!wordFallback.isEmpty()) {
+            return wordFallback;
+        }
+
+        // 최종 폴백 → 일반 스니펫 텍스트
+        System.out.println("====> [인스타] 일반 텍스트로 최종 폴백");
         return snippetTexts;
     }
 }

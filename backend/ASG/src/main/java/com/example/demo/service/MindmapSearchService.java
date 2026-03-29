@@ -34,14 +34,19 @@ public class MindmapSearchService {
     @Cacheable(value = "related-keywords", key = "#brandId")
     public MindmapSearchResponseDto getRelatedKeywords(Long brandId) {
 
-        // 1. brand 테이블에서 브랜드명 조회
+        // 1. brand 테이블에서 브랜드명 + 서비스명 조회
         Map<String, Object> brand = jdbcTemplate.queryForMap(
-                "SELECT brand_name FROM brand WHERE brand_id = ?", brandId);
-        String brandName = brand.get("brand_name").toString();
+                "SELECT brand_name, service_name FROM brand WHERE brand_id = ?", brandId);
+        String brandName   = brand.get("brand_name").toString();
+        String serviceName = brand.get("service_name") != null ? brand.get("service_name").toString() : "";
+        // service_name이 더 구체적인 경우 연관 검색어 조회에 사용
+        // 예: "오월의종 베이커리", "그라운드요가 스튜디오"
+        String searchQuery = (serviceName.isBlank() || serviceName.equals(brandName))
+                           ? brandName : serviceName;
 
         // 2. 구글 + 네이버 병렬 호출 (동기 처리로 변환)
         SerpApiResponseDto[] results = serpApiClient
-                .fetchBothRelatedKeywords(brandName)
+                .fetchBothRelatedKeywords(searchQuery)
                 .block();  // WebFlux Mono → 일반 동기 방식으로 변환
 
         SerpApiResponseDto googleResult = results[0];

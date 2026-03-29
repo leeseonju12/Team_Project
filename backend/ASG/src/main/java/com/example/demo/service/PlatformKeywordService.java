@@ -24,35 +24,40 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class PlatformKeywordService {
-
+ 
     private final GoogleSearchService googleSearchService;
     private final YoutubeService youtubeService;
     private final NaverSearchMService naverSearchMService;
     private final KeywordAnalysisService keywordAnalysisService;
     private final JdbcTemplate jdbcTemplate;  // 추가
-
+ 
     public PlatformKeywordResponseDto getKeywords(Long brandId) {
-
-        // 1. brandId로 브랜드명 조회 (MindmapService와 동일한 방식)
+ 
+        // 1. brandId로 브랜드명 + 서비스명 조회
         Map<String, Object> brand = jdbcTemplate.queryForMap(
-                "SELECT brand_name FROM brand WHERE brand_id = ?", brandId);
-        String brandName = brand.get("brand_name").toString();
+                "SELECT brand_name, service_name FROM brand WHERE brand_id = ?", brandId);
+        String brandName   = brand.get("brand_name").toString();
+        String serviceName = brand.get("service_name") != null ? brand.get("service_name").toString() : "";
+        // service_name이 브랜드명과 다를 때만 사용 (더 구체적인 검색어)
+        // 예: brand_name="그라운드요가", service_name="그라운드요가 스튜디오" → "그라운드요가 스튜디오" 로 검색
+        String searchQuery = (serviceName.isBlank() || serviceName.equals(brandName))
+                           ? brandName : serviceName;
 
         // 2. DTO 생성
-        BrandSearchRequestDto request = new BrandSearchRequestDto(brandName, "month");
-
+        BrandSearchRequestDto request = new BrandSearchRequestDto(searchQuery, "month");
+ 
         // 3. 각 플랫폼 데이터 수집
         List<String> instagramRaw = googleSearchService.getGoogleData(request, true);
         List<String> googleRaw    = googleSearchService.getGoogleData(request, false);
         List<String> youtubeRaw   = youtubeService.getYoutubeData(request);
         List<String>       naverRaw     = naverSearchMService.getNaverBlogData(request);
-
-        // 4. n-gram 키워드 분석
-        List<String> instagramKeywords = keywordAnalysisService.analyzeKeywords(instagramRaw);
-        List<String> googleKeywords    = keywordAnalysisService.analyzeKeywords(googleRaw);
-        List<String> youtubeKeywords   = keywordAnalysisService.analyzeKeywords(youtubeRaw);
-        List<String> naverKeywords     = keywordAnalysisService.analyzeKeywords(naverRaw);
-
+ 
+        // 4. n-gram 키워드 분석 (brandName을 동적 불용어로 전달)
+        List<String> instagramKeywords = keywordAnalysisService.analyzeKeywords(instagramRaw, brandName);
+        List<String> googleKeywords    = keywordAnalysisService.analyzeKeywords(googleRaw,    brandName);
+        List<String> youtubeKeywords   = keywordAnalysisService.analyzeKeywords(youtubeRaw,   brandName);
+        List<String> naverKeywords     = keywordAnalysisService.analyzeKeywords(naverRaw,     brandName);
+ 
      // PlatformKeywordService.java
         return new PlatformKeywordResponseDto(
                 brandName,
