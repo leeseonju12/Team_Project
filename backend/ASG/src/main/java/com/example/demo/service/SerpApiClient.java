@@ -56,7 +56,7 @@ public class SerpApiClient {
                         .build())
                 .retrieve()
                 .bodyToMono(String.class)  // ← String으로 먼저 받기
-                .doOnNext(body -> System.out.println("====> [네이버 raw 응답 앞 500자] " + body.substring(0, Math.min(500, body.length()))))
+                .doOnNext(body -> System.out.println("====> [네이버 raw] " + body.substring(0, Math.min(2000, body.length()))))
                 .map(body -> {
                     try {
                         return new com.fasterxml.jackson.databind.ObjectMapper().readValue(body, SerpApiResponseDto.class);

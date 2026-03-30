@@ -17,7 +17,7 @@ public class PlatformKeywordController {
 
     @GetMapping("/keywords")
     public ResponseEntity<PlatformKeywordResponseDto> getKeywords(
-            @RequestParam(defaultValue = "12") Long brandId) {
+            @RequestParam(defaultValue = "19") Long brandId) {
         PlatformKeywordResponseDto response = platformKeywordService.getKeywords(brandId);
         return ResponseEntity.ok(response);
     }

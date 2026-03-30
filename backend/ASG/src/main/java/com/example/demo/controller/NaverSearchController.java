@@ -22,7 +22,7 @@ public class NaverSearchController {
     
     //TODO - 로그인 된 회원의 브랜드아이디로 변경해야함 
     public NaverSearchResponseDto getDashboard(
-            @RequestParam(defaultValue = "12")    Long brandId,
+            @RequestParam(defaultValue = "19")    Long brandId,
             @RequestParam(defaultValue = "month") String period,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
