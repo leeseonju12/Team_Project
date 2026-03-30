@@ -20,7 +20,7 @@ public class ChannelPerformanceController {
 
     @GetMapping
     public ChannelPerformanceResponseDto getDashboard(
-            @RequestParam(defaultValue = "1") Long brandId,
+            @RequestParam(defaultValue = "12") Long brandId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {

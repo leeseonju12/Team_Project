@@ -31,4 +31,4 @@ spring:
       data-locations: classpath:db/channel-performance-data.sql
       continue-on-error: true
 
-# api 키 전부 삭제함 
+# api 키 삭제

@@ -21,7 +21,7 @@ public class MindmapController {
      */
     @GetMapping
     public MindmapSearchResponseDto getRelatedKeywords(
-            @RequestParam(defaultValue = "10") Long brandId) {
+            @RequestParam(defaultValue = "12") Long brandId) {
         return mindmapService.getRelatedKeywords(brandId);
     }
 
@@ -32,7 +32,7 @@ public class MindmapController {
      */
     @PostMapping("/refresh")
     public MindmapSearchResponseDto refreshRelatedKeywords(
-            @RequestParam(defaultValue = "10") Long brandId) {
+            @RequestParam(defaultValue = "12") Long brandId) {
         return mindmapService.refreshRelatedKeywords(brandId);
     }
 }
