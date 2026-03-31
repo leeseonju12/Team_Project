@@ -1,11 +1,14 @@
-package com.example.demo.controller; // 본인 패키지명으로 변경하세요
+package com.example.demo.controller;
 
 import com.example.demo.dto.FeedbackDto;
-
+import com.example.demo.repository.FeedbackRepository;
+import com.example.demo.service.FacebookApiService;
 import com.example.demo.service.FeedbackService;
 import com.example.demo.service.InstagramApiService;
 
 import com.example.demo.domain.CustomerFeedback;
+import com.example.demo.domain.enums.FeedbackStatus;
+import com.example.demo.domain.enums.Platform;
 
 import lombok.RequiredArgsConstructor;
 
@@ -15,6 +18,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -29,8 +33,11 @@ import java.util.Map;
 public class FeedbackController {
 	
 	private final InstagramApiService instagramApiService;
+	private final FacebookApiService facebookApiService;
 
     private final FeedbackService feedbackService;
+    
+    private final FeedbackRepository feedbackRepository;
     /*
 	@GetMapping("/feedback")
     public String feedbackPage() {
@@ -86,5 +93,20 @@ public class FeedbackController {
     }
     
     
+    @PostMapping("/facebook/sync-comments")
+    public ResponseEntity<?> syncAllFacebookComments() { // 🌟 @RequestParam 싹 다 지웠습니다!
+        try {
+            // 이제 파라미터 넘길 필요 없이 메서드만 딱 부르면 끝납니다.
+            // 서비스가 알아서 yml 파일에서 토큰 꺼내서 페이스북 다녀옵니다.
+            int newCount = facebookApiService.fetchAndSaveAllPageComments();
+            
+            return ResponseEntity.ok(Map.of(
+                "message", "페이스북 동기화 완료",
+                "newCount", newCount 
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
+        }
+    }
     
 }

@@ -39,4 +39,9 @@ public class PageController {
 	public String searchTestPage() {
 		return "forward:/imgSearchTest.html";
 	}
+	
+	@GetMapping("/sns/pexels") 
+    public String showPexelsPage() {
+        return "pexels"; 
+    }
 }

@@ -1140,10 +1140,7 @@
       return displayStatus === 'generated' || displayStatus === 'completed';
     }
 
-    function isAnswerNeeded(item) {
-      const displayStatus = getDisplayStatus(item);
-      return ['unresolved', 'checked', 'unchecked'].includes(displayStatus);
-    }
+ 
 
     function getStatusLabel(status) {
       return {

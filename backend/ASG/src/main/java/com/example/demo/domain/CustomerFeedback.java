@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import com.example.demo.domain.enums.AiStatus;
 import com.example.demo.domain.enums.FeedbackStatus;
 import com.example.demo.domain.enums.FeedbackType;
+import com.example.demo.domain.enums.Platform;
 
 @Entity
 @Table(name = "customer_feedback")
@@ -32,11 +33,6 @@ public class CustomerFeedback {
     @JoinColumn(name = "brand_platform_id")
     private BrandPlatform brandPlatform; 
     */
-    
-    // 원본 데이터(Source)와 1:1 연결
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "source_id")
-    private FeedbackSource source;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
@@ -59,18 +55,33 @@ public class CustomerFeedback {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    
+    
+    @Column(unique = true, name = "external_id")
+    private String externalId;    // SNS 고유 댓글 ID (중복 방지의 핵심!)
+
+    private String authorName;    // 작성자 이름
+    
+    @Column(columnDefinition = "TEXT")
+    private String originalText;  // 댓글 내용
+
+    private String originUrl;     // 댓글이 달린 게시글 URL
+
+    @Enumerated(EnumType.STRING)
+    private Platform platform;
 
 
 	@PrePersist
 	public void prePersist() {
 	    // Source의 플랫폼 정보를 보고 Type을 알아서 채워 넣음!
-	    if (this.source != null && this.source.getPlatform() != null) {
-	        this.type = this.source.getPlatform().getAutoType();
+		if (this.platform != null) {
+	        this.type = this.platform.getAutoType();
 	    }
 	    
 	    // 기본값 세팅
 	    if (this.status == null) this.status = FeedbackStatus.UNRESOLVED;
 	    if (this.aiStatus == null) this.aiStatus = AiStatus.IDLE;
+	    if (this.createdAt == null) this.createdAt = LocalDateTime.now();
 	}
 	
 	// 💡 AI 답변 업데이트용 비즈니스 메서드

@@ -1,22 +1,31 @@
 package com.example.demo.controller;
 
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2AuthorizedClient;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.demo.service.FacebookApiService;
 import com.example.demo.service.FacebookAuthService;
 
 @RestController
 public class FacebookController {
 
     private final FacebookAuthService facebookAuthService;
+    private final FacebookApiService facebookApiService;
 
     // Service 의존성 주입
-    public FacebookController(FacebookAuthService facebookAuthService) {
+    public FacebookController(FacebookAuthService facebookAuthService, FacebookApiService facebookApiService) {
         this.facebookAuthService = facebookAuthService;
+        this.facebookApiService = facebookApiService;
     }
 
     @GetMapping("/facebook/token")
@@ -42,4 +51,5 @@ public class FacebookController {
                "<hr>" +
                "<p><b>장기 토큰 (60일 유효, DB 저장용):</b> <br><b style='color:blue;'>" + longLivedToken + "</b></p>";
     }
+    
 }

@@ -3,8 +3,8 @@ package com.example.demo.service;
 import com.example.demo.repository.FeedbackRepository;
 import com.example.demo.repository.InstagramCommentRepository;
 import com.example.demo.domain.CustomerFeedback;
-import com.example.demo.domain.FeedbackSource;
 import com.example.demo.domain.enums.AiStatus;
+import com.example.demo.domain.enums.FeedbackStatus;
 import com.example.demo.domain.enums.FeedbackType;
 import com.example.demo.entity.InstagramComment;
 
@@ -13,7 +13,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -214,44 +216,36 @@ public class InstagramApiService {
                 // 배열을 돌면서 하나씩 DB에 저장
                 for (JsonNode node : dataArray) {
                 	
-                	String originUrl = node.path("media").path("permalink").asText("");
-                	
-                	// 🌟 A. 통합 DB용 '출처' 정보 생성
-                    FeedbackSource source = FeedbackSource.builder()
-                    		.externalId(node.get("id").asText())
+                	String commentId = node.path("id").asText();
+                    String username = node.path("username").asText("unknown");
+                    String text = node.path("text").asText("");
+                    String permalink = node.path("media").path("permalink").asText("");
+                    Optional<CustomerFeedback> existing = feedbackRepository.findByExternalId(commentId);
+
+                    if (existing.isPresent()) {
+                        // [UPDATE] 내용이 변했을 수 있으니 텍스트만 업데이트
+                        CustomerFeedback feedback = existing.get();
+                        feedback.setOriginalText(text);
+                        feedbackRepository.save(feedback);
+                        continue; // 다음 댓글로 이동
+                    }
+                    
+                    // 🌟 B. 통합 DB용 '피드백' 객체 생성
+                    CustomerFeedback newFeedback = CustomerFeedback.builder()
+                    		.externalId(commentId)
                             .authorName(node.path("username").asText("unknown"))
                             .originalText(node.path("text").asText(""))
                             .platform(com.example.demo.domain.enums.Platform.INSTAGRAM)
-
-                            .build();
-
-                    // 🌟 B. 통합 DB용 '피드백' 객체 생성
-                    CustomerFeedback feedback = CustomerFeedback.builder()
-                            .source(source)
+                            .originUrl(permalink)
+                            .status(FeedbackStatus.UNRESOLVED)
+                            .createdAt(LocalDateTime.now())
                             .type(FeedbackType.COMMENT)
                             .aiStatus(AiStatus.IDLE)
                             .build();
                 	
                     // 🌟 C. 통합 레포지토리에 저장! (이래야 대시보드에 나옵니다)
-                    feedbackRepository.save(feedback);
-                	
-                	/*
-                    InstagramComment comment = new InstagramComment();
-                    comment.setId(node.get("id").asText());
-                    comment.setMediaId(mediaId); // 🌟 파라미터로 받은 미디어 ID 저장
-                    comment.setUsername(node.path("username").asText("unknown")); // 혹시 없을 경우 대비
-                    comment.setText(node.path("text").asText(""));
-                    comment.setTimestamp(node.path("timestamp").asText(""));
-                    comment.setLikeCount(node.path("like_count").asInt(0));
-                    
+                    feedbackRepository.save(newFeedback);
 
-                	
-                    // DB에 저장! (이미 같은 ID가 있으면 UPDATE, 없으면 INSERT 해줍니다)
-                    commentRepository.save(comment);
-                    */
-                    
-                    
-	
                 }
             }
             return dataArray;
@@ -303,18 +297,17 @@ public class InstagramApiService {
                     String commentId = node.get("id").asText(); // 인스타그램 고유 댓글 ID
 
                     // 🌟 핵심: DB에 이미 이 댓글 ID가 있는지 검사! 없으면 저장합니다.
-                    if (!feedbackRepository.existsBySource_ExternalId(commentId)) {
-                        
-                        FeedbackSource source = FeedbackSource.builder()
-                                .externalId(commentId) // 여기에 고유 ID 저장
+                    if (!feedbackRepository.existsByExternalId(commentId)) {
+
+
+                        CustomerFeedback feedback = CustomerFeedback.builder()
+                        		.externalId(commentId)
                                 .authorName(node.path("username").asText("unknown"))
                                 .originalText(node.path("text").asText(""))
                                 .platform(com.example.demo.domain.enums.Platform.INSTAGRAM)
                                 .originUrl(permalink)
-                                .build();
-
-                        CustomerFeedback feedback = CustomerFeedback.builder()
-                                .source(source)
+                                .status(FeedbackStatus.UNRESOLVED)
+                                .createdAt(LocalDateTime.now())
                                 .type(FeedbackType.COMMENT)
                                 .aiStatus(AiStatus.IDLE)
                                 .build();

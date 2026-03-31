@@ -324,7 +324,7 @@
       background: linear-gradient(90deg, var(--teal), var(--indigo));
       transition: width .35s ease;
     }
-
+/*
 .toolbar {
       display: flex;
       align-items: center;
@@ -332,13 +332,12 @@
       gap: 14px;
       flex-wrap: wrap;
 
-      /* 스크롤 시 화면 상단에 고정 */
       position: sticky;
       top: 64px;
       z-index: 100;
 
       padding: 14px 22px 32px 22px; 
-      margin-bottom: -12px; /* 꼬리가 길어진 만큼 바깥 여백을 당겨서 레이아웃 유지 */
+      margin-bottom: -12px;
 
       background: rgba(248, 250, 252, 0.75);
       backdrop-filter: blur(12px);
@@ -347,6 +346,37 @@
       -webkit-mask-image: linear-gradient(to bottom, black 0%, black 75%, transparent 100%);
       mask-image: linear-gradient(to bottom, black 0%, black 75%, transparent 100%);
     }
+    */
+    .toolbar {
+	  display: flex;
+	  align-items: center;
+	  justify-content: space-between;
+	  gap: 14px;
+	  flex-wrap: wrap;
+	
+	  /* 스크롤 시 상단 고정 */
+	  position: sticky;
+	  top: 64px;
+	  z-index: 100;
+	
+	  /* 하단 마스크 때문에 잘리던 현상을 방지하기 위해 패딩 조정 */
+	  padding: 14px 22px; 
+	  margin-bottom: 20px; /* 음수 마진 대신 적절한 양수 마진 권장 */
+	
+	  background: rgba(248, 250, 252, 0.8); /* 투명도 살짝 조절 */
+	  backdrop-filter: blur(12px);
+	  -webkit-backdrop-filter: blur(12px);
+	
+	  /* 🌟 하단 마스크 이미지 삭제 (범인 제거!) */
+	  /* -webkit-mask-image: ... (삭제) */
+	  /* mask-image: ... (삭제) */
+	
+	  /* 🌟 대신 하단 경계선을 넣어 깔끔하게 구분 */
+	  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+	  
+	  /* 필요하다면 아주 은은한 그림자 추가 */
+	  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+	}
 
     .toolbar-left {
       display: flex;
@@ -1086,10 +1116,10 @@
       </div>
 
       <div class="toolbar-right">
-      	<button class="btn-sync" onclick="syncInstagramData()" id="btnSync">
-          <span class="spin" id="spinSync"></span>
-          🔄 최신 데이터 불러오기
-        </button>
+<button class="btn-sync" onclick="syncAllSocialData()" id="btnSync" type="button">
+  <span class="spin" id="spinSync" style="display:none;"></span>
+  🔄 최신 데이터 불러오기
+</button>
         <button class="btn-main" id="btnAIAll" onclick="generateAllAI()">
           <span class="spin" id="spinAll"></span>
           ✦ 선택 항목 AI 답변 생성
@@ -1136,577 +1166,489 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    // 💡 변경된 부분: 하드코딩된 RAW_ITEMS 제거하고 빈 배열로 시작
-    let items = [];
-    let filteredItems = [];
-    let selectedIds = new Set();
-    let activeFilterGroup = 'all';
-    let activeFilterValue = null;
+  let items = [];
+  let filteredItems = [];
+  let selectedIds = new Set();
+  let activeFilterGroup = 'all';
+  let activeFilterValue = null;
 
-    // 💡 추가된 부분: 백엔드 API에서 데이터를 가져오는 함수
-    async function fetchFeedbackData() {
-      try {
-        // 같은 Spring Boot 서버 내에서 실행되므로 상대 경로 사용
-        const response = await fetch('/api/feedbacks');
-        if (!response.ok) throw new Error('데이터를 불러오는데 실패했습니다.');
-        
-        const data = await response.json();
-        items = data.map(v => ({...v}));
-        
-        // 데이터 로딩 완료 후 필터 및 테이블 초기 렌더링
-        resetFilters(); 
-      } catch (error) {
-        console.error(error);
-        showToast('DB에서 데이터를 불러오는데 실패했습니다.', 'error');
+  // 백엔드 API에서 데이터를 가져오는 함수
+  async function fetchFeedbackData() {
+    try {
+      const response = await fetch('/api/feedbacks');
+      if (!response.ok) throw new Error('데이터를 불러오는데 실패했습니다.');
+      
+      const data = await response.json();
+      items = data.map(v => ({...v}));
+      
+      resetFilters(); 
+    } catch (error) {
+      console.error(error);
+      showToast('DB에서 데이터를 불러오는데 실패했습니다.', 'error');
+    }
+  }
+
+  // 상태 계산 유틸리티
+  function getDisplayStatus(item) {
+    if (item.status === 'completed') return 'completed';
+    if (item.aiStatus === 'done' && item.aiReply && item.aiReply.trim()) return 'generated';
+    if (item.status === 'checked') return 'checked';
+    if (item.status === 'unchecked') return 'unchecked';
+    return 'unresolved';
+  }
+
+  function isAnswerDone(item) {
+    const displayStatus = getDisplayStatus(item);
+    return displayStatus === 'generated' || displayStatus === 'completed';
+  }
+
+  function isAnswerNeeded(item) {
+    const displayStatus = getDisplayStatus(item);
+    return ['unresolved', 'checked', 'unchecked'].includes(displayStatus);
+  }
+
+  function getStatusLabel(status) {
+    const labels = {
+      unresolved: '미답변',
+      checked: '확인',
+      unchecked: '미확인',
+      generated: 'AI 답변 생성됨',
+      completed: '전송 완료',
+      sending: '전송중'
+    };
+    return labels[status] || status;
+  }
+
+  // --- 필터링 로직 ---
+  function clearFilterActives() {
+    document.querySelectorAll('.filter-trigger, .filter-option').forEach(el => el.classList.remove('active'));
+  }
+
+  function setFilter(group, value) {
+    activeFilterGroup = group;
+    activeFilterValue = value;
+    clearFilterActives();
+    
+    if (group === 'review_group') document.getElementById('filter-review')?.classList.add('active');
+    else if (group === 'comment_group') document.getElementById('filter-comment')?.classList.add('active');
+    else if (group === 'status_group') document.getElementById('filter-status')?.classList.add('active');
+    
+    const optionIdMap = {
+      review_all: 'opt-review_all', naver_review: 'opt-naver_review', kakao_review: 'opt-kakao_review',
+      google_review: 'opt-google_review', comment_all: 'opt-comment_all', instagram_comment: 'opt-instagram_comment',
+      facebook_comment: 'opt-facebook_comment', answer_done: 'opt-done', answer_needed: 'opt-need'
+    };
+    
+    if (optionIdMap[value]) document.getElementById(optionIdMap[value])?.classList.add('active');
+    applyFilter();
+  }
+
+  function resetFilters() {
+    activeFilterGroup = 'all';
+    activeFilterValue = null;
+    clearFilterActives();
+    document.getElementById('filter-all')?.classList.add('active');
+    applyFilter();
+  }
+
+  function applyFilter() {
+    const q = document.getElementById('searchInput')?.value.trim().toLowerCase() || '';
+    
+    filteredItems = items.filter(it => {
+      let filterMatch = true;
+      if (activeFilterGroup === 'review_group') {
+        filterMatch = (activeFilterValue === 'review_all') ? it.type === 'review' : (it.type === 'review' && it.platform === activeFilterValue);
+      } else if (activeFilterGroup === 'comment_group') {
+        filterMatch = (activeFilterValue === 'comment_all') ? it.type === 'comment' : (it.type === 'comment' && it.platform === activeFilterValue);
+      } else if (activeFilterGroup === 'status_group') {
+        filterMatch = (activeFilterValue === 'answer_done') ? isAnswerDone(it) : isAnswerNeeded(it);
       }
-    }
+      
+      const queryMatch = !q || it.name.toLowerCase().includes(q) || it.platformLabel.toLowerCase().includes(q) || 
+                         it.text.toLowerCase().includes(q) || (it.aiReply || '').toLowerCase().includes(q);
+      
+      return filterMatch && queryMatch;
+    });
+    
+    selectedIds = new Set(filteredItems.filter(it => selectedIds.has(it.id)).map(it => it.id));
+    renderTable();
+    updateKPIs();
+  }
 
-    function getDisplayStatus(item) {
-      if (item.status === 'completed') return 'completed';
-      if (item.aiStatus === 'done' && item.aiReply && item.aiReply.trim()) return 'generated';
-      if (item.status === 'checked') return 'checked';
-      if (item.status === 'unchecked') return 'unchecked';
-      return 'unresolved';
-    }
+  // --- 테이블 렌더링 ---
+  function platHtml(item) {
+    return `<span class="plat-badge ${item.platClass}"><span class="plat-dot"></span>${item.platformLabel}</span>`;
+  }
 
-    function isAnswerDone(item) {
-      const displayStatus = getDisplayStatus(item);
-      return displayStatus === 'generated' || displayStatus === 'completed';
+  function typeLabel(item) {
+    if (item.type === 'review') {
+      return `<span style="font-size:11px;font-weight:800;color:var(--text2);background:var(--slate2);border:1px solid var(--border);padding:4px 9px;border-radius:999px;">리뷰</span>`;
     }
+    return `<span style="font-size:11px;font-weight:800;color:var(--indigo-dark);background:var(--indigo-light);border:1px solid #C7D2FE;padding:4px 9px;border-radius:999px;">댓글</span>`;
+  }
 
-    function isAnswerNeeded(item) {
-      const displayStatus = getDisplayStatus(item);
-      return ['unresolved', 'checked', 'unchecked'].includes(displayStatus);
+  function renderTable() {
+    const tbody = document.getElementById('tbody');
+    document.getElementById('countBadge').textContent = filteredItems.length;
+    updateSelectCount();
+    
+    if (!filteredItems.length) {
+      tbody.innerHTML = `<tr><td colspan="10"><div class="empty"><span>🔎</span>조건에 맞는 항목이 없습니다.</div></td></tr>`;
+      return;
     }
+    
+    let html = '';
+    filteredItems.forEach(it => {
+      const displayStatus = getDisplayStatus(it);
+      const hasReply = !!(it.aiReply && it.aiReply.trim());
+      const isSent = it.status === 'completed';
+      const isSending = it.status === 'sending';
+      const isReview = it.type === 'review';
+      const isComment = it.type === 'comment';
 
-    function getStatusLabel(status) {
-      return {
-        unresolved: '미답변',
-        checked: '확인',
-        unchecked: '미확인',
-        generated: 'AI 답변 생성됨',
-        completed: '전송 완료',
-        sending: '전송중'
-      } [status] || status;
-    }
+      html += `
+      <tr style="${isSent ? 'opacity:.82;' : ''}">
+        <td class="center">
+          <input type="checkbox" class="cb" ${selectedIds.has(it.id) ? 'checked' : ''} onchange="toggleSelect(${it.id}, this)" ${isSent ? 'disabled' : ''}>
+        </td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:30px;height:30px;border-radius:50%;background:${it.avatarColor || '#ccc'};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;">${it.avatar || '?'}</div>
+            <span style="font-weight:700;color:var(--text);font-size:13px;">${it.name}</span>
+          </div>
+        </td>
+        <td>${platHtml(it)}</td>
+        <td>${typeLabel(it)}</td>
+        <td>
+          <div class="review-cell"><a href="${it.originUrl}" target="_blank" class="origin-link">${it.text}</a></div>
+        </td>
+        <td>
+        <div id="replyDisp-${it.id}" class="${hasReply ? 'reply-full' : 'reply-empty'}" onclick="startEdit(${it.id})" style="cursor:${isSent || !hasReply ? 'default' : 'pointer'};">${hasReply ? it.aiReply : '아직 생성된 AI 답변이 없습니다.'}</div>
+        
+        <textarea class="reply-edit" id="replyEdit-${it.id}" onblur="saveEdit(${it.id})" onkeydown="if(event.key==='Escape') cancelEdit(${it.id})">${it.aiReply || ''}</textarea>
+        
+        ${!isSent && hasReply ? `<div style="font-size:10px;color:var(--text3);margin-top:4px;">✎ 클릭하여 수정</div>` : ``}
+      </td>
+        <td class="center">
+          ${isSending ? `<span class="stag sending">전송중</span>` : `<span class="stag ${displayStatus}">${getStatusLabel(displayStatus)}</span>`}
+        </td>
+        <td class="center">
+          <button class="btn-row-ai" id="rowAiBtn-${it.id}" onclick="generateSingleAI(${it.id})" ${isSent ? 'disabled' : ''}>
+            <span class="spin" id="rowSpin-${it.id}"></span>${hasReply ? 'AI 재생성' : 'AI 생성'}
+          </button>
+        </td>
+        <td class="center">
+          ${isReview ? (hasReply ? `<button class="btn-row-copy" onclick="copyReply(${it.id})">📋 복사</button>` : `<span style="font-size:11px;color:var(--text3);">—</span>`) : 
+            isComment ? (isSent ? `<span class="stag completed">전송 완료</span>` : hasReply ? `<button class="btn-row-send" id="sendBtn-${it.id}" onclick="sendSingle(${it.id})"><span class="spin" id="sendSpin-${it.id}"></span>전송</button>` : `<span style="font-size:11px;color:var(--text3);">—</span>`) : 
+            `<span style="font-size:11px;color:var(--text3);">—</span>`}
+        </td>
+      </tr>`;
 
-    function clearFilterActives() {
-      document.querySelectorAll('.filter-trigger').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.filter-option').forEach(el => el.classList.remove('active'));
-    }
-
-    function setFilter(group, value) {
-      activeFilterGroup = group;
-      activeFilterValue = value;
-      clearFilterActives();
-      if (group === 'review_group') {
-        document.getElementById('filter-review').classList.add('active');
-      } else if (group === 'comment_group') {
-        document.getElementById('filter-comment').classList.add('active');
-      } else if (group === 'status_group') {
-        document.getElementById('filter-status').classList.add('active');
+      if (isSent && it.sentReply) {
+        html += `
+        <tr class="my-reply-row">
+          <td></td>
+          <td colspan="9">
+            <div class="my-reply-box">
+              <div class="my-reply-label">내 답글</div>
+              <div class="my-reply-text">${it.sentReply}</div>
+            </div>
+          </td>
+        </tr>`;
       }
-      const optionIdMap = {
-        review_all: 'opt-review_all',
-        naver_review: 'opt-naver_review',
-        kakao_review: 'opt-kakao_review',
-        google_review: 'opt-google_review',
-        comment_all: 'opt-comment_all',
-        instagram_comment: 'opt-instagram_comment',
-        facebook_comment: 'opt-facebook_comment',
-        answer_done: 'opt-done',
-        answer_needed: 'opt-need'
-      };
-      const optionId = optionIdMap[value];
-      if (optionId) document.getElementById(optionId)?.classList.add('active');
-      applyFilter();
-    }
+    });
+    tbody.innerHTML = html;
+    updateSelectAllCheckbox();
+  }
 
-    function resetFilters() {
-      activeFilterGroup = 'all';
-      activeFilterValue = null;
-      clearFilterActives();
-      document.getElementById('filter-all').classList.add('active');
-      applyFilter();
-    }
+  // --- 선택 및 KPI ---
+  function updateSelectCount() {
+    const badge = document.getElementById('selectBadge');
+    if(badge) badge.textContent = `${selectedIds.size}개 선택`;
+  }
 
-    function platHtml(item) {
-      return `<span class="plat-badge ${item.platClass}"><span class="plat-dot"></span>${item.platformLabel}</span>`;
-    }
+  function updateSelectAllCheckbox() {
+    const eligible = filteredItems.filter(it => it.status !== 'completed');
+    const selectAllCb = document.getElementById('selectAll');
+    if(selectAllCb) selectAllCb.checked = eligible.length > 0 && eligible.every(it => selectedIds.has(it.id));
+  }
 
-    function typeLabel(item) {
-      return item.type === 'review' ?
-        `<span style="font-size:11px;font-weight:800;color:var(--text2);background:var(--slate2);border:1px solid var(--border);padding:4px 9px;border-radius:999px;">리뷰</span>` :
-        `<span style="font-size:11px;font-weight:800;color:var(--indigo-dark);background:var(--indigo-light);border:1px solid #C7D2FE;padding:4px 9px;border-radius:999px;">댓글</span>`;
-    }
+  function toggleSelect(id, cb) {
+    cb.checked ? selectedIds.add(id) : selectedIds.delete(id);
+    updateSelectCount();
+    updateSelectAllCheckbox();
+  }
 
-    function applyFilter() {
-      const q = document.getElementById('searchInput').value.trim().toLowerCase();
-      filteredItems = items.filter(it => {
-        let filterMatch = true;
-        if (activeFilterGroup === 'review_group') {
-          if (activeFilterValue === 'review_all') {
-            filterMatch = it.type === 'review';
-          } else {
-            filterMatch = it.type === 'review' && it.platform === activeFilterValue;
-          }
-        } else if (activeFilterGroup === 'comment_group') {
-          if (activeFilterValue === 'comment_all') {
-            filterMatch = it.type === 'comment';
-          } else {
-            filterMatch = it.type === 'comment' && it.platform === activeFilterValue;
-          }
-        } else if (activeFilterGroup === 'status_group') {
-          if (activeFilterValue === 'answer_done') {
-            filterMatch = isAnswerDone(it);
-          } else if (activeFilterValue === 'answer_needed') {
-            filterMatch = isAnswerNeeded(it);
-          }
-        }
-        const queryMatch = !q ||
-          it.name.toLowerCase().includes(q) ||
-          it.platformLabel.toLowerCase().includes(q) ||
-          it.text.toLowerCase().includes(q) ||
-          (it.aiReply || '').toLowerCase().includes(q);
-        return filterMatch && queryMatch;
-      });
-      selectedIds = new Set(filteredItems.filter(it => selectedIds.has(it.id)).map(it => it.id));
+  function toggleSelectAll(cb) {
+    filteredItems.forEach(it => {
+      if (it.status !== 'completed') {
+        cb.checked ? selectedIds.add(it.id) : selectedIds.delete(it.id);
+      }
+    });
+    renderTable();
+  }
+
+  function updateKPIs() {
+    if(document.getElementById('kpiTotal')) document.getElementById('kpiTotal').textContent = items.length;
+    if(document.getElementById('kpiNeed')) document.getElementById('kpiNeed').textContent = items.filter(isAnswerNeeded).length;
+    if(document.getElementById('kpiReady')) document.getElementById('kpiReady').textContent = items.filter(isAnswerDone).length;
+    if(document.getElementById('kpiCompleted')) document.getElementById('kpiCompleted').textContent = items.filter(v => v.status === 'completed').length;
+  }
+
+  // --- AI 및 API 처리 로직 ---
+  async function generateSingleAI(id) {
+    const item = items.find(v => v.id === id);
+    if (!item) return;
+
+    const btn = document.getElementById(`rowAiBtn-${id}`);
+    const spin = document.getElementById(`rowSpin-${id}`);
+    if (btn) btn.disabled = true;
+    if (spin) spin.style.display = 'inline-block';
+    
+    try {
+      const response = await fetch(`/api/feedbacks/${id}/ai-reply`, { method: 'PUT' });
+      if (!response.ok) throw new Error('API 호출 실패');
+      
+      Object.assign(item, await response.json());
+      showToast(`${item.name}님 AI 답변 생성 완료`, 'success');
+    } catch (e) {
+      console.error(e);
+      showToast('AI 생성 중 오류가 발생했습니다.', 'error');
+    } finally {
+      if (btn) btn.disabled = false;
+      if (spin) spin.style.display = 'none';
       renderTable();
       updateKPIs();
     }
+  }
 
-    function renderTable() {
-      const tbody = document.getElementById('tbody');
-      document.getElementById('countBadge').textContent = filteredItems.length;
-      updateSelectCount();
-      if (!filteredItems.length) {
-        tbody.innerHTML = `<tr><td colspan="10"><div class="empty"><span>🔎</span>조건에 맞는 항목이 없습니다.</div></td></tr>`;
-        return;
-      }
-      let html = '';
-      filteredItems.forEach(it => {
-        const displayStatus = getDisplayStatus(it);
-        const hasReply = !!(it.aiReply && it.aiReply.trim());
-        const isSent = it.status === 'completed';
-        const isSending = it.status === 'sending';
-        const isReview = it.type === 'review';
-        const isComment = it.type === 'comment';
-        console.log("현재 아이템 데이터: ", it);
-        html += `
-        <tr style="${isSent ? 'opacity:.82;' : ''}">
-          <td class="center">
-            <input type="checkbox" class="cb"
-              ${selectedIds.has(it.id) ? 'checked' : ''}
-              onchange="toggleSelect(${it.id}, this)"
-              ${isSent ? 'disabled' : ''}>
-          </td>
+  async function generateAllAI() {
+    const targets = filteredItems.filter(it => selectedIds.has(it.id) && it.status !== 'completed');
+    if (!targets.length) return showToast('AI 생성할 항목을 선택해 주세요.', 'error');
 
-          <td>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div style="width:30px;height:30px;border-radius:50%;background:${it.avatarColor};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;">${it.avatar}</div>
-              <span style="font-weight:700;color:var(--text);font-size:13px;">${it.name}</span>
-            </div>
-          </td>
+    const btn = document.getElementById('btnAIAll');
+    const spin = document.getElementById('spinAll');
+    const wrap = document.getElementById('progressWrap');
+    const fill = document.getElementById('progressFill');
+    const lbl = document.getElementById('progressLabel');
+    const pct = document.getElementById('progressPct');
 
-          <td>${platHtml(it)}</td>
-
-          <td>${typeLabel(it)}</td>
-
-          <td>
-          <div class="review-cell"><a href="${it.originUrl}" target="_blank" class="origin-link">${it.text}</a></div>
-        </td>
-
-        <td>
-        <div id="replyDisp-${it.id}" class="${hasReply ? 'reply-full' : 'reply-empty'}"
-             onclick="startEdit(${it.id})"
-             style="cursor:${isSent || !hasReply ? 'default' : 'pointer'};">${hasReply ? it.aiReply : '아직 생성된 AI 답변이 없습니다.'}</div>
-        <textarea class="reply-edit" id="replyEdit-${it.id}"
-          onblur="saveEdit(${it.id})"
-          onkeydown="if(event.key==='Escape') cancelEdit(${it.id})">${it.aiReply || ''}</textarea>
-        ${!isSent && hasReply ? `<div style="font-size:10px;color:var(--text3);margin-top:4px;">✎ 클릭하여 수정</div>` : ``}
-      </td>
-
-          <td class="center">
-            ${isSending
-              ? `<span class="stag sending">전송중</span>`
-              : `<span class="stag ${displayStatus}">${getStatusLabel(displayStatus)}</span>`
-            }
-          </td>
-
-          <td class="center">
-            <button class="btn-row-ai" id="rowAiBtn-${it.id}" onclick="generateSingleAI(${it.id})" ${isSent ? 'disabled' : ''}>
-              <span class="spin" id="rowSpin-${it.id}"></span>
-              ${hasReply ? 'AI 재생성' : 'AI 생성'}
-            </button>
-          </td>
-
-          <td class="center">
-            ${
-              isReview
-                ? (
-                    hasReply
-                      ? `<button class="btn-row-copy" onclick="copyReply(${it.id})">📋 복사</button>`
-                      : `<span style="font-size:11px;color:var(--text3);">—</span>`
-                  )
-                : isComment
-                  ? (
-                      isSent
-                        ? `<span class="stag completed">전송 완료</span>`
-                        : hasReply
-                          ? `<button class="btn-row-send" id="sendBtn-${it.id}" onclick="sendSingle(${it.id})">
-                              <span class="spin" id="sendSpin-${it.id}"></span>전송
-                            </button>`
-                          : `<span style="font-size:11px;color:var(--text3);">—</span>`
-                    )
-                  : `<span style="font-size:11px;color:var(--text3);">—</span>`
-            }
-          </td>
-        </tr>
-      `;
-        if (isSent && it.sentReply) {
-          html += `
-          <tr class="my-reply-row">
-            <td></td>
-            <td colspan="9">
-              <div class="my-reply-box">
-                <div class="my-reply-label">내 답글</div>
-                <div class="my-reply-text">${it.sentReply}</div>
-              </div>
-            </td>
-          </tr>
-        `;
-        }
-      });
-      tbody.innerHTML = html;
-      const eligible = filteredItems.filter(it => it.status !== 'completed');
-      document.getElementById('selectAll').checked =
-        eligible.length > 0 && eligible.every(it => selectedIds.has(it.id));
-    }
-
-    function updateSelectCount() {
-      document.getElementById('selectBadge').textContent = `${selectedIds.size}개 선택`;
-    }
-
-    function toggleSelect(id, cb) {
-      if (cb.checked) selectedIds.add(id);
-      else selectedIds.delete(id);
-      updateSelectCount();
-      updateSelectAll();
-    }
-
-    function toggleSelectAll(cb) {
-      filteredItems.forEach(it => {
-        if (it.status !== 'completed') {
-          if (cb.checked) selectedIds.add(it.id);
-          else selectedIds.delete(it.id);
-        }
-      });
-      renderTable();
-    }
-
-    function updateSelectAll() {
-      const eligible = filteredItems.filter(it => it.status !== 'completed');
-      document.getElementById('selectAll').checked =
-        eligible.length > 0 && eligible.every(it => selectedIds.has(it.id));
-    }
-
-    function updateKPIs() {
-      document.getElementById('kpiTotal').textContent = items.length;
-      document.getElementById('kpiNeed').textContent = items.filter(isAnswerNeeded).length;
-      document.getElementById('kpiReady').textContent = items.filter(isAnswerDone).length;
-      document.getElementById('kpiCompleted').textContent = items.filter(v => v.status === 'completed').length;
-    }
-
-
-    async function generateSingleAI(id) {
-      const item = items.find(v => v.id === id);
-      if (!item) return;
-
-      const btn = document.getElementById(`rowAiBtn-${id}`);
-      const spin = document.getElementById(`rowSpin-${id}`);
-      if (btn) btn.disabled = true;
-      if (spin) spin.style.display = 'inline-block';
-      
+    if(btn) btn.disabled = true;
+    if(spin) spin.style.display = 'inline-block';
+    if(wrap) wrap.classList.add('visible');
+    
+    let done = 0;
+    
+    for (const item of targets) {
       try {
-    	// 백엔드 API 호출 (PUT 요청)
-          const response = await fetch(`/api/feedbacks/${id}/ai-reply`, {
-            method: 'PUT'
-          });
-          
-          if (!response.ok) throw new Error('API 호출 실패');
-          
-          // 백엔드에서 업데이트하고 DTO로 보내준 최신 데이터를 로컬 변수에 덮어쓰기
-          const updatedData = await response.json();
-          Object.assign(item, updatedData);
-          
-          showToast(`${item.name}님 AI 답변 생성 완료`, 'success');
-        } catch (e) {
-          console.error(e);
-          showToast('AI 생성 중 오류가 발생했습니다.', 'error');
-        } finally {
-         
-          await new Promise(resolve => setTimeout(resolve, 500)); //프론트 .5초 딜레이
-          if (btn) btn.disabled = false;
-          if (spin) spin.style.display = 'none';
-          renderTable();
-          updateKPIs();
-        }
-      }
-
-
-    async function generateAllAI() {
-      const targets = filteredItems.filter(it => selectedIds.has(it.id) && it.status !== 'completed');
-      if (!targets.length) {
-        showToast('AI 생성할 항목을 선택해 주세요.', 'error');
-        return;
-      }
-      const btn = document.getElementById('btnAIAll');
-      const spin = document.getElementById('spinAll');
-     
-      await new Promise(resolve => setTimeout(resolve, 500)); //프론트 .5초 딜레이
-      btn.disabled = true;
-      spin.style.display = 'inline-block';
-      const wrap = document.getElementById('progressWrap');
-      const fill = document.getElementById('progressFill');
-      const lbl = document.getElementById('progressLabel');
-      const pct = document.getElementById('progressPct');
-      wrap.classList.add('visible');
-      fill.style.width = '0%';
-      lbl.textContent = `0 / ${targets.length}`;
-      pct.textContent = '0%';
-      let done = 0;
-      
-      for (const item of targets) {
-        try {
-        	const response = await fetch(`/api/feedbacks/${item.id}/ai-reply`, {
-                method: 'PUT'
-              });
-        	if (response.ok) {
-                const updatedData = await response.json();
-                Object.assign(item, updatedData);
-              }
-        } catch (e) {
+        const response = await fetch(`/api/feedbacks/${item.id}/ai-reply`, { method: 'PUT' });
+        if (response.ok) Object.assign(item, await response.json());
+      } catch (e) {
         console.error(`ID ${item.id} 생성 실패`, e);
       }
-      await new Promise(resolve => setTimeout(resolve, 1000)); //제미나이 1초 딜레이
       
       done++;
       const progress = Math.round((done / targets.length) * 100);
-      fill.style.width = progress + '%';
-      lbl.textContent = `${done} / ${targets.length}`;
-      pct.textContent = progress + '%';
+      if(fill) fill.style.width = progress + '%';
+      if(lbl) lbl.textContent = `${done} / ${targets.length}`;
+      if(pct) pct.textContent = progress + '%';
       
+      renderTable(); // 프로그레스 체감을 위해 렌더링 유지
+      updateKPIs();
+    }
+    
+    if(btn) btn.disabled = false;
+    if(spin) spin.style.display = 'none';
+    if(wrap) setTimeout(() => wrap.classList.remove('visible'), 1200);
+    showToast(`AI 답변 ${done}건 생성 완료`, 'success');
+  }
+
+  // --- 인라인 에디터 ---
+  function startEdit(id) {
+    const item = items.find(v => v.id === id);
+    if (!item || item.status === 'completed' || !item.aiReply?.trim()) return;
+    const disp = document.getElementById(`replyDisp-${id}`);
+    const edit = document.getElementById(`replyEdit-${id}`);
+    if (!disp || !edit) return;
+    
+    disp.style.display = 'none';
+    edit.style.display = 'block';
+    edit.focus();
+    edit.selectionStart = edit.value.length;
+  }
+
+  function saveEdit(id) {
+    const item = items.find(v => v.id === id);
+    const edit = document.getElementById(`replyEdit-${id}`);
+    if (!item || !edit) return;
+    
+    item.aiReply = edit.value.trim();
+    item.aiStatus = item.aiReply ? 'done' : 'idle';
+    renderTable();
+    updateKPIs();
+  }
+
+  function cancelEdit(id) {
+    const disp = document.getElementById(`replyDisp-${id}`);
+    const edit = document.getElementById(`replyEdit-${id}`);
+    if (disp) disp.style.display = '';
+    if (edit) edit.style.display = 'none';
+  }
+
+  async function copyReply(id) {
+    const item = items.find(v => v.id === id);
+    if (!item || !item.aiReply?.trim()) return showToast('복사할 답변이 없습니다.', 'error');
+    try {
+      await navigator.clipboard.writeText(item.aiReply);
+      showToast(`${item.name}님의 AI 답변을 복사했습니다.`, 'success');
+    } catch (e) {
+      showToast('복사에 실패했습니다.', 'error');
+    }
+  }
+
+  // --- 답변 전송 ---
+  async function sendSingle(id) {
+    const item = items.find(v => v.id === id);
+    if (!item || item.type !== 'comment' || !item.aiReply?.trim()) return showToast('전송할 댓글 답변이 없습니다.', 'error');
+    
+    const btn = document.getElementById(`sendBtn-${id}`);
+    const spin = document.getElementById(`sendSpin-${id}`);
+    if (btn) btn.disabled = true;
+    if (spin) spin.style.display = 'inline-block';
+    
+    const originalStatus = item.status;
+    item.status = 'sending';
+    renderTable();
+    
+    try {
+      const response = await fetch(`/api/feedbacks/${id}/send`, { method: 'PUT' });
+      if (!response.ok) throw new Error((await response.json()).message || '서버 에러');
+      
+      Object.assign(item, await response.json());
+      
+      document.getElementById('sentBannerDesc').textContent = `${item.name}님의 댓글 답변이 전송되었습니다.`;
+      document.getElementById('sentBanner')?.classList.add('show');
+      showToast(`${item.name}님 답변 전송 완료`, 'success');
+    } catch (e) {
+      console.error(e);
+      showToast('전송 중 오류가 발생했습니다.', 'error');
+      item.status = originalStatus; // 실패 시 원래 상태로 복구
+    } finally {
       renderTable();
       updateKPIs();
     }
-      
-      btn.disabled = false;
-      spin.style.display = 'none';
-      setTimeout(() => wrap.classList.remove('visible'), 1200);
-      showToast(`AI 답변 ${done}건 생성 완료`, 'success');
-    }
+  }
 
-    function startEdit(id) {
-      const item = items.find(v => v.id === id);
-      if (!item || item.status === 'completed' || !item.aiReply.trim()) return;
-      const disp = document.getElementById(`replyDisp-${id}`);
-      const edit = document.getElementById(`replyEdit-${id}`);
-      if (!disp || !edit) return;
-      disp.style.display = 'none';
-      edit.style.display = 'block';
-      edit.focus();
-      edit.selectionStart = edit.value.length;
-    }
+  async function sendAllComments() {
+    const toSend = items.filter(v => v.type === 'comment' && v.aiStatus === 'done' && v.status !== 'completed' && v.aiReply?.trim());
+    if (!toSend.length) return showToast('전송할 댓글 답변이 없습니다.', 'error');
 
-    function saveEdit(id) {
-      const item = items.find(v => v.id === id);
-      const disp = document.getElementById(`replyDisp-${id}`);
-      const edit = document.getElementById(`replyEdit-${id}`);
-      if (!item || !disp || !edit) return;
-      item.aiReply = edit.value.trim();
-      item.aiStatus = item.aiReply ? 'done' : 'idle';
-      disp.textContent = item.aiReply || '아직 생성된 AI 답변이 없습니다.';
-      disp.className = item.aiReply ? 'reply-full' : 'reply-empty';
-      disp.style.display = '';
-      edit.style.display = 'none';
-      renderTable();
-      updateKPIs();
-    }
-
-    function cancelEdit(id) {
-      const disp = document.getElementById(`replyDisp-${id}`);
-      const edit = document.getElementById(`replyEdit-${id}`);
-      if (disp) disp.style.display = '';
-      if (edit) edit.style.display = 'none';
-    }
-
-    async function copyReply(id) {
-      const item = items.find(v => v.id === id);
-      if (!item || !item.aiReply.trim()) {
-        showToast('복사할 답변이 없습니다.', 'error');
-        return;
-      }
+    toSend.forEach(v => v.status = 'sending');
+    renderTable();
+    
+    let successCount = 0;
+    for (const item of toSend) {
       try {
-        await navigator.clipboard.writeText(item.aiReply);
-        showToast(`${item.name}님의 AI 답변을 복사했습니다.`, 'success');
-      } catch (e) {
-        showToast('복사에 실패했습니다.', 'error');
-      }
-    }
-
-    async function sendSingle(id) {
-      const item = items.find(v => v.id === id);
-      if (!item || item.type !== 'comment' || !item.aiReply.trim()) {
-        showToast('전송할 댓글 답변이 없습니다.', 'error');
-        return;
-      }
-      const btn = document.getElementById(`sendBtn-${id}`);
-      const spin = document.getElementById(`sendSpin-${id}`);
-      if (btn) btn.disabled = true;
-      if (spin) spin.style.display = 'inline-block';
-      
-      item.status = 'sending';
-      renderTable();
-      updateKPIs();
-      
-      
-      
-      //const myRealToken = "EAAemf
-      
-      try {    	  
-    	  const response = await fetch(`/api/feedbacks/${id}/send`, {
-    		    method: 'PUT'
-    		});
-          
-        	if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || '알 수 없는 서버 에러 발생');
-            }
-          
-          // 백엔드에서 업데이트된 최신 데이터 덮어쓰기 (status가 completed로 변경됨)
-          const updatedData = await response.json();
-          Object.assign(item, updatedData);
-
-          // 상단 성공 배너 띄우기
-          const banner = document.getElementById('sentBanner');
-          const desc = document.getElementById('sentBannerDesc');
-          desc.textContent = `${item.name}님의 댓글 답변이 전송되었고, 원문 아래에 "내 답글"로 표시됩니다.`;
-          banner.classList.add('show');
-          showToast(`${item.name}님 댓글 답변 전송 완료`, 'success');
-
-        } catch (e) {
-          console.error(e);
-          showToast('전송 중 오류가 발생했습니다.', 'error');
-          item.status = 'unresolved'; // 에러 시 원래 상태로 롤백
-        } finally {
-        	if (btn) btn.disabled = false;
-            if (spin) spin.style.display = 'none';
-          renderTable();
-          updateKPIs();
-        }
-    }
-
-    //다건 전송
-    async function sendAllComments() {
-        const toSend = items.filter(v =>
-          v.type === 'comment' &&
-          v.aiStatus === 'done' &&
-          v.status !== 'completed' &&
-          v.aiReply && v.aiReply.trim()
-        );
-        
-        if (!toSend.length) {
-          showToast('전송할 댓글 답변이 없습니다.', 'error');
-          return;
-        }
-
-        toSend.forEach(v => v.status = 'sending');
-        renderTable();
-        updateKPIs();
-        
-        let successCount = 0;
-
-        for (const item of toSend) {
-          try {
-              const response = await fetch(`/api/feedbacks/${item.id}/send`, {
-                  method: 'PUT'
-              });
-
-              if (response.ok) {
-                  const updatedData = await response.json();
-                  Object.assign(item, updatedData); // 전송 성공 시 상태 덮어쓰기
-                  successCount++;
-              } else {
-                  item.status = 'unresolved'; // 실패 시 롤백
-              }
-          } catch (e) {
-              console.error(`ID ${item.id} 전송 실패`, e);
-              item.status = 'unresolved';
-          }
-          
-          // 🌟 인스타그램 API 연속 호출 차단(429 에러) 방지용 1초 딜레이
-          await new Promise(r => setTimeout(r, 1000)); 
-        }
-
-        renderTable();
-        updateKPIs();
-
-        if (successCount > 0) {
-            const banner = document.getElementById('sentBanner');
-            const desc = document.getElementById('sentBannerDesc');
-            desc.textContent = `총 ${successCount}건의 댓글 답변이 전송되었고, 각 항목 아래에 "내 답글"로 표시됩니다.`;
-            banner.classList.add('show');
-            showToast(`${successCount}건 댓글 답변 전송 완료`, 'success');
+        const response = await fetch(`/api/feedbacks/${item.id}/send`, { method: 'PUT' });
+        if (response.ok) {
+          Object.assign(item, await response.json());
+          successCount++;
         } else {
-            showToast('전송에 성공한 댓글이 없습니다.', 'error');
+          item.status = 'unresolved'; 
         }
+      } catch (e) {
+        console.error(`ID ${item.id} 전송 실패`, e);
+        item.status = 'unresolved';
       }
-
-    function showToast(msg, type = '') {
-      const toast = document.getElementById('toast');
-      toast.textContent = type === 'success' ? `✅ ${msg}` : type === 'error' ? `❌ ${msg}` : msg;
-      toast.className = `toast show ${type}`;
-      clearTimeout(toast._timer);
-      toast._timer = setTimeout(() => toast.classList.remove('show'), 3000);
+      await new Promise(r => setTimeout(r, 1000)); // 페이스북/인스타 API rate limit 방지
     }
 
-    // 💡 변경된 부분: 초기화 함수에서 fetchFeedbackData를 호출
-    function init() {
-      fetchFeedbackData(); 
+    renderTable();
+    updateKPIs();
+
+    if (successCount > 0) {
+      document.getElementById('sentBannerDesc').textContent = `총 ${successCount}건의 답변이 전송되었습니다.`;
+      document.getElementById('sentBanner')?.classList.add('show');
+      showToast(`${successCount}건 전송 완료`, 'success');
+    } else {
+      showToast('전송에 성공한 댓글이 없습니다.', 'error');
     }
-    
-    init();
-    
- // 🌟 인스타그램 댓글 전체 동기화 함수
-    async function syncInstagramData() {
-      const btn = document.getElementById('btnSync');
-      const spin = document.getElementById('spinSync');
+  }
+
+  // --- UI 유틸리티 ---
+  function showToast(msg, type = '') {
+    const toast = document.getElementById('toast');
+    if(!toast) return;
+    toast.textContent = type === 'success' ? `✅ ${msg}` : type === 'error' ? `❌ ${msg}` : msg;
+    toast.className = `toast show ${type}`;
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  // 🌟 올바른 URL과 Method(POST)로 수정된 인스타그램 동기화
+  
+
+  // 🌟 미리 만들어둔 페이스북 동기화 함수 (HTML 버튼에 onclick="syncFacebookData()" 연결만 하시면 됩니다)
+  // 🌟 인스타그램 + 페이스북 통합 동기화 함수
+async function syncAllSocialData() {
+  const btn = document.getElementById('btnSync');
+  const spin = document.getElementById('spinSync');
+  
+  if(btn) btn.disabled = true;
+  if(spin) spin.style.display = 'inline-block';
+  showToast('소셜 데이터를 동기화하는 중입니다... (최대 1~2분 소요)', '');
+
+  let totalNewCount = 0;
+
+  try {
+    // 1. 인스타그램 데이터 긁어오기
+    try {
+      const instaRes = await fetch('/api/feedbacks/instagram/sync-comments', { method: 'POST' });
+      if (instaRes.ok) {
+        const instaData = await instaRes.json();
+        totalNewCount += (instaData.newCount || 0);
+      }
+    } catch (e) {
+      console.error('인스타그램 동기화 실패:', e);
+    }
+
+    // 2. 페이스북 데이터 긁어오기
+    try {
+      // ⚠️ 주의: 반드시 본인의 실제 페이스북 페이지 ID와 토큰으로 변경하세요!
+      const pageId = "페이지_ID_입력"; 
+      const pageAccessToken = "페이스북_토큰_입력";
+
+      const fbRes = await fetch('/api/feedbacks/facebook/sync-comments', { method: 'POST' });
       
-      btn.disabled = true;
-      spin.style.display = 'inline-block';
-      showToast('최신 데이터를 불러오는 중입니다... (최대 1~2분 소요)', '');
-
-      try {
-        // 백엔드 컨트롤러에 만들어둔 API 호출!
-        const response = await fetch('/api/sns/sync-comments/instagram');
-        if (!response.ok) throw new Error('동기화 실패');
-        
-        const result = await response.json();
-        
-        showToast(`${result.newCommentCount}개의 새로운 댓글을 가져왔습니다!`, 'success');
-        
-        // 동기화가 끝나면 화면의 데이터를 다시 불러와서 표를 새로고침!
-        fetchFeedbackData(); 
-
-      } catch (error) {
-        console.error(error);
-        showToast('데이터 동기화 중 오류가 발생했습니다.', 'error');
-      } finally {
-        btn.disabled = false;
-        spin.style.display = 'none';
+      if (fbRes.ok) {
+        const fbData = await fbRes.json();
+        totalNewCount += (fbData.newCount || 0);
       }
+    } catch (e) {
+      console.error('페이스북 동기화 실패:', e);
     }
 
+    // 3. 결과 알림창 띄우기
+    if (totalNewCount > 0) {
+      showToast(`총 ${totalNewCount}개의 새로운 댓글을 가져왔습니다!`, 'success');
+    } else {
+      showToast('새로 추가된 댓글이 없습니다.', 'success');
+    }
+
+    // 4. DB에 들어간 최신 데이터를 화면에 다시 그리기 (새로고침 효과)
+    await fetchFeedbackData(); 
+
+  } catch (error) {
+    console.error('전체 동기화 중 에러 발생:', error);
+    showToast('데이터 동기화 중 오류가 발생했습니다.', 'error');
+  } finally {
+    if(btn) btn.disabled = false;
+    if(spin) spin.style.display = 'none';
+  }
+}
+
+  // 초기 실행
+  fetchFeedbackData();
   </script>
 </body>
 
