@@ -7,6 +7,11 @@ spring:
     username: root
     password:
   
+  data: #네이버 api 호출 제한용
+    redis:
+      host: localhost   # Redis 서버 주소
+      port: 6379
+  
   jpa:
     hibernate:
       # update: Entity 클래스를 보고 없는 테이블(customer_feedback)을 자동으로 만들어줌
@@ -15,14 +20,17 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.MySQLDialect
         
   sql:
     init:
-      mode: never # 앱 실행 시 data.sql을 항상 실행하여 더미 데이터 세팅
+      mode: always # 앱 실행 시 data.sql을 항상 실행하여 더미 데이터 세팅
       schema-locations:
         - optional:classpath*:db/gather-full-init.sql
         - optional:classpath*:gather-full-init.sql
         - optional:classpath*:schema.sql
       data-locations: classpath:db/channel-performance-data.sql
       continue-on-error: true
+  thymeleaf:
+    servlet:
+      produce-partial-output-while-processing: false
+

@@ -151,15 +151,13 @@ public class FeedbackService {
 
         String replyText = feedback.getAiReply();
         
-        // 인스타
         if (feedback.getPlatform() == Platform.INSTAGRAM) {
-            String commentId = feedback.getExternalId(); // 저장해둔 인스타 댓글 ID
-
-            // 2. 🌟 진짜 인스타그램 서버에 답글 전송!
+        	
+            String commentId = feedback.getExternalId();
             instagramApiService.replyToComment(commentId, replyText);
         }    
         else if (feedback.getPlatform() == Platform.FACEBOOK) {
-            // 🌟 페이스북 전송 로직 드디어 합류!
+            
             System.out.println(">>> 페이스북 답글 전송 시작: " + feedback.getExternalId());
             facebookApiService.replyToComment(feedback.getExternalId(), replyText);
         }

@@ -13,20 +13,18 @@ import com.example.demo.domain.enums.FeedbackStatus;
 import com.example.demo.domain.enums.FeedbackType;
 import com.example.demo.domain.enums.Platform;
 
+@Builder
 @Entity
 @Table(name = "customer_feedback")
 @Data
-@Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class CustomerFeedback {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "feedback_id")
     private Long id;
 
-    
-    
     /*
     // 어떤 브랜드의 어떤 플랫폼에 달린 피드백인지 연결
     @ManyToOne(fetch = FetchType.LAZY)
