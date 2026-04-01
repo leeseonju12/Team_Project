@@ -47,8 +47,8 @@ public class NaverSearchMService {
 
         // 2. URL 설정 (최신순 sort=date, 최대치 display=100)
         // 네이버 검색 API는 기간 필터 파라미터가 없으므로 최신순으로 많이 가져와서 서버에서 걸러야 합니다.
-        String apiURL = "https://openapi.naver.com/v1/search/blog?query=" + encodedQuery 
-                        + "&display=100&sort=date";
+        String apiURL = "https://openapi.naver.com/v1/search/webkr?query=" + encodedQuery
+                + "&display=100";
 
         // 3. 헤더 설정
         HttpHeaders headers = new HttpHeaders();

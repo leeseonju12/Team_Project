@@ -11,7 +11,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import org.springframework.jdbc.core.JdbcTemplate;
 import java.util.Map;
 
 /*
@@ -29,37 +28,47 @@ public class PlatformKeywordService {
     private final YoutubeService youtubeService;
     private final NaverSearchMService naverSearchMService;
     private final KeywordAnalysisService keywordAnalysisService;
-    private final JdbcTemplate jdbcTemplate;  // 추가
+    private final JdbcTemplate jdbcTemplate;
 
     public PlatformKeywordResponseDto getKeywords(Long brandId) {
 
-        // 1. brandId로 브랜드명 조회 (MindmapService와 동일한 방식)
+        // 1. brandId로 브랜드명 + 위치명 + 서비스명 조회
         Map<String, Object> brand = jdbcTemplate.queryForMap(
-                "SELECT brand_name FROM brand WHERE brand_id = ?", brandId);
-        String brandName = brand.get("brand_name").toString();
+                "SELECT brand_name, location_name, service_name FROM brand WHERE brand_id = ?", brandId);
+        String brandName    = brand.get("brand_name").toString();
+        String locationName = brand.get("location_name") != null ? brand.get("location_name").toString() : "";
+        String serviceName  = brand.get("service_name")  != null ? brand.get("service_name").toString()  : "";
 
-        // 2. DTO 생성
-        BrandSearchRequestDto request = new BrandSearchRequestDto(brandName, "month");
+        // 공통 검색어: brand_name + location_name + service_name
+        // 예: "잉글리쉬가든 강원 춘천시 englishgarden_21"
+        String searchQuery = brandName
+                + (locationName.isBlank() ? "" : " " + locationName)
+                + (serviceName.isBlank()  ? "" : " " + serviceName);
+        BrandSearchRequestDto request = new BrandSearchRequestDto(searchQuery, "year");
 
-        // 3. 각 플랫폼 데이터 수집
-        List<String> instagramRaw = googleSearchService.getGoogleData(request, true);
-        List<String> googleRaw    = googleSearchService.getGoogleData(request, false);
-        List<String> youtubeRaw   = youtubeService.getYoutubeData(request);
-        List<String>       naverRaw     = naverSearchMService.getNaverBlogData(request);
+        // 유튜브/네이버 전용: brand_name만 사용
+        // - 유튜브: 검색어가 길면 결과가 적어짐
+        // - 네이버 블로그: 계정명 포함 시 관련 없는 결과 유입
+        BrandSearchRequestDto brandOnlyRequest = new BrandSearchRequestDto(brandName, "year");
 
-        // 4. n-gram 키워드 분석
-        List<String> instagramKeywords = keywordAnalysisService.analyzeKeywords(instagramRaw);
-        List<String> googleKeywords    = keywordAnalysisService.analyzeKeywords(googleRaw);
-        List<String> youtubeKeywords   = keywordAnalysisService.analyzeKeywords(youtubeRaw);
-        List<String> naverKeywords     = keywordAnalysisService.analyzeKeywords(naverRaw);
+        // 2. 각 플랫폼 데이터 수집
+        List<String> instagramRaw = googleSearchService.getGoogleData(request,          true);
+        List<String> googleRaw    = googleSearchService.getGoogleData(request,          false);
+        List<String> youtubeRaw   = youtubeService.getYoutubeData(brandOnlyRequest);
+        List<String> naverRaw     = naverSearchMService.getNaverBlogData(brandOnlyRequest);
 
-     // PlatformKeywordService.java
+        // 3. 키워드 분석 (brandName을 동적 불용어로 전달)
+        List<String> instagramKeywords = keywordAnalysisService.analyzeKeywords(instagramRaw, brandName);
+        List<String> googleKeywords    = keywordAnalysisService.analyzeKeywords(googleRaw,    brandName);
+        List<String> youtubeKeywords   = keywordAnalysisService.analyzeKeywords(youtubeRaw,   brandName);
+        List<String> naverKeywords     = keywordAnalysisService.analyzeKeywords(naverRaw,     brandName);
+
         return new PlatformKeywordResponseDto(
                 brandName,
-                instagramKeywords, // 인스타
-                youtubeKeywords,   // 유튜브
-                naverKeywords,     // 네이버
-                googleKeywords     // 구글
+                instagramKeywords,
+                youtubeKeywords,
+                naverKeywords,
+                googleKeywords
         );
     }
 }

@@ -51,11 +51,20 @@ public class SerpApiClient {
                 .uri(uriBuilder -> uriBuilder
                         .path("/search.json")
                         .queryParam("engine", "naver")
-                        .queryParam("query", brandName)  // 네이버는 q 대신 query 파라미터 사용
+                        .queryParam("query", brandName)
                         .queryParam("api_key", apiKey)
                         .build())
                 .retrieve()
-                .bodyToMono(SerpApiResponseDto.class);
+                .bodyToMono(String.class)  // ← String으로 먼저 받기
+                .doOnNext(body -> System.out.println("====> [네이버 raw] " + body.substring(0, Math.min(2000, body.length()))))
+                .map(body -> {
+                    try {
+                        return new com.fasterxml.jackson.databind.ObjectMapper().readValue(body, SerpApiResponseDto.class);
+                    } catch (Exception e) {
+                        System.err.println("====> [네이버 파싱 오류] " + e.getMessage());
+                        return new SerpApiResponseDto();
+                    }
+                });
     }
 
     /**

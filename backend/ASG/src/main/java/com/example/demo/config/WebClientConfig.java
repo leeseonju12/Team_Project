@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.http.codec.ClientCodecConfigurer;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 
 @Configuration
 public class WebClientConfig {
@@ -13,9 +15,16 @@ public class WebClientConfig {
 
     @Bean
     public WebClient serpApiWebClient() {
+        ExchangeStrategies strategies = ExchangeStrategies.builder()
+                .codecs(configurer -> configurer
+                        .defaultCodecs()
+                        .maxInMemorySize(5 * 1024 * 1024)) // 5MB로 확장
+                .build();
+
         return WebClient.builder()
                 .baseUrl(baseUrl)
                 .defaultHeader("Content-Type", "application/json")
+                .exchangeStrategies(strategies)
                 .build();
     }
 }
