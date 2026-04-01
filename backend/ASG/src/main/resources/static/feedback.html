@@ -7,7 +7,6 @@
   <title>소셜다모아 — 리뷰/댓글 AI 답변 관리</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet" />
   <style>
-    /* CSS는 기존과 100% 동일하게 유지했습니다 */
     :root {
       --teal: #14B8A6;
       --teal-light: #CCFBF1;
@@ -324,29 +323,7 @@
       background: linear-gradient(90deg, var(--teal), var(--indigo));
       transition: width .35s ease;
     }
-/*
-.toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      flex-wrap: wrap;
 
-      position: sticky;
-      top: 64px;
-      z-index: 100;
-
-      padding: 14px 22px 32px 22px; 
-      margin-bottom: -12px;
-
-      background: rgba(248, 250, 252, 0.75);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-
-      -webkit-mask-image: linear-gradient(to bottom, black 0%, black 75%, transparent 100%);
-      mask-image: linear-gradient(to bottom, black 0%, black 75%, transparent 100%);
-    }
-    */
     .toolbar {
 	  display: flex;
 	  align-items: center;
@@ -678,7 +655,7 @@
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      padding: 3px 9px;
+      padding: 0px 9px;
       border-radius: 999px;
       font-size: 11px;
       font-weight: 700;
@@ -1002,6 +979,51 @@
         padding: 9px 9px;
       }
     }
+    
+    /* --- 페이지네이션 스타일 --- */
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 0;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+}
+
+.page-btn {
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  background: var(--white);
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: var(--slate2);
+  border-color: var(--border2);
+}
+
+.page-btn.active {
+  background: var(--indigo-light);
+  border-color: #C7D2FE;
+  color: var(--indigo-dark);
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--slate);
+}
   </style>
 </head>
 
@@ -1147,8 +1169,8 @@
           <thead>
             <tr>
               <th class="center" style="width:36px;"></th>
-              <th>고객명</th>
-              <th>플랫폼</th>
+              <th style="text-align: center;">고객명</th>
+              <th style="text-align: center;">플랫폼</th>
               <th>유형</th>
               <th>원문</th>
               <th>AI 생성 답변</th>
@@ -1159,6 +1181,7 @@
           </thead>
           <tbody id="tbody"></tbody>
         </table>
+        <div id="paginationContainer" class="pagination-wrapper"></div>
       </div>
     </div>
   </div>
@@ -1166,20 +1189,29 @@
   <div class="toast" id="toast"></div>
 
   <script>
+//--- 변수 선언부 ---
   let items = [];
   let filteredItems = [];
   let selectedIds = new Set();
-  let activeFilterGroup = 'all';
-  let activeFilterValue = null;
+  
+  // 상태 변수: 소스와 처리 상태를 독립적으로 관리
+  let activeSourceGroup = 'all'; 
+  let activeSourceValue = null;
+  let activeStatusValue = null;  
 
-  // 백엔드 API에서 데이터를 가져오는 함수
+  let currentPage = 1;
+  const itemsPerPage = 10;
+
+  // --- API 호출 ---
   async function fetchFeedbackData() {
     try {
       const response = await fetch('/api/feedbacks');
       if (!response.ok) throw new Error('데이터를 불러오는데 실패했습니다.');
       
       const data = await response.json();
-      items = data.map(v => ({...v}));
+      items = data.map(v => ({...v})).sort((a, b) => {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
       
       resetFilters(); 
     } catch (error) {
@@ -1188,7 +1220,7 @@
     }
   }
 
-  // 상태 계산 유틸리티
+  // --- 상태 계산 유틸리티 ---
   function getDisplayStatus(item) {
     if (item.status === 'completed') return 'completed';
     if (item.aiStatus === 'done' && item.aiReply && item.aiReply.trim()) return 'generated';
@@ -1209,45 +1241,86 @@
 
   function getStatusLabel(status) {
     const labels = {
-      unresolved: '미답변',
-      checked: '확인',
-      unchecked: '미확인',
-      generated: 'AI 답변 생성됨',
-      completed: '전송 완료',
-      sending: '전송중'
+      unresolved: '미답변', checked: '확인', unchecked: '미확인',
+      generated: 'AI 답변 생성됨', completed: '전송 완료', sending: '전송중'
     };
     return labels[status] || status;
   }
 
-  // --- 필터링 로직 ---
-  function clearFilterActives() {
+  // --- 필터링 및 UI 업데이트 로직 ---
+  function updateFilterUI() {
     document.querySelectorAll('.filter-trigger, .filter-option').forEach(el => el.classList.remove('active'));
-  }
+    
+    const reviewBtn = document.getElementById('filter-review');
+    const commentBtn = document.getElementById('filter-comment');
+    const statusBtn = document.getElementById('filter-status');
+    const allBtn = document.getElementById('filter-all');
 
-  function setFilter(group, value) {
-    activeFilterGroup = group;
-    activeFilterValue = value;
-    clearFilterActives();
-    
-    if (group === 'review_group') document.getElementById('filter-review')?.classList.add('active');
-    else if (group === 'comment_group') document.getElementById('filter-comment')?.classList.add('active');
-    else if (group === 'status_group') document.getElementById('filter-status')?.classList.add('active');
-    
+    if (reviewBtn) reviewBtn.innerHTML = '리뷰 목록 <span>▾</span>';
+    if (commentBtn) commentBtn.innerHTML = '답글 자동화 <span>▾</span>';
+    if (statusBtn) statusBtn.innerHTML = '처리 상태 <span>▾</span>';
+
     const optionIdMap = {
       review_all: 'opt-review_all', naver_review: 'opt-naver_review', kakao_review: 'opt-kakao_review',
       google_review: 'opt-google_review', comment_all: 'opt-comment_all', instagram_comment: 'opt-instagram_comment',
       facebook_comment: 'opt-facebook_comment', answer_done: 'opt-done', answer_needed: 'opt-need'
     };
+
+    let isAll = true;
+
+    if (activeSourceGroup === 'review_group') {
+      isAll = false;
+      if (reviewBtn) reviewBtn.classList.add('active');
+      const optEl = document.getElementById(optionIdMap[activeSourceValue]);
+      if (optEl && reviewBtn) {
+        optEl.classList.add('active');
+        reviewBtn.innerHTML = `${optEl.textContent} <span>▾</span>`;
+      }
+    } else if (activeSourceGroup === 'comment_group') {
+      isAll = false;
+      if (commentBtn) commentBtn.classList.add('active');
+      const optEl = document.getElementById(optionIdMap[activeSourceValue]);
+      if (optEl && commentBtn) {
+        optEl.classList.add('active');
+        commentBtn.innerHTML = `${optEl.textContent} <span>▾</span>`;
+      }
+    }
+
+    if (activeStatusValue) {
+      isAll = false;
+      if (statusBtn) statusBtn.classList.add('active');
+      const optEl = document.getElementById(optionIdMap[activeStatusValue]);
+      if (optEl && statusBtn) {
+        optEl.classList.add('active');
+        statusBtn.innerHTML = `${optEl.textContent} <span>▾</span>`;
+      }
+    }
+
+    if (isAll && allBtn) {
+      allBtn.classList.add('active');
+    }
+  }
+
+  function setFilter(group, value) {
+    if (group === 'status_group') {
+      activeStatusValue = value;
+    } else {
+      activeSourceGroup = group;
+      activeSourceValue = value;
+    }
     
-    if (optionIdMap[value]) document.getElementById(optionIdMap[value])?.classList.add('active');
+    updateFilterUI();
+    currentPage = 1;
     applyFilter();
   }
 
   function resetFilters() {
-    activeFilterGroup = 'all';
-    activeFilterValue = null;
-    clearFilterActives();
-    document.getElementById('filter-all')?.classList.add('active');
+    activeSourceGroup = 'all';
+    activeSourceValue = null;
+    activeStatusValue = null;
+    
+    updateFilterUI();
+    currentPage = 1;
     applyFilter();
   }
 
@@ -1255,36 +1328,50 @@
     const q = document.getElementById('searchInput')?.value.trim().toLowerCase() || '';
     
     filteredItems = items.filter(it => {
-      let filterMatch = true;
-      if (activeFilterGroup === 'review_group') {
-        filterMatch = (activeFilterValue === 'review_all') ? it.type === 'review' : (it.type === 'review' && it.platform === activeFilterValue);
-      } else if (activeFilterGroup === 'comment_group') {
-        filterMatch = (activeFilterValue === 'comment_all') ? it.type === 'comment' : (it.type === 'comment' && it.platform === activeFilterValue);
-      } else if (activeFilterGroup === 'status_group') {
-        filterMatch = (activeFilterValue === 'answer_done') ? isAnswerDone(it) : isAnswerNeeded(it);
+      let sourceMatch = true;
+      if (activeSourceGroup === 'review_group') {
+        if (activeSourceValue === 'review_all') sourceMatch = (it.type === 'review');
+        else if (activeSourceValue === 'naver_review') sourceMatch = (it.type === 'review' && it.platformLabel === '네이버');
+        else if (activeSourceValue === 'kakao_review') sourceMatch = (it.type === 'review' && it.platformLabel === '카카오');
+        else if (activeSourceValue === 'google_review') sourceMatch = (it.type === 'review' && it.platformLabel === '구글');
+      } else if (activeSourceGroup === 'comment_group') {
+        if (activeSourceValue === 'comment_all') sourceMatch = (it.type === 'comment');
+        else if (activeSourceValue === 'instagram_comment') sourceMatch = (it.type === 'comment' && it.platformLabel === '인스타그램');
+        else if (activeSourceValue === 'facebook_comment') sourceMatch = (it.type === 'comment' && it.platformLabel === '페이스북');
       }
+
+      let statusMatch = true;
+      if (activeStatusValue === 'answer_done') {
+        statusMatch = isAnswerDone(it);
+      } else if (activeStatusValue === 'answer_needed') {
+        statusMatch = isAnswerNeeded(it);
+      }
+
+      const queryMatch = !q || 
+                         (it.name && it.name.toLowerCase().includes(q)) || 
+                         (it.platformLabel && it.platformLabel.toLowerCase().includes(q)) || 
+                         (it.text && it.text.toLowerCase().includes(q)) || 
+                         (it.aiReply && it.aiReply.toLowerCase().includes(q));
       
-      const queryMatch = !q || it.name.toLowerCase().includes(q) || it.platformLabel.toLowerCase().includes(q) || 
-                         it.text.toLowerCase().includes(q) || (it.aiReply || '').toLowerCase().includes(q);
-      
-      return filterMatch && queryMatch;
+      return sourceMatch && statusMatch && queryMatch;
     });
     
     selectedIds = new Set(filteredItems.filter(it => selectedIds.has(it.id)).map(it => it.id));
+    
     renderTable();
     updateKPIs();
   }
 
-  // --- 테이블 렌더링 ---
+  // --- 테이블 렌더링 및 페이지네이션 ---
   function platHtml(item) {
     return `<span class="plat-badge ${item.platClass}"><span class="plat-dot"></span>${item.platformLabel}</span>`;
   }
 
   function typeLabel(item) {
     if (item.type === 'review') {
-      return `<span style="font-size:11px;font-weight:800;color:var(--text2);background:var(--slate2);border:1px solid var(--border);padding:4px 9px;border-radius:999px;">리뷰</span>`;
+      return `<span style="font-size:11px;font-weight:800;color:var(--text2);background:var(--slate2);border:1px solid var(--border);padding:0px 9px;border-radius:999px;margin-left:-10px;">리뷰</span>`;
     }
-    return `<span style="font-size:11px;font-weight:800;color:var(--indigo-dark);background:var(--indigo-light);border:1px solid #C7D2FE;padding:4px 9px;border-radius:999px;">댓글</span>`;
+    return `<span style="font-size:11px;font-weight:800;color:var(--indigo-dark);background:var(--indigo-light);border:1px solid #C7D2FE;padding:0px 9px;border-radius:999px;margin-left:-10px;">댓글</span>`;
   }
 
   function renderTable() {
@@ -1294,11 +1381,16 @@
     
     if (!filteredItems.length) {
       tbody.innerHTML = `<tr><td colspan="10"><div class="empty"><span>🔎</span>조건에 맞는 항목이 없습니다.</div></td></tr>`;
+      renderPagination();
       return;
     }
     
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentItems = filteredItems.slice(startIndex, endIndex);
+    
     let html = '';
-    filteredItems.forEach(it => {
+    currentItems.forEach(it => {
       const displayStatus = getDisplayStatus(it);
       const hasReply = !!(it.aiReply && it.aiReply.trim());
       const isSent = it.status === 'completed';
@@ -1313,14 +1405,13 @@
         </td>
         <td>
           <div style="display:flex;align-items:center;gap:8px;">
-            <div style="width:30px;height:30px;border-radius:50%;background:${it.avatarColor || '#ccc'};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;">${it.avatar || '?'}</div>
-            <span style="font-weight:700;color:var(--text);font-size:13px;">${it.name}</span>
+            <span style="font-weight:700;color:var(--text);font-size:13px;width:80px; overflow:hidden;text-overflow: ellipsis;">${it.name || '알 수 없음'}</span>
           </div>
         </td>
-        <td>${platHtml(it)}</td>
+        <td style="text-align: center;">${platHtml(it)}</td>
         <td>${typeLabel(it)}</td>
         <td>
-          <div class="review-cell"><a href="${it.originUrl}" target="_blank" class="origin-link">${it.text}</a></div>
+          <div class="review-cell"><a href="${it.originUrl}" target="_blank" class="origin-link">${it.text || ''}</a></div>
         </td>
         <td>
         <div id="replyDisp-${it.id}" class="${hasReply ? 'reply-full' : 'reply-empty'}" onclick="startEdit(${it.id})" style="cursor:${isSent || !hasReply ? 'default' : 'pointer'};">${hasReply ? it.aiReply : '아직 생성된 AI 답변이 없습니다.'}</div>
@@ -1359,6 +1450,35 @@
     });
     tbody.innerHTML = html;
     updateSelectAllCheckbox();
+    renderPagination();
+  }
+
+  function renderPagination() {
+    const container = document.getElementById('paginationContainer');
+    if (!container) return; 
+
+    const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+    let pageHtml = '';
+
+    if (totalPages <= 1) {
+      container.innerHTML = ''; 
+      return;
+    }
+
+    pageHtml += `<button class="page-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>&laquo;</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+      pageHtml += `<button class="page-btn ${currentPage === i ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+    }
+    pageHtml += `<button class="page-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>&raquo;</button>`;
+
+    container.innerHTML = pageHtml;
+  }
+
+  function changePage(page) {
+    const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    renderTable();
   }
 
   // --- 선택 및 KPI ---
@@ -1368,7 +1488,10 @@
   }
 
   function updateSelectAllCheckbox() {
-    const eligible = filteredItems.filter(it => it.status !== 'completed');
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const currentItems = filteredItems.slice(startIndex, startIndex + itemsPerPage);
+    const eligible = currentItems.filter(it => it.status !== 'completed');
+
     const selectAllCb = document.getElementById('selectAll');
     if(selectAllCb) selectAllCb.checked = eligible.length > 0 && eligible.every(it => selectedIds.has(it.id));
   }
@@ -1380,7 +1503,10 @@
   }
 
   function toggleSelectAll(cb) {
-    filteredItems.forEach(it => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const currentItems = filteredItems.slice(startIndex, startIndex + itemsPerPage);
+
+    currentItems.forEach(it => {
       if (it.status !== 'completed') {
         cb.checked ? selectedIds.add(it.id) : selectedIds.delete(it.id);
       }
@@ -1395,7 +1521,7 @@
     if(document.getElementById('kpiCompleted')) document.getElementById('kpiCompleted').textContent = items.filter(v => v.status === 'completed').length;
   }
 
-  // --- AI 및 API 처리 로직 ---
+  // --- API 처리 로직 ---
   async function generateSingleAI(id) {
     const item = items.find(v => v.id === id);
     if (!item) return;
@@ -1438,7 +1564,6 @@
     if(wrap) wrap.classList.add('visible');
     
     let done = 0;
-    
     for (const item of targets) {
       try {
         const response = await fetch(`/api/feedbacks/${item.id}/ai-reply`, { method: 'PUT' });
@@ -1453,7 +1578,7 @@
       if(lbl) lbl.textContent = `${done} / ${targets.length}`;
       if(pct) pct.textContent = progress + '%';
       
-      renderTable(); // 프로그레스 체감을 위해 렌더링 유지
+      renderTable(); 
       updateKPIs();
     }
     
@@ -1463,7 +1588,6 @@
     showToast(`AI 답변 ${done}건 생성 완료`, 'success');
   }
 
-  // --- 인라인 에디터 ---
   function startEdit(id) {
     const item = items.find(v => v.id === id);
     if (!item || item.status === 'completed' || !item.aiReply?.trim()) return;
@@ -1506,7 +1630,6 @@
     }
   }
 
-  // --- 답변 전송 ---
   async function sendSingle(id) {
     const item = items.find(v => v.id === id);
     if (!item || item.type !== 'comment' || !item.aiReply?.trim()) return showToast('전송할 댓글 답변이 없습니다.', 'error');
@@ -1532,7 +1655,7 @@
     } catch (e) {
       console.error(e);
       showToast('전송 중 오류가 발생했습니다.', 'error');
-      item.status = originalStatus; // 실패 시 원래 상태로 복구
+      item.status = originalStatus;
     } finally {
       renderTable();
       updateKPIs();
@@ -1560,7 +1683,7 @@
         console.error(`ID ${item.id} 전송 실패`, e);
         item.status = 'unresolved';
       }
-      await new Promise(r => setTimeout(r, 1000)); // 페이스북/인스타 API rate limit 방지
+      await new Promise(r => setTimeout(r, 1000));
     }
 
     renderTable();
@@ -1575,7 +1698,6 @@
     }
   }
 
-  // --- UI 유틸리티 ---
   function showToast(msg, type = '') {
     const toast = document.getElementById('toast');
     if(!toast) return;
@@ -1585,69 +1707,55 @@
     toast._timer = setTimeout(() => toast.classList.remove('show'), 3000);
   }
 
-  // 🌟 올바른 URL과 Method(POST)로 수정된 인스타그램 동기화
-  
+  async function syncAllSocialData() {
+    const btn = document.getElementById('btnSync');
+    const spin = document.getElementById('spinSync');
+    
+    if(btn) btn.disabled = true;
+    if(spin) spin.style.display = 'inline-block';
+    showToast('소셜 데이터를 동기화하는 중입니다... (최대 1~2분 소요)', '');
 
-  // 🌟 미리 만들어둔 페이스북 동기화 함수 (HTML 버튼에 onclick="syncFacebookData()" 연결만 하시면 됩니다)
-  // 🌟 인스타그램 + 페이스북 통합 동기화 함수
-async function syncAllSocialData() {
-  const btn = document.getElementById('btnSync');
-  const spin = document.getElementById('spinSync');
-  
-  if(btn) btn.disabled = true;
-  if(spin) spin.style.display = 'inline-block';
-  showToast('소셜 데이터를 동기화하는 중입니다... (최대 1~2분 소요)', '');
+    let totalNewCount = 0;
 
-  let totalNewCount = 0;
-
-  try {
-    // 1. 인스타그램 데이터 긁어오기
     try {
-      const instaRes = await fetch('/api/feedbacks/instagram/sync-comments', { method: 'POST' });
-      if (instaRes.ok) {
-        const instaData = await instaRes.json();
-        totalNewCount += (instaData.newCount || 0);
+      try {
+        const instaRes = await fetch('/api/feedbacks/instagram/sync-comments', { method: 'POST' });
+        if (instaRes.ok) {
+          const instaData = await instaRes.json();
+          totalNewCount += (instaData.newCount || 0);
+        }
+      } catch (e) {
+        console.error('인스타그램 동기화 실패:', e);
       }
-    } catch (e) {
-      console.error('인스타그램 동기화 실패:', e);
-    }
 
-    // 2. 페이스북 데이터 긁어오기
-    try {
-      // ⚠️ 주의: 반드시 본인의 실제 페이스북 페이지 ID와 토큰으로 변경하세요!
-      const pageId = "페이지_ID_입력"; 
-      const pageAccessToken = "페이스북_토큰_입력";
-
-      const fbRes = await fetch('/api/feedbacks/facebook/sync-comments', { method: 'POST' });
-      
-      if (fbRes.ok) {
-        const fbData = await fbRes.json();
-        totalNewCount += (fbData.newCount || 0);
+      try {
+        const fbRes = await fetch('/api/feedbacks/facebook/sync-comments', { method: 'POST' });
+        if (fbRes.ok) {
+          const fbData = await fbRes.json();
+          totalNewCount += (fbData.newCount || 0);
+        }
+      } catch (e) {
+        console.error('페이스북 동기화 실패:', e);
       }
-    } catch (e) {
-      console.error('페이스북 동기화 실패:', e);
+
+      if (totalNewCount > 0) {
+        showToast(`총 ${totalNewCount}개의 새로운 댓글을 가져왔습니다!`, 'success');
+      } else {
+        showToast('새로 추가된 댓글이 없습니다.', 'success');
+      }
+
+      await fetchFeedbackData(); 
+
+    } catch (error) {
+      console.error('전체 동기화 중 에러 발생:', error);
+      showToast('데이터 동기화 중 오류가 발생했습니다.', 'error');
+    } finally {
+      if(btn) btn.disabled = false;
+      if(spin) spin.style.display = 'none';
     }
-
-    // 3. 결과 알림창 띄우기
-    if (totalNewCount > 0) {
-      showToast(`총 ${totalNewCount}개의 새로운 댓글을 가져왔습니다!`, 'success');
-    } else {
-      showToast('새로 추가된 댓글이 없습니다.', 'success');
-    }
-
-    // 4. DB에 들어간 최신 데이터를 화면에 다시 그리기 (새로고침 효과)
-    await fetchFeedbackData(); 
-
-  } catch (error) {
-    console.error('전체 동기화 중 에러 발생:', error);
-    showToast('데이터 동기화 중 오류가 발생했습니다.', 'error');
-  } finally {
-    if(btn) btn.disabled = false;
-    if(spin) spin.style.display = 'none';
   }
-}
 
-  // 초기 실행
+  // --- 초기 실행 ---
   fetchFeedbackData();
   </script>
 </body>

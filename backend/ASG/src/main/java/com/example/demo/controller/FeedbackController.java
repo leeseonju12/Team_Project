@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/feedbacks")
@@ -47,9 +48,16 @@ public class FeedbackController {
     */
 
     // GET http://localhost:8080/api/feedbacks 호출 시 작동
+//    @GetMapping
+//    public List<FeedbackDto> getFeedbacks() {
+//        return feedbackService.getAllFeedbacks();
+//    }
+    
     @GetMapping
     public List<FeedbackDto> getFeedbacks() {
-        return feedbackService.getAllFeedbacks();
+        return feedbackService.getAllFeedbacks().stream()
+                .map(FeedbackDto::fromEntity)
+                .collect(Collectors.toList());
     }
 
     @PutMapping("/{id}/ai-reply")
@@ -108,5 +116,6 @@ public class FeedbackController {
             return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
         }
     }
+
     
 }

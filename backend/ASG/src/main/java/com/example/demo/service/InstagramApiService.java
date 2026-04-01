@@ -14,7 +14,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +33,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
+
+
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +56,11 @@ public class InstagramApiService {
  // 🌟 yml에 적어둔 여러 개의 계정 ID를 한 번에 불러옵니다.
     @Value("${instagram.api.account-ids}")
     private List<String> systemAccountIds;
+    
+    private static final DateTimeFormatter ISO_FORMATTER = new DateTimeFormatterBuilder()
+            .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            .appendPattern("[Z][XX][XXX]")
+            .toFormatter(Locale.ENGLISH);
 
     @Transactional
     public int syncAllInstagramComments() {
@@ -221,6 +233,10 @@ public class InstagramApiService {
                     String text = node.path("text").asText("");
                     String permalink = node.path("media").path("permalink").asText("");
                     Optional<CustomerFeedback> existing = feedbackRepository.findByExternalId(commentId);
+                    String timestampStr = node.path("timestamp").asText();
+                    
+                    LocalDateTime actualCreatedAt = parseInstagramTimestamp(timestampStr);
+
 
                     if (existing.isPresent()) {
                         // [UPDATE] 내용이 변했을 수 있으니 텍스트만 업데이트
@@ -238,7 +254,7 @@ public class InstagramApiService {
                             .platform(com.example.demo.domain.enums.Platform.INSTAGRAM)
                             .originUrl(permalink)
                             .status(FeedbackStatus.UNRESOLVED)
-                            .createdAt(LocalDateTime.now())
+                            .createdAt(actualCreatedAt)
                             .type(FeedbackType.COMMENT)
                             .aiStatus(AiStatus.IDLE)
                             .build();
@@ -298,6 +314,8 @@ public class InstagramApiService {
 
                     // 🌟 핵심: DB에 이미 이 댓글 ID가 있는지 검사! 없으면 저장합니다.
                     if (!feedbackRepository.existsByExternalId(commentId)) {
+                    	String timestampStr = node.path("timestamp").asText();
+                        LocalDateTime actualCreatedAt = parseInstagramTimestamp(timestampStr);
 
 
                         CustomerFeedback feedback = CustomerFeedback.builder()
@@ -307,7 +325,7 @@ public class InstagramApiService {
                                 .platform(com.example.demo.domain.enums.Platform.INSTAGRAM)
                                 .originUrl(permalink)
                                 .status(FeedbackStatus.UNRESOLVED)
-                                .createdAt(LocalDateTime.now())
+                                .createdAt(actualCreatedAt)
                                 .type(FeedbackType.COMMENT)
                                 .aiStatus(AiStatus.IDLE)
                                 .build();
@@ -382,6 +400,20 @@ public class InstagramApiService {
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("서버 내부 시스템 에러: " + e.getMessage());
+        }
+    }
+    
+    private LocalDateTime parseInstagramTimestamp(String timestampStr) {
+        if (timestampStr == null || timestampStr.isEmpty()) {
+            return LocalDateTime.now();
+        }
+        try {
+            return OffsetDateTime.parse(timestampStr, ISO_FORMATTER)
+                    .atZoneSameInstant(ZoneId.of("Asia/Seoul"))
+                    .toLocalDateTime();
+        } catch (Exception e) {
+            System.err.println("❌ [파싱 실패] 문자열: [" + timestampStr + "] / 이유: " + e.getMessage());
+            return LocalDateTime.now();
         }
     }
     

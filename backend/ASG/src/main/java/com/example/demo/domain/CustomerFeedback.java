@@ -12,6 +12,7 @@ import com.example.demo.domain.enums.AiStatus;
 import com.example.demo.domain.enums.FeedbackStatus;
 import com.example.demo.domain.enums.FeedbackType;
 import com.example.demo.domain.enums.Platform;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Builder
 @Entity
@@ -56,14 +57,14 @@ public class CustomerFeedback {
     
     
     @Column(unique = true, name = "external_id")
-    private String externalId;    // SNS 고유 댓글 ID (중복 방지의 핵심!)
+    private String externalId;    // SNS 고유 댓글 ID
 
-    private String authorName;    // 작성자 이름
+    private String authorName;
     
     @Column(columnDefinition = "TEXT")
-    private String originalText;  // 댓글 내용
+    private String originalText;
 
-    private String originUrl;     // 댓글이 달린 게시글 URL
+    private String originUrl;
 
     @Enumerated(EnumType.STRING)
     private Platform platform;

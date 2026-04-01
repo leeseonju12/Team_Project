@@ -37,11 +37,15 @@ public class FeedbackService {
     @Value("${ai.api-key}")
     private String geminiApiKey;*/
 
-    public List<FeedbackDto> getAllFeedbacks() {
-        return feedbackRepository.findAll().stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-    }
+//    public List<FeedbackDto> getAllFeedbacks() {
+//        return feedbackRepository.findAll().stream()
+//                .map(this::convertToDto)
+//                .collect(Collectors.toList());
+//    }
+    
+	  public List<CustomerFeedback> getAllFeedbacks() {
+		  return feedbackRepository.findAllByOrderByIdAsc();
+	}
 
     // Entity -> DTO 변환 로직
     private FeedbackDto convertToDto(CustomerFeedback feedback) {
