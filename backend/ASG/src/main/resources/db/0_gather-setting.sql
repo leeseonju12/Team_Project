@@ -414,23 +414,28 @@ ALTER TABLE `strategy_recommendation_item` ADD FOREIGN KEY (`platform_id`) REFER
 
 -- seed data
 INSERT IGNORE INTO brand (brand_id, brand_name, service_name, industry_type, location_name, created_at, updated_at) VALUES
-(1,  '연남살롱',     '연남살롱 커피',     'CAFE',         '연남점',   NOW(), NOW()),
-(2,  '을지OB베어',   '을지OB베어',        'BAR',          '을지로점', NOW(), NOW()),
-(3,  '황금돼지',     '황금돼지 족발',      'RESTAURANT',   '종로점',   NOW(), NOW()),
-(4,  '맘스터치',     '맘스터치',          'FAST_FOOD',    '홍대점',   NOW(), NOW()),
-(5,  '밀도',        '밀도 식빵',          'BAKERY',       '성수점',   NOW(), NOW()),
-(6,  '옴뇸뇸',      '옴뇸뇸 디저트',      'DESSERT',      '마포점',   NOW(), NOW()),
-(7,  '준오헤어',     '준오헤어',          'HAIR_SALON',   '강남점',   NOW(), NOW()),
-(8,  '네일트리',     '네일트리',          'NAIL',         '신촌점',   NOW(), NOW()),
-(9,  '스파위',       '스파위',            'SPA_MASSAGE',  '이태원점', NOW(), NOW()),
-(10, '짐박스',       '짐박스 크로스핏',    'FITNESS',      '합정점',   NOW(), NOW()),
-(11, '더필라테스',   '더필라테스',         'PILATES_YOGA', '서초점',   NOW(), NOW()),
-(12, '29cm',        '29cm 편집샵',        'RETAIL',       '성수점',   NOW(), NOW()),
-(13, '리버클로젯',   '리버클로젯',         'CLOTHING',     '홍대점',   NOW(), NOW()),
-(14, '크린토피아',   '크린토피아',         'LAUNDRY',      '역삼점',   NOW(), NOW()),
-(15, '바우하우스',   '바우하우스 펫샵',     'PET',          '판교점',   NOW(), NOW()),
-(16, '이투스',       '이투스 학원',        'EDUCATION',    '노량진점', NOW(), NOW()),
-(17, '동네사진관',   '동네사진관',         'ETC',          '삼청점',   NOW(), NOW());
+(1, '어글리베이커리',  'uglybakery',              'CAFE_BAKERY',          '서울 마포구 망원동',       NOW(), NOW()),
+(2, '을밀대',          'eulmildae',               'FOOD_RESTAURANT',      '서울 마포구 염리동',       NOW(), NOW()),
+(3, '와드',            'wad_seongsu',             'BEAUTY_SALON',         '서울 성동구 서울숲',       NOW(), NOW()),
+(4, '선데이클로즈',    'sundayclothes_official',  'FASHION_CLOTHING',     '서울 중구 을지로',         NOW(), NOW()),
+(5, '산방댁게스트하우스', 'sanbangdaek',          'ACCOMMODATION_PENSION','제주 서귀포시 안덕면',     NOW(), NOW()),
+(6, '필라테스서울',    'pilatesseoul',            'FITNESS_SPORTS',       '서울 송파구 잠실',         NOW(), NOW()),
+(7, '잉글리쉬가든',   'englishgarden_21',         'EDUCATION_ACADEMY',    '강원 춘천시',              NOW(), NOW()),
+(8, '서울SY피부과',   'sydermatology',            'MEDICAL_HOSPITAL',     '서울 강남구 압구정',       NOW(), NOW()),
+(9, '인덱스숍',       'indexshop.kr',             'RETAIL_SHOPPING',      '서울 광진구 건대',         NOW(), NOW()),
+(10,'플로애',         '_floae_',                  'ETC',                  '서울 강남구 역삼동',       NOW(), NOW());
+
+INSERT IGNORE INTO brand (brand_id, brand_name, service_name, industry_type, location_name, created_at, updated_at) VALUES
+(11, '몽심',          '_creative_mongsim',      'CAFE_BAKERY',          '대전 대덕구 한남대',        NOW(), NOW()),
+(12, '연돈',          'yeondon2014',            'FOOD_RESTAURANT',      '제주 서귀포시',             NOW(), NOW()),
+(13, '헤어웰',        'hairwell',               'BEAUTY_SALON',         '전북 전주시 서신동',        NOW(), NOW()),
+(14, '너겟',          'nugget_min',             'FASHION_CLOTHING',     '강원 강릉시 원대로',        NOW(), NOW()),
+(15, '한옥스테이소화', 'tdesign71',             'ACCOMMODATION_PENSION','경북 경주시 황남동',        NOW(), NOW()),
+(16, '요가베르데',    'yoga__verde',             'FITNESS_SPORTS',       '제주 제주시 비자림',        NOW(), NOW()),
+(17, '씨앤씨미술학원', 'suwan_cnc',             'EDUCATION_ACADEMY',    '광주 광산구 수완지구',      NOW(), NOW()),
+(18, '서산연세치과',  'seosan_yonsei',           'MEDICAL_HOSPITAL',     '충남 서산시',               NOW(), NOW()),
+(19, '책방오늘',      'onulbooks_in_seochon',   'RETAIL_SHOPPING',      '서울 종로구 서촌',          NOW(), NOW()),
+(20, '삶은감자',      'life_gamja',             'ETC',                  '강원 강릉시 임영로',        NOW(), NOW());
 
 INSERT IGNORE INTO platform (platform_id, platform_code, platform_name, brand_color, is_active)
 VALUES

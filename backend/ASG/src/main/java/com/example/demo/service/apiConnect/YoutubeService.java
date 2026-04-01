@@ -64,6 +64,7 @@ public class YoutubeService {
                 ResponseEntity<String> response = restTemplate.getForEntity(apiURL, String.class);
                 String body = response.getBody();
                 responses.add(body);
+                System.out.println("====> [유튜브] 페이지 " + (i+1) + " 수집 완료");
 
                 // 💡 응답 JSON에서 "nextPageToken"을 찾아서 다음 루프에서 사용
                 JsonNode root = objectMapper.readTree(body);
@@ -73,8 +74,9 @@ public class YoutubeService {
                     break; // 다음 페이지가 없으면 루프 종료
                 }
             } catch (Exception e) {
-                responses.add("{\"error\":\"유튜브 페이지 " + (i+1) + " 호출 실패: " + e.getMessage() + "\"}");
-                break;
+            	 System.err.println("====> [유튜브] 페이지 " + (i+1) + " 호출 실패: " + e.getMessage());
+            	    responses.add("{\"error\":\"유튜브 페이지 " + (i+1) + " 호출 실패: " + e.getMessage() + "\"}");
+            	    break;
             }
         }
         return responses;

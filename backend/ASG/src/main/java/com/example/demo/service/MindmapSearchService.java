@@ -34,18 +34,28 @@ public class MindmapSearchService {
     @Cacheable(value = "related-keywords", key = "#brandId")
     public MindmapSearchResponseDto getRelatedKeywords(Long brandId) {
 
-        // 1. brand 테이블에서 브랜드명 조회
+    	// 1. brand 테이블에서 브랜드명 조회
         Map<String, Object> brand = jdbcTemplate.queryForMap(
                 "SELECT brand_name FROM brand WHERE brand_id = ?", brandId);
-        String brandName = brand.get("brand_name").toString();
+        String brandName   = brand.get("brand_name").toString();
+
+        // 연관 검색어는 brand_name만 사용
+        // service_name(인스타 계정명) 포함 시 네이버 연관검색어 미반환
+        String searchQuery = brandName;
 
         // 2. 구글 + 네이버 병렬 호출 (동기 처리로 변환)
         SerpApiResponseDto[] results = serpApiClient
-                .fetchBothRelatedKeywords(brandName)
+                .fetchBothRelatedKeywords(searchQuery)
                 .block();  // WebFlux Mono → 일반 동기 방식으로 변환
 
         SerpApiResponseDto googleResult = results[0];
         SerpApiResponseDto naverResult  = results[1];
+
+        // 디버그 로그
+        System.out.println("====> [구글 연관검색어] " + 
+            (googleResult.getRelatedSearches() != null ? googleResult.getRelatedSearches().size() + "개" : "null"));
+        System.out.println("====> [네이버 연관검색어] " + 
+            (naverResult.getRelatedResults() != null ? naverResult.getRelatedResults().size() + "개" : "null"));
 
         // 3. 구글 + 네이버 결과 병합 및 점수 계산
         List<MindmapSearchKeywordDto> merged = mergeAndScore(googleResult, naverResult);

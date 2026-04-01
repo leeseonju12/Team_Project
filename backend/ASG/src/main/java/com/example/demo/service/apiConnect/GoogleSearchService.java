@@ -41,7 +41,11 @@ public class GoogleSearchService {
         List<String> snippetTexts = new ArrayList<>(); // 원본 스니펫 (폴백용)
 
         // 1. 검색어 설정
-        String query = isInstagram ? "site:instagram.com " + request.getBrandName() : request.getBrandName();
+        // 인스타 모드: service_name이 인스타 계정명이므로 @계정명 형식으로 검색 → 더 정확한 결과
+        // 일반 모드: brand_name 그대로 사용
+        String query = isInstagram
+                ? "site:instagram.com " + request.getBrandName()  // brandName 자리에 serviceName이 들어옴 (PlatformKeywordService에서 조립)
+                : request.getBrandName();
 
         // 2. SerpApi URL 생성
         String apiURL = UriComponentsBuilder.fromUriString("https://serpapi.com/search")

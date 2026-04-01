@@ -303,25 +303,20 @@ public class NaverSearchService {
     // 업종별 후보 키워드풀 (DataLab은 한 번에 최대 5개)
     private List<String> getCandidateKeywords(String industryType) {
         return switch (industryType) {
-            case "CAFE"         -> List.of("카페 추천", "카페 신메뉴", "디저트 맛집", "브런치 카페", "아메리카노");
-            case "RESTAURANT"   -> List.of("맛집 추천", "점심 특선", "저녁 맛집", "혼밥", "배달 맛집");
-            case "FAST_FOOD"    -> List.of("햄버거 맛집", "패스트푸드 추천", "치킨 버거", "세트메뉴", "햄버거 맛집");
-            case "BAR"          -> List.of("술집 추천", "분위기 좋은 바", "이자카야 추천", "와인바", "칵테일바");
-            case "BAKERY"       -> List.of("빵집 추천", "베이커리 신메뉴", "소금빵 맛집", "크루아상 맛집", "식빵 맛집");
-            case "DESSERT"      -> List.of("디저트 카페", "케이크 맛집", "마카롱 추천", "아이스크림 맛집", "빙수 맛집");
-            case "HAIR_SALON"   -> List.of("미용실 추천", "헤어샵 예약", "염색 잘하는 곳", "커트 잘하는 미용실", "펌 추천");
-            case "NAIL"         -> List.of("네일샵 추천", "젤네일 디자인", "네일아트 예약", "발네일 추천", "네일 가격");
-            case "SPA_MASSAGE"  -> List.of("마사지샵 추천", "스파 예약", "피부관리 잘하는 곳", "아로마 마사지", "힐링 스파");
-            case "FITNESS"      -> List.of("헬스장 추천", "PT 가격", "크로스핏 추천", "헬스 등록", "퍼스널트레이닝");
-            case "PILATES_YOGA" -> List.of("필라테스 추천", "요가 학원", "필라테스 가격", "요가 초보", "몸매관리 운동");
-            case "RETAIL"       -> List.of("편집샵 추천", "신상 입고", "한정판 구매", "편집샵 세일", "브랜드 추천");
-            case "CLOTHING"     -> List.of("옷 쇼핑", "빈티지샵 추천", "코디 추천", "의류 세일", "가을 신상");
-            case "LAUNDRY"      -> List.of("세탁소 추천", "드라이클리닝 가격", "이불 세탁", "명품 세탁", "운동화 세탁");
-            case "PET"          -> List.of("펫샵 추천", "강아지 용품", "고양이 간식 추천", "동물병원 추천", "반려동물 미용");
-            case "EDUCATION"    -> List.of("학원 추천", "과외 추천", "수능 학원", "성인 영어학원", "자격증 학원");
-            default             -> List.of("매장 추천", "신메뉴", "할인 이벤트", "맛집", "베스트메뉴");
+            case "CAFE_BAKERY"          -> List.of("카페 추천", "베이커리 맛집", "브런치 카페", "디저트 카페", "신메뉴");
+            case "FOOD_RESTAURANT"      -> List.of("맛집 추천", "점심 특선", "혼밥 맛집", "배달 맛집", "저녁 맛집");
+            case "BEAUTY_SALON"         -> List.of("미용실 추천", "헤어샵 예약", "네일샵 추천", "뷰티샵 추천", "염색 잘하는 곳");
+            case "FASHION_CLOTHING"     -> List.of("옷 쇼핑", "빈티지샵 추천", "코디 추천", "의류 신상", "패션 추천");
+            case "ACCOMMODATION_PENSION"-> List.of("펜션 추천", "글램핑 추천", "게스트하우스 추천", "숙박 예약", "감성 숙소");
+            case "FITNESS_SPORTS"       -> List.of("헬스장 추천", "PT 가격", "필라테스 추천", "요가 학원", "퍼스널트레이닝");
+            case "EDUCATION_ACADEMY"    -> List.of("학원 추천", "과외 추천", "성인 영어학원", "자격증 학원", "공방 추천");
+            case "MEDICAL_HOSPITAL"     -> List.of("한의원 추천", "치과 추천", "피부과 추천", "동네병원 추천", "한방치료");
+            case "RETAIL_SHOPPING"      -> List.of("편집샵 추천", "소품샵 추천", "신상 입고", "독립서점 추천", "잡화 쇼핑");
+            case "ETC"                  -> List.of("생활편의 추천", "세탁소 추천", "반찬가게 추천", "동네가게 추천", "소상공인 추천");
+            default                     -> List.of("매장 추천", "신메뉴", "할인 이벤트", "맛집", "베스트메뉴");
         };
     }
+    
     // ── 최대 3회 재시도 + Semaphore 순차 호출 ────────────────────
     private static final int  MAX_RETRY      = 3;
     private static final long RETRY_DELAY_MS = 5000; // 재시도 전 5초 대기
