@@ -1,0 +1,1282 @@
+<!-- <!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>소셜다모아 — 마이페이지</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --teal:#14B8A6;--teal-light:#CCFBF1;--teal-mid:#5EEAD4;--teal-dark:#0D9488;
+      --slate:#F1F5F9;--slate2:#E2E8F0;
+      --indigo:#6366F1;--indigo-light:#EEF2FF;--indigo-dark:#4F46E5;
+      --text:#0F172A;--text2:#475569;--text3:#94A3B8;
+      --white:#FFFFFF;--border:#E2E8F0;--border2:#CBD5E1;
+      --green:#22C55E;--green-light:#DCFCE7;
+      --red:#EF4444;--red-light:#FEE2E2;
+      --yellow:#F59E0B;--yellow-light:#FEF3C7;
+      --orange:#F97316;--purple:#8B5CF6;--purple-light:#EDE9FE;
+      --radius:14px;--radius-sm:9px;
+      --shadow-sm:0 1px 3px rgba(15,23,42,.07);
+      --shadow:0 4px 16px rgba(15,23,42,.08),0 2px 6px rgba(15,23,42,.05);
+      --shadow-lg:0 12px 32px rgba(15,23,42,.12),0 4px 12px rgba(15,23,42,.07);
+      --sidebar:240px;
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--slate);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;}
+
+    .top-stripe{height:4px;background:linear-gradient(90deg,var(--teal) 0%,var(--indigo) 60%,var(--teal-mid) 100%);}
+    header{background:var(--white);border-bottom:1px solid var(--border);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow-sm);flex-shrink:0;position:sticky;top:0;z-index:200;}
+    .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;}
+    .logo-mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--indigo));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;box-shadow:0 2px 8px rgba(20,184,166,.35);flex-shrink:0;}
+    .logo-name{font-size:15px;font-weight:700;letter-spacing:-.3px;}
+    .logo-sub{font-size:11px;color:var(--text3);margin-left:6px;}
+    .nav-pills{display:flex;gap:4px;}
+    .nav-pill{padding:6px 14px;border-radius:100px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid transparent;color:var(--text2);background:transparent;transition:all .2s;font-family:'Noto Sans KR',sans-serif;text-decoration:none;display:flex;align-items:center;gap:5px;}
+    .nav-pill:hover{background:var(--slate);color:var(--text);}
+    .nav-pill.active{background:var(--indigo-light);border-color:#C7D2FE;color:var(--indigo-dark);font-weight:600;}
+    .header-user{display:flex;align-items:center;gap:10px;}
+    .user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--indigo));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;cursor:pointer;}
+    .user-name{font-size:13px;font-weight:600;color:var(--text2);}
+
+    .page-wrap{flex:1;display:flex;max-width:1280px;margin:0 auto;width:100%;padding:28px 40px 80px;gap:24px;}
+
+    .sidebar{width:var(--sidebar);flex-shrink:0;}
+    .sidebar-profile{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 20px;margin-bottom:14px;text-align:center;}
+    .profile-avatar-wrap{position:relative;width:72px;height:72px;margin:0 auto 12px;}
+    .profile-avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--indigo));display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:#fff;box-shadow:0 3px 12px rgba(20,184,166,.35);}
+    .profile-name{font-size:15px;font-weight:800;margin-bottom:2px;}
+    .profile-email{font-size:11px;color:var(--text3);}
+    .profile-badge{display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:3px 10px;border-radius:100px;background:var(--teal-light);border:1px solid var(--teal-mid);font-size:10px;font-weight:700;color:var(--teal-dark);}
+
+    .sidebar-nav{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+    .snav-group-label{padding:10px 16px 6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);}
+    .snav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;transition:background .15s;border-left:3px solid transparent;font-size:13px;font-weight:500;color:var(--text2);}
+    .snav-item:hover{background:var(--slate);color:var(--text);}
+    .snav-item.active{background:rgba(20,184,166,.06);border-left-color:var(--teal);color:var(--teal-dark);font-weight:700;}
+    .snav-item .sni{font-size:15px;width:22px;text-align:center;flex-shrink:0;}
+    .snav-divider{height:1px;background:var(--border);margin:4px 0;}
+
+    .content{flex:1;min-width:0;}
+    .section{display:none;animation:fadeUp .3s ease both;}
+    .section.active{display:block;}
+
+    .section-header{margin-bottom:22px;}
+    .section-header h2{font-family:'Playfair Display',serif;font-size:clamp(18px,2vw,24px);font-weight:700;letter-spacing:-.3px;}
+    .section-header h2 em{font-style:italic;background:linear-gradient(135deg,var(--teal),var(--indigo));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    .section-header p{margin-top:5px;font-size:13px;color:var(--text2);line-height:1.6;}
+
+    .card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px;}
+    .card:last-child{margin-bottom:0;}
+    .card-header{padding:14px 22px;border-bottom:1px solid var(--border);background:var(--slate);display:flex;align-items:center;justify-content:space-between;gap:12px;}
+    .card-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;}
+    .card-body{padding:24px 22px;}
+
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .field{margin-bottom:16px;}
+    .field:last-child{margin-bottom:0;}
+    label{font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px;}
+    .req{color:var(--teal);margin-left:2px;}
+    input[type=text],input[type=email],input[type=tel],input[type=password],input[type=url],select,textarea{
+      width:100%;height:44px;padding:0 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+      font-size:13px;font-family:'Noto Sans KR',sans-serif;color:var(--text);background:var(--white);outline:none;
+      transition:border-color .2s,box-shadow .2s;
+    }
+    textarea{height:auto;padding:12px 14px;resize:vertical;}
+    input:focus,select:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(20,184,166,.12);}
+    input::placeholder,textarea::placeholder{color:var(--text3);}
+    input:disabled,select:disabled{background:var(--slate);color:var(--text3);cursor:not-allowed;}
+    select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;}
+    .input-row{display:flex;gap:8px;}
+    .input-row input{flex:1;}
+    input.success{border-color:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,.1);}
+    input.error{border-color:var(--red);box-shadow:0 0 0 3px rgba(239,68,68,.1);}
+    .field-msg{margin-top:5px;font-size:11px;font-weight:500;display:flex;align-items:center;gap:4px;min-height:16px;}
+    .field-msg.ok{color:var(--green);}
+    .field-msg.err{color:var(--red);}
+    .field-msg.info{color:var(--text3);}
+
+    .btn-inline{height:44px;padding:0 14px;border-radius:var(--radius-sm);border:1.5px solid var(--teal);background:var(--teal-light);color:var(--teal-dark);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;transition:all .2s;flex-shrink:0;}
+    .btn-inline:hover{background:var(--teal);color:#fff;}
+    .btn-save{height:44px;padding:0 24px;border-radius:var(--radius-sm);border:none;background:linear-gradient(135deg,var(--teal),var(--indigo));color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;box-shadow:0 2px 8px rgba(20,184,166,.25);transition:all .2s;display:flex;align-items:center;gap:7px;}
+    .btn-save:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(20,184,166,.35);}
+    .btn-save .spin{display:none;width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+    .btn-save.loading .spin{display:inline-block;}
+    .btn-outline{height:44px;padding:0 20px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--white);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .2s;}
+    .btn-outline:hover{border-color:var(--border2);background:var(--slate);}
+    .btn-danger{height:44px;padding:0 20px;border-radius:var(--radius-sm);border:1.5px solid var(--red-light);background:var(--red-light);color:var(--red);font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .2s;}
+    .btn-danger:hover{background:var(--red);color:#fff;border-color:var(--red);}
+    .save-row{display:flex;justify-content:flex-end;margin-top:20px;gap:8px;}
+
+    .img-upload-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+    .img-preview{width:100px;height:100px;border-radius:var(--radius-sm);border:2px dashed var(--border2);background:var(--slate);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:28px;cursor:pointer;transition:all .2s;overflow:hidden;flex-shrink:0;}
+    .img-preview:hover{border-color:var(--teal);background:var(--teal-light);}
+    .img-preview img{width:100%;height:100%;object-fit:cover;display:none;}
+    .img-upload-info{font-size:12px;color:var(--text2);line-height:1.8;}
+    .img-upload-info span{font-size:11px;color:var(--text3);}
+    .img-upload-btns{display:flex;gap:8px;margin-top:10px;}
+    input[type=file]{display:none;}
+
+    .hours-grid{display:flex;flex-direction:column;gap:8px;}
+    .hours-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--white);transition:border-color .2s;}
+    .day-name{font-size:13px;font-weight:700;color:var(--text);width:28px;flex-shrink:0;}
+    .day-toggle{width:38px;height:22px;border-radius:100px;background:var(--slate2);border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+    .day-toggle::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.15);}
+    .day-toggle.on{background:linear-gradient(135deg,var(--teal),var(--indigo));}
+    .day-toggle.on::after{left:19px;}
+    .hours-time{display:flex;align-items:center;gap:6px;flex:1;}
+    .hours-time input[type=time]{width:106px;height:36px;padding:0 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:'Noto Sans KR',sans-serif;color:var(--text);outline:none;}
+    .hours-time input[type=time]:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(20,184,166,.1);}
+    .hours-sep{font-size:12px;color:var(--text3);}
+    .day-closed{font-size:12px;color:var(--text3);font-weight:500;display:none;}
+    .hours-row.closed .hours-time{display:none;}
+    .hours-row.closed .day-closed{display:block;}
+    .hours-row.on-row{border-color:rgba(20,184,166,.3);background:rgba(20,184,166,.02);}
+
+    .pw-strength{display:flex;gap:4px;margin-top:7px;}
+    .pw-bar{flex:1;height:4px;border-radius:10px;background:var(--border);transition:background .3s;}
+    .pw-bar.s1{background:var(--red);}
+    .pw-bar.s2{background:var(--red);}
+    .pw-bar.s3{background:var(--yellow);}
+    .pw-bar.s4{background:var(--green);}
+    .pw-strength-label{font-size:11px;font-weight:600;color:var(--text3);margin-top:4px;text-align:right;}
+
+    /* ── 말투/이모지 카드 ── */
+    .tone-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+    .tone-card{padding:12px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);text-align:center;cursor:pointer;transition:all .2s;background:var(--white);}
+    .tone-card:hover{border-color:var(--teal);background:var(--teal-light);}
+    .tone-card.selected{border-color:var(--teal);background:rgba(20,184,166,.08);}
+    .tone-card.selected .tc-name{color:var(--teal-dark);}
+    .tc-emoji{font-size:22px;margin-bottom:5px;}
+    .tc-name{font-size:12px;font-weight:700;color:var(--text2);}
+
+    /* ── 슬라이더 ── */
+    .slider-label-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:6px;}
+    .slider-wrap{display:flex;align-items:center;gap:14px;}
+    input[type=range]{flex:1;height:6px;border-radius:10px;-webkit-appearance:none;background:var(--slate2);outline:none;cursor:pointer;border:none;padding:0;}
+    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--indigo));cursor:pointer;box-shadow:0 2px 6px rgba(20,184,166,.4);border:2px solid #fff;}
+    .slider-val{min-width:50px;height:30px;border-radius:7px;background:var(--indigo-light);color:var(--indigo-dark);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+
+    .default-mode-wrap{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--slate);margin-bottom:20px;}
+    .toggle-switch{width:46px;height:26px;border-radius:100px;background:var(--slate2);border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+    .toggle-switch::after{content:'';position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.15);}
+    .toggle-switch.on{background:linear-gradient(135deg,var(--teal),var(--indigo));}
+    .toggle-switch.on::after{left:23px;}
+
+    .sns-check-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+    .sns-check-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;background:var(--white);}
+    .sns-check-item:hover{border-color:var(--teal);background:rgba(20,184,166,.03);}
+    .sns-check-item.checked{border-color:var(--teal);background:rgba(20,184,166,.06);}
+    .sns-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+    .sns-label{font-size:13px;font-weight:600;flex:1;}
+    .check-circle{width:20px;height:20px;border-radius:50%;border:2px solid var(--border2);background:var(--white);display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+    .check-circle.on{background:linear-gradient(135deg,var(--teal),var(--indigo));border-color:transparent;}
+    .check-circle.on::after{content:'✓';color:#fff;font-size:10px;font-weight:800;}
+
+    .template-box{border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;}
+    .template-box-header{padding:10px 14px;background:var(--slate);border-bottom:1px solid var(--border);font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
+    .template-box textarea{border:none;border-radius:0;height:80px;resize:none;font-size:13px;padding:12px 14px;}
+    .template-box textarea:focus{box-shadow:none;border-bottom:none;}
+.template-box:focus-within{border:1.5px solid var(--teal);box-shadow:0 0 0 3px rgba(20,184,166,.12);}
+
+    .sns-account-list{display:flex;flex-direction:column;gap:12px;}
+    .sns-account-item{display:flex;align-items:center;gap:14px;padding:16px 18px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--white);transition:all .2s;}
+    .sns-account-item:hover{border-color:var(--border2);box-shadow:var(--shadow-sm);}
+    .sns-acc-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+    .sns-acc-info{flex:1;}
+    .sns-acc-name{font-size:14px;font-weight:700;margin-bottom:2px;}
+    .sns-acc-id{font-size:12px;color:var(--text3);}
+    .sns-acc-status{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:100px;font-size:11px;font-weight:700;margin-top:5px;}
+    .sns-acc-status.ok{background:var(--green-light);color:#15803D;}
+    .sns-acc-status.expired{background:var(--yellow-light);color:#92400E;}
+    .sns-acc-status.none{background:var(--slate);color:var(--text3);}
+    .sns-dot{width:6px;height:6px;border-radius:50%;}
+    .sns-acc-actions{display:flex;gap:6px;flex-shrink:0;}
+    .btn-sns{height:34px;padding:0 12px;border-radius:var(--radius-sm);font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .2s;border:1.5px solid var(--border);background:var(--white);color:var(--text2);}
+    .btn-sns:hover{background:var(--slate);}
+    .btn-sns.reconnect{border-color:var(--yellow);background:var(--yellow-light);color:#92400E;}
+    .btn-sns.reconnect:hover{background:var(--yellow);color:#fff;}
+    .btn-sns.connect{border-color:var(--teal);background:var(--teal-light);color:var(--teal-dark);}
+    .btn-sns.connect:hover{background:var(--teal);color:#fff;}
+    .btn-sns.disconnect{border-color:var(--red-light);color:var(--red);}
+    .btn-sns.disconnect:hover{background:var(--red);color:#fff;border-color:var(--red);}
+
+    .danger-zone{border:1.5px solid var(--red-light);border-radius:var(--radius);overflow:hidden;}
+    .danger-header{padding:14px 22px;background:var(--red-light);border-bottom:1px solid #FECACA;display:flex;align-items:center;gap:8px;}
+    .danger-header span{font-size:13px;font-weight:700;color:var(--red);}
+    .danger-body{padding:20px 22px;background:var(--white);}
+    .danger-item{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:14px 0;border-bottom:1px solid var(--border);}
+    .danger-item:last-child{border-bottom:none;padding-bottom:0;}
+    .danger-item-text strong{font-size:13px;font-weight:700;display:block;margin-bottom:3px;}
+    .danger-item-text span{font-size:12px;color:var(--text3);line-height:1.5;}
+
+    .info-notice{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:var(--indigo-light);border:1.5px solid #C7D2FE;border-radius:var(--radius-sm);margin-bottom:16px;}
+    .info-notice span{font-size:12px;color:var(--indigo-dark);line-height:1.6;}
+
+    /* ── 문의 내역 ── */
+    .inquiry-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+    .inq-stat{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:16px 18px;display:flex;flex-direction:column;gap:4px;box-shadow:var(--shadow-sm);}
+    .inq-stat-label{font-size:11px;font-weight:600;color:var(--text3);}
+    .inq-stat-val{font-size:22px;font-weight:900;letter-spacing:-.5px;}
+    .inq-stat-val.c-total{color:var(--text);}
+    .inq-stat-val.c-pending{color:var(--yellow);}
+    .inq-stat-val.c-done{color:var(--teal-dark);}
+    .inq-filter-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+    .inq-filter-tabs{display:flex;gap:4px;}
+    .inq-tab{padding:6px 14px;border-radius:100px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--text2);transition:all .2s;font-family:'Noto Sans KR',sans-serif;}
+    .inq-tab.active{background:var(--indigo-light);border-color:#C7D2FE;color:var(--indigo-dark);}
+    .inq-search-wrap{display:flex;align-items:center;gap:8px;}
+    .inq-search{height:36px;padding:0 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:'Noto Sans KR',sans-serif;color:var(--text);outline:none;width:220px;transition:border-color .2s;}
+    .inq-search:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(20,184,166,.12);}
+    .btn-new-inq{height:36px;padding:0 14px;border-radius:var(--radius-sm);border:none;background:linear-gradient(135deg,var(--teal),var(--indigo));color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:5px;transition:all .2s;}
+    .btn-new-inq:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(20,184,166,.3);}
+    .inq-list{display:flex;flex-direction:column;gap:10px;}
+    .inq-item{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;transition:all .2s;cursor:pointer;}
+    .inq-item:hover{border-color:var(--border2);box-shadow:var(--shadow-sm);}
+    .inq-item.open{border-color:rgba(20,184,166,.4);}
+    .inq-item-head{padding:14px 18px;display:flex;align-items:center;gap:12px;}
+    .inq-badge{padding:3px 8px;border-radius:100px;font-size:10px;font-weight:800;white-space:nowrap;flex-shrink:0;}
+    .inq-badge.pending{background:var(--yellow-light);color:#92400E;}
+    .inq-badge.answered{background:var(--green-light);color:#15803D;}
+    .inq-badge.closed{background:var(--slate2);color:var(--text3);}
+    .inq-cat-badge{padding:3px 8px;border-radius:100px;font-size:10px;font-weight:700;background:var(--indigo-light);color:var(--indigo-dark);white-space:nowrap;flex-shrink:0;}
+    .inq-title{font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .inq-date{font-size:11px;color:var(--text3);white-space:nowrap;flex-shrink:0;}
+    .inq-expand-icon{font-size:11px;color:var(--text3);transition:transform .2s;flex-shrink:0;}
+    .inq-item.open .inq-expand-icon{transform:rotate(180deg);}
+    .inq-body{display:none;border-top:1px solid var(--border);background:var(--slate);}
+    .inq-item.open .inq-body{display:block;}
+    .inq-body-q{padding:16px 18px;}
+    .inq-body-q-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:6px;}
+    .inq-body-q-text{font-size:13px;color:var(--text2);line-height:1.7;}
+    .inq-body-a{padding:16px 18px;background:rgba(20,184,166,.04);border-top:1px solid rgba(20,184,166,.15);}
+    .inq-body-a-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--teal-dark);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+    .inq-body-a-text{font-size:13px;color:var(--text2);line-height:1.7;}
+    .inq-pending-msg{padding:16px 18px;background:rgba(245,158,11,.04);border-top:1px solid rgba(245,158,11,.15);}
+    .inq-pending-inner{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--yellow-light);border-radius:var(--radius-sm);font-size:12px;color:#92400E;font-weight:500;}
+    .inq-form-wrap{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 22px;margin-bottom:20px;display:none;}
+    .inq-form-wrap.show{display:block;animation:fadeUp .25s ease both;}
+    .inq-form-title{font-size:14px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+    .inq-cat-select{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+    .inq-cat-opt{padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);text-align:center;cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);background:var(--white);transition:all .2s;}
+    .inq-cat-opt:hover{border-color:var(--indigo);background:var(--indigo-light);color:var(--indigo-dark);}
+    .inq-cat-opt.selected{border-color:var(--indigo);background:var(--indigo-light);color:var(--indigo-dark);}
+    .inq-cat-opt .ico{font-size:16px;display:block;margin-bottom:3px;}
+    .inq-char-count{font-size:11px;color:var(--text3);text-align:right;margin-top:4px;}
+    .inq-form-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
+    .inq-empty{text-align:center;padding:60px 20px;}
+    .inq-empty-icon{font-size:48px;margin-bottom:14px;}
+    .inq-empty-title{font-size:15px;font-weight:700;margin-bottom:6px;color:var(--text2);}
+    .inq-empty-desc{font-size:13px;color:var(--text3);line-height:1.6;}
+    .inq-pagination{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:20px;}
+    .inq-page-btn{width:32px;height:32px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--white);font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;color:var(--text2);transition:all .2s;display:flex;align-items:center;justify-content:center;}
+    .inq-page-btn:hover{border-color:var(--teal);color:var(--teal-dark);}
+    .inq-page-btn.active{background:linear-gradient(135deg,var(--teal),var(--indigo));color:#fff;border-color:transparent;}
+
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:1000;align-items:center;justify-content:center;padding:20px;}
+    .modal-overlay.show{display:flex;}
+    .modal{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-lg);width:100%;max-width:460px;overflow:hidden;animation:fadeUp .25s ease both;}
+    .modal-header{padding:16px 22px;background:var(--slate);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+    .modal-header span{font-size:14px;font-weight:700;}
+    .modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--text3);line-height:1;}
+    .modal-body{padding:24px 22px;}
+    .modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+
+    .toast{position:fixed;bottom:28px;right:28px;z-index:9999;background:var(--text);color:#fff;padding:11px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:8px;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;}
+    .toast.show{transform:translateY(0);opacity:1;}
+    .toast.ok{background:var(--teal-dark);}
+    .toast.err{background:var(--red);}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    @media(max-width:900px){
+      .page-wrap{padding:20px 16px 60px;}
+      .sidebar{display:none;}
+      .grid-2{grid-template-columns:1fr;}
+      .tone-grid{grid-template-columns:repeat(3,1fr);}
+      .sns-check-grid{grid-template-columns:1fr;}
+      .inquiry-summary{grid-template-columns:1fr 1fr;}
+      .inq-filter-row{flex-direction:column;align-items:flex-start;}
+      .inq-cat-select{grid-template-columns:repeat(2,1fr);}
+    }
+    
+        /* 모든 이탤릭 강조 텍스트에 숨구멍(패딩)을 미리 뚫어놓기 */
+em {
+  font-style: italic;
+  padding-right: 0.15em; /* inline 상태에서도 오른쪽 패딩은 먹힙니다! */
+  margin-right: -0.15em;
+  
+  /* 그라데이션 잘림 방지를 위한 추가 팁 
+  줄바꿈이 일어날 때, 잘린 각각의 조각들에 테두리나 패딩을 똑같이 다시 적용*/
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+    
+  </style>
+</head>
+<body>
+  <div class="top-stripe"></div>
+  <header>
+    <a href="#" class="logo">
+      <div class="logo-mark">S</div>
+      <span class="logo-name">소셜다모아</span>
+      <span class="logo-sub">All Social Gather</span>
+    </a>
+    <nav class="nav-pills">
+      <a href="#" class="nav-pill">✏️ 콘텐츠 생성</a>
+      <a href="#" class="nav-pill">💬 리뷰 관리</a>
+      <a href="#" class="nav-pill">📊 성과 분석</a>
+      <a href="#" class="nav-pill active">👤 마이페이지</a>
+    </nav>
+    <div class="header-user">
+      <div class="user-avatar">김</div>
+      <span class="user-name">김소셜 님</span>
+    </div>
+  </header>
+
+<!-- ── Sidebar ── -->
+  <div class="page-wrap">
+    <div class="sidebar">
+      <div class="sidebar-profile">
+        <div class="profile-avatar-wrap"><div class="profile-avatar">김</div></div>
+        <div class="profile-name">김소셜</div>
+        <div class="profile-email">kim@social.com</div>
+        <div class="profile-badge">⭐ 프로 플랜</div>
+      </div>
+      <!-- ── ㅡmypage Sidebar ── -->
+<nav class="sidebar-nav">
+  <div class="snav-group-label">계정</div>
+  <div class="snav-item active" data-sec="member" onclick="showSection('member',this)"><span class="sni">👤</span>회원정보</div>
+  <div class="snav-divider"></div>
+
+  <div class="snav-group-label">결제</div>
+  <a href="/mypage/payment" class="snav-item" style="text-decoration:none;"><span class="sni">💳</span>결제 수단 변경</a>
+  <div class="snav-divider"></div>
+
+  <div class="snav-group-label">사업장</div>
+  <div class="snav-item" data-sec="shop" onclick="showSection('shop',this)"><span class="sni">🏪</span>가게 정보</div>
+  <div class="snav-divider"></div>
+
+  <div class="snav-group-label">콘텐츠</div>
+<div class="snav-item" data-sec="content" onclick="showSection('content',this)"><span class="sni">✍️</span>콘텐츠 개인 설정</div>
+<div class="snav-item" data-sec="history" onclick="showSection('history',this)"><span class="sni">📂</span>콘텐츠 히스토리</div>
+<div class="snav-divider"></div>
+
+  <div class="snav-group-label">연동</div>
+  <div class="snav-item" data-sec="sns" onclick="showSection('sns',this)"><span class="sni">🔗</span>SNS 계정 관리</div>
+  <div class="snav-divider"></div>
+
+  <div class="snav-group-label">고객지원</div>
+  <div class="snav-item" data-sec="inquiry" onclick="showSection('inquiry',this)">
+    <span class="sni">📋</span>문의 내역
+    <span id="inqBadge" style="margin-left:auto;background:var(--yellow-light);color:#92400E;font-size:10px;font-weight:800;padding:2px 7px;border-radius:100px;">2</span>
+  </div>
+</nav>
+    </div>
+
+    <div class="content">
+
+      <!-- ════ 3-1 회원정보 ════ -->
+      <div class="section active" id="sec-member">
+        <div class="section-header">
+          <h2>회원 <em>정보</em></h2>
+          <p>기본 계정 정보를 확인하고 수정합니다.</p>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">👤 기본 정보</div></div>
+          <div class="card-body">
+            <div class="grid-2">
+              <div class="field">
+                <label>이름 (담당자명) <span class="req">*</span></label>
+                <input type="text" id="m_name" value="김소셜" />
+              </div>
+              <div class="field">
+                <label>이메일</label>
+                <input type="email" id="m_email" value="kim@social.com" disabled />
+                <div class="field-msg info">소셜 로그인 연동 계정으로 변경이 불가합니다.</div>
+              </div>
+            </div>
+            <div class="field" style="margin-bottom:0;">
+              <label>휴대폰 번호 <span class="req">*</span></label>
+              <div class="input-row">
+                <input type="tel" id="m_phone" value="010-1234-5678" maxlength="13" oninput="formatTel(this)" />
+                <button class="btn-inline" onclick="sendVerify()">인증번호 발송</button>
+              </div>
+              <div class="field-msg info" id="phoneVerifyMsg"></div>
+            </div>
+            <div class="field" id="verifyCodeField" style="display:none;margin-top:12px;margin-bottom:0;">
+              <label>인증번호</label>
+              <div class="input-row">
+                <input type="text" id="m_code" placeholder="인증번호 6자리" maxlength="6" />
+                <span style="font-size:12px;font-weight:700;color:var(--teal-dark);align-self:center;min-width:40px;text-align:right;" id="mTimer"></span>
+                <button class="btn-inline" onclick="verifyCode()">확인</button>
+              </div>
+              <div class="field-msg info" id="codeMsg">인증번호를 입력해 주세요. (테스트: 123456)</div>
+            </div>
+            <div class="save-row">
+              <button class="btn-save" onclick="saveSection(this,'기본 정보')"><span class="spin"></span>저장하기</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔒 비밀번호 변경</div></div>
+          <div class="card-body">
+            <div class="field">
+              <label>현재 비밀번호 <span class="req">*</span></label>
+              <input type="password" id="pw_cur" placeholder="현재 비밀번호 입력" />
+            </div>
+            <div class="field">
+              <label>새 비밀번호 <span class="req">*</span></label>
+              <input type="password" id="pw_new" placeholder="영문·숫자·특수문자 8자 이상" oninput="onNewPw(this)" />
+              <div class="pw-strength">
+                <div class="pw-bar" id="pwb1"></div><div class="pw-bar" id="pwb2"></div>
+                <div class="pw-bar" id="pwb3"></div><div class="pw-bar" id="pwb4"></div>
+              </div>
+              <div class="pw-strength-label" id="pwLbl"></div>
+            </div>
+            <div class="field" style="margin-bottom:0;">
+              <label>새 비밀번호 확인 <span class="req">*</span></label>
+              <input type="password" id="pw_confirm" placeholder="새 비밀번호 재입력" oninput="onPwConfirm()" />
+              <div class="field-msg info" id="pwConfirmMsg"></div>
+            </div>
+            <div class="save-row">
+              <button class="btn-save" onclick="changePw(this)"><span class="spin"></span>비밀번호 변경</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- ── 플랜 관리 카드 ── -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">💎 플랜 관리</div>
+    <div style="display:flex;align-items:center;gap:6px;background:var(--slate2);border-radius:100px;padding:3px;font-size:12px;font-weight:700;">
+      <button id="billingMonthly" onclick="setBilling('monthly')"
+        style="padding:4px 14px;border-radius:100px;border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:700;transition:all .2s;background:linear-gradient(135deg,var(--teal),var(--indigo));color:#fff;box-shadow:0 2px 6px rgba(20,184,166,.3);">
+        월간
+      </button>
+      <button id="billingAnnual" onclick="setBilling('annual')"
+        style="padding:4px 14px;border-radius:100px;border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:700;transition:all .2s;background:transparent;color:var(--text3);">
+        연간 <span style="font-size:10px;color:var(--teal-dark);font-weight:800;">20%↓</span>
+      </button>
+    </div>
+  </div>
+  <div class="card-body">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;" id="planGrid">
+
+      <!-- 무료 -->
+      <div class="plan-card" id="plan-free" onclick="selectPlan('free')" style="border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:20px 16px;cursor:pointer;transition:all .2s;background:var(--white);position:relative;">
+        <div style="font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">무료</div>
+        <div style="font-size:26px;font-weight:900;letter-spacing:-1px;color:var(--text);">₩0<span style="font-size:12px;font-weight:500;color:var(--text3);">/월</span></div>
+        <div style="margin:12px 0;height:1px;background:var(--border);"></div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:7px;">
+          <li style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;"><span style="color:var(--green);font-weight:700;">✓</span> SNS 채널 연동 2개</li>
+          <li style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;"><span style="color:var(--green);font-weight:700;">✓</span> AI 콘텐츠 생성 월 10건</li>
+          <li style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;"><span style="color:var(--green);font-weight:700;">✓</span> 기본 성과 대시보드</li>
+          <li style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;"><span style="color:var(--green);font-weight:700;">✓</span> 리뷰 모니터링</li>
+          <li style="font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px;"><span style="color:var(--border2);font-weight:700;">✕</span> 예약 발행</li>
+          <li style="font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px;"><span style="color:var(--border2);font-weight:700;">✕</span> AI 전략 추천</li>
+          <li style="font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px;"><span style="color:var(--border2);font-weight:700;">✕</span> AI 리뷰 자동 답변</li>
+        </ul>
+        <button style="margin-top:16px;width:100%;height:36px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--slate);color:var(--text3);font-size:12px;font-weight:700;cursor:default;font-family:'Noto Sans KR',sans-serif;" >기본 플랜</button>
+      </div>
+
+      <!-- 프로 (현재 플랜) -->
+      <div class="plan-card" id="plan-pro" onclick="selectPlan('pro')" style="border:2px solid var(--teal);border-radius:var(--radius-sm);padding:20px 16px;cursor:pointer;transition:all .2s;background:rgba(20,184,166,.04);position:relative;">
+        <div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--teal),var(--indigo));color:#fff;font-size:10px;font-weight:800;padding:3px 12px;border-radius:100px;white-space:nowrap;">현재 이용 중</div>
+        <div style="font-size:11px;font-weight:800;color:var(--teal-dark);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">프로</div>
+        <div id="proPrice" style="font-size:26px;font-weight:900;letter-spacing:-1px;color:var(--text);">₩29,000<span style="font-size:12px;font-weight:500;color:var(--text3);">/월</span></div>
+        <div style="margin:12px 0;height:1px;background:rgba(20,184,166,.2);"></div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:7px;">
+          <li style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;"><span style="color:var(--green);font-weight:700;">✓</span> SNS 채널 연동 전체</li>
+          <li style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;"><span style="color:var(--green);font-weight:700;">✓</span> AI 콘텐츠 생성 월 무제한</li>
+          <li style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;"><span style="color:var(--green);font-weight:700;">✓</span> 통합 성과 대시보드</li>
+          <li style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;"><span style="color:var(--green);font-weight:700;">✓</span> 리뷰 모니터링 + AI 답변</li>
+          <li style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;"><span style="color:var(--green);font-weight:700;">✓</span> 예약 발행</li>
+          <li style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;"><span style="color:var(--green);font-weight:700;">✓</span> AI 전략 추천</li>
+<li style="font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px;"><span style="color:var(--border2);font-weight:700;">✕</span> 전담 매니저 지원</li>
+        </ul>
+        <button style="margin-top:16px;width:100%;height:36px;border-radius:var(--radius-sm);border:none;background:linear-gradient(135deg,var(--teal),var(--indigo));color:#fff;font-size:12px;font-weight:700;cursor:default;font-family:'Noto Sans KR',sans-serif;">이용 중</button>
+      </div>
+
+      <!-- 비즈니스 -->
+      <div class="plan-card" id="plan-biz" onclick="selectPlan('biz')" style="border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:20px 16px;cursor:pointer;transition:all .2s;background:var(--white);position:relative;">
+        <div style="font-size:11px;font-weight:800;color:var(--indigo-dark);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">비즈니스</div>
+        <div id="bizPrice" style="font-size:26px;font-weight:900;letter-spacing:-1px;color:var(--text);">₩79,000<span style="font-size:12px;font-weight:500;color:var(--text3);">/월</span></div>
+        <div style="margin:12px 0;height:1px;background:var(--border);"></div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:7px;">
+          <li style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;"><span style="color:var(--green);font-weight:700;">✓</span> 프로 플랜 모든 기능</li>
+          <li style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;"><span style="color:var(--green);font-weight:700;">✓</span> 다중 매장 관리 최대 5개</li>
+          <li style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;"><span style="color:var(--green);font-weight:700;">✓</span> 팀원 계정 3명드</li>
+          <li style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;"><span style="color:var(--green);font-weight:700;">✓</span> 고급 리포트 다운로드</li>
+          <li style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;"><span style="color:var(--green);font-weight:700;">✓</span> 전담 매니저 지원</li>
+          <li style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;"><span style="color:var(--green);font-weight:700;">✓</span> 맞춤형 온보딩</li>
+<li style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;"><span style="color:var(--green);font-weight:700;">✓</span> API 연동</li>
+        </ul>
+        <button onclick="event.stopPropagation();showToast('📞 비즈니스 플랜 문의: biz@sodamoa.com','ok')"
+          style="margin-top:16px;width:100%;height:36px;border-radius:var(--radius-sm);border:1.5px solid var(--indigo);background:var(--indigo-light);color:var(--indigo-dark);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .2s;">
+          업그레이드
+        </button>
+      </div>
+
+    </div>
+
+    <!-- 현재 구독 정보 -->
+    <div style="margin-top:16px;padding:12px 16px;background:var(--slate);border-radius:var(--radius-sm);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div style="font-size:12px;color:var(--text2);">
+        <span style="font-weight:700;">다음 결제일</span>&nbsp;&nbsp;2025년 08월 18일 &nbsp;·&nbsp; 자동 갱신 중
+      </div>
+      <div style="display:flex;gap:8px;">
+<button onclick="location.href='/mypage/payment'" style="height:32px;padding:0 12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--white);font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;color:var(--text2);transition:all .2s;">💳 결제 수단 변경</button>
+        <button onclick="showToast('구독이 취소됐습니다. 기간 만료 시 무료 플랜으로 전환됩니다.','err')" style="height:32px;padding:0 12px;border-radius:var(--radius-sm);border:1.5px solid var(--red-light);background:var(--white);font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;color:var(--red);transition:all .2s;">구독 취소</button>
+      </div>
+    </div>
+  </div>
+</div>
+        
+        <div class="danger-zone">
+          <div class="danger-header"><span>⚠️ 위험 구역</span></div>
+          <div class="danger-body">
+            <div class="danger-item">
+              <div class="danger-item-text">
+                <strong>회원 탈퇴</strong>
+                <span>탈퇴 시 모든 가게 정보, 성과 데이터, 콘텐츠 설정이 즉시 삭제됩니다.<br/>이 작업은 되돌릴 수 없습니다.</span>
+              </div>
+              <button class="btn-danger" onclick="openModal('withdraw')">탈퇴하기</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ 3-2 가게 정보 ════ -->
+      <div class="section" id="sec-shop">
+        <div class="section-header">
+          <h2>가게 <em>정보</em></h2>
+          <p>가게 기본 정보와 영업시간을 수정합니다.</p>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🖼️ 대표 이미지</div>
+            <span style="font-size:11px;color:var(--text3);">콘텐츠 생성 시 참고 이미지로 활용됩니다</span>
+          </div>
+          <div class="card-body">
+            <div class="img-upload-wrap">
+              <div>
+                <div class="img-preview" id="imgPreview" onclick="document.getElementById('imgFile').click()">
+                  <img id="previewImg" /><span id="previewPlaceholder">🏪</span>
+                </div>
+              </div>
+              <div class="img-upload-info">
+                <strong style="font-size:13px;font-weight:700;display:block;margin-bottom:6px;">가게 대표 이미지 등록</strong>
+                권장 크기: 800 × 800px 이상<br/>지원 형식: JPG, PNG, WEBP<br/>
+                <span>최대 파일 크기: 5MB</span>
+                <div class="img-upload-btns">
+                  <button class="btn-inline" style="height:36px;font-size:12px;" onclick="document.getElementById('imgFile').click()">📁 이미지 선택</button>
+                  <button class="btn-outline" style="height:36px;font-size:12px;" onclick="removeImg()">삭제</button>
+                </div>
+              </div>
+            </div>
+            <input type="file" id="imgFile" accept="image/*" onchange="previewImage(event)" />
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🏷️ 기본 정보</div></div>
+          <div class="card-body">
+            <div class="grid-2">
+              <div class="field">
+                <label>가게명 <span class="req">*</span></label>
+                <input type="text" id="s_name" value="소셜다모아 카페" />
+              </div>
+              <div class="field">
+                <label>업종 <span class="req">*</span></label>
+                <select id="s_category">
+                  <option selected>카페 / 베이커리</option>
+                  <option>음식점 / 식당</option><option>미용 / 뷰티</option><option>패션 / 의류</option>
+                  <option>숙박 / 펜션</option><option>피트니스 / 스포츠</option><option>교육 / 학원</option>
+                  <option>의료 / 병원</option><option>소매 / 쇼핑</option><option>기타</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>전화번호 <span class="req">*</span></label>
+              <input type="tel" id="s_tel" value="02-1234-5678" maxlength="13" oninput="formatTel(this)" />
+            </div>
+            <div class="field" style="margin-bottom:0;">
+              <label>주소 <span class="req">*</span></label>
+              <div class="input-row" style="margin-bottom:8px;">
+                <input type="text" id="s_addr" value="서울특별시 강남구 테헤란로 123" readonly style="background:var(--slate);" />
+                <button class="btn-inline" onclick="mockAddr()">주소 변경</button>
+              </div>
+              <input type="text" id="s_addr_detail" value="4층 401호" placeholder="상세 주소" />
+            </div>
+            <div class="save-row">
+              <button class="btn-save" onclick="saveSection(this,'가게 기본 정보')"><span class="spin"></span>저장하기</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">⏰ 영업시간</div></div>
+          <div class="card-body">
+            <div class="hours-grid" id="shopHours"></div>
+            <div class="save-row">
+              <button class="btn-save" onclick="saveSection(this,'영업시간')"><span class="spin"></span>저장하기</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ 3-3 콘텐츠 개인 설정 ════ -->
+      <div class="section" id="sec-content">
+        <div class="section-header">
+          <h2>콘텐츠 <em>개인 설정</em></h2>
+          <p>콘텐츠 생성 시 적용되는 스타일·양식 기본값을 설정합니다.</p>
+        </div>
+        <div class="default-mode-wrap">
+          <div>
+            <strong style="font-size:13px;font-weight:700;display:block;">✦ 기본값 사용 모드</strong>
+            <span style="font-size:11px;color:var(--text3);">켜기: 아래 설정이 매번 자동 적용&nbsp;&nbsp;|&nbsp;&nbsp;끄기: 콘텐츠 생성 시마다 직접 선택</span>
+          </div>
+          <button class="toggle-switch on" id="cDefaultToggle" onclick="this.classList.toggle('on');showToast(this.classList.contains('on')?'✦ 기본값 모드 켜짐':'✦ 기본값 모드 꺼짐','ok')"></button>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📝 인트로 · 아웃트로 양식</div></div>
+          <div class="card-body">
+            <div class="grid-2">
+              <div>
+                <div class="template-box">
+                  <div class="template-box-header">✨ 인트로</div>
+                  <textarea id="c_intro">안녕하세요 😊 소셜다모아 카페입니다!
+오늘도 맛있는 소식 전해드려요 ☕</textarea>
+                </div>
+              </div>
+              <div>
+                <div class="template-box">
+                  <div class="template-box-header">🎯 아웃트로</div>
+                  <textarea id="c_outro">방문해 주셔서 감사합니다 🙏
+다음에도 좋은 소식으로 찾아올게요!</textarea>
+                </div>
+              </div>
+            </div>
+            <div class="save-row" style="margin-top:14px;">
+              <button class="btn-save" onclick="saveSection(this,'인트로·아웃트로')"><span class="spin"></span>저장하기</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">⚙️ 스타일 설정</div></div>
+          <div class="card-body">
+
+            <!-- 말투 -->
+            <div style="margin-bottom:22px;">
+              <label style="margin-bottom:10px;">✍️ 말투 스타일</label>
+              <div class="tone-grid" id="cToneGrid">
+                <div class="tone-card selected" data-tone="default" onclick="selectTone(this)"><div class="tc-emoji">💬</div><div class="tc-name">기본</div></div>
+                <div class="tone-card" data-tone="friendly" onclick="selectTone(this)"><div class="tc-emoji">😊</div><div class="tc-name">친근</div></div>
+                <div class="tone-card" data-tone="clean" onclick="selectTone(this)"><div class="tc-emoji">✨</div><div class="tc-name">깔끔</div></div>
+                <div class="tone-card" data-tone="formal" onclick="selectTone(this)"><div class="tc-emoji">🎁</div><div class="tc-name">격식</div></div>
+                <div class="tone-card" data-tone="trendy" onclick="selectTone(this)"><div class="tc-emoji">🔥</div><div class="tc-name">트렌디</div></div>
+              </div>
+            </div>
+
+            <!-- 이모지 -->
+            <div style="margin-bottom:22px;">
+              <label style="margin-bottom:10px;">😀 이모지 사용량</label>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" id="cEmojiGrid">
+                <div class="tone-card" data-emoji="few" onclick="selectEmoji(this)"><div class="tc-emoji">🙂</div><div class="tc-name">적게</div></div>
+                <div class="tone-card selected" data-emoji="moderate" onclick="selectEmoji(this)"><div class="tc-emoji">😄</div><div class="tc-name">적당히</div></div>
+                <div class="tone-card" data-emoji="many" onclick="selectEmoji(this)"><div class="tc-emoji">🎉</div><div class="tc-name">많이</div></div>
+              </div>
+            </div>
+
+            <!-- 글자수 슬라이더 -->
+            <div>
+              <label style="margin-bottom:4px;">📏 글자 수 제한</label>
+              <div class="slider-wrap" style="margin-top:10px;">
+                <input type="range" id="c_charlen" min="100" max="500" step="50" value="500"
+                  oninput="document.getElementById('cCharLenVal').textContent=this.value+'자'" />
+                <div class="slider-val" id="cCharLenVal">500자</div>
+              </div>
+              <div class="slider-label-row">
+                <span>100자</span><span>200자</span><span>300자</span><span>400자</span><span>500자</span>
+              </div>
+            </div>
+
+            <div class="save-row">
+              <button class="btn-save" onclick="saveSection(this,'스타일 설정')"><span class="spin"></span>저장하기</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📢 게시할 SNS 기본 선택값</div></div>
+          <div class="card-body">
+            <div class="info-notice">
+              <span>💡</span>
+              <span>콘텐츠 생성 후 게시 화면에서 기본으로 선택될 채널을 설정합니다. 게시 시 직접 변경도 가능합니다.</span>
+            </div>
+            <div class="sns-check-grid">
+              <div class="sns-check-item checked" onclick="toggleSnsDefault(this)">
+                <div class="sns-icon" style="background:linear-gradient(135deg,#f09433,#dc2743,#bc1888);">📸</div>
+                <span class="sns-label">Instagram</span><div class="check-circle on"></div>
+              </div>
+              <div class="sns-check-item checked" onclick="toggleSnsDefault(this)">
+                <div class="sns-icon" style="background:#03C75A;">📝</div>
+                <span class="sns-label">네이버 블로그</span><div class="check-circle on"></div>
+              </div>
+              <div class="sns-check-item" onclick="toggleSnsDefault(this)">
+                <div class="sns-icon" style="background:#F9C000;">💬</div>
+                <span class="sns-label">카카오채널</span><div class="check-circle"></div>
+              </div>
+              <div class="sns-check-item" onclick="toggleSnsDefault(this)">
+                <div class="sns-icon" style="background:#1877F2;">👍</div>
+                <span class="sns-label">Facebook</span><div class="check-circle"></div>
+              </div>
+            </div>
+            <div class="save-row">
+              <button class="btn-save" onclick="saveSection(this,'SNS 기본 선택값')"><span class="spin"></span>저장하기</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- ════ 콘텐츠 히스토리 ════ -->
+<div class="section" id="sec-history">
+  <div class="section-header">
+    <h2>콘텐츠 <em>히스토리</em></h2>
+    <p>발행된 콘텐츠 내역을 확인합니다.</p>
+  </div>
+
+  <!-- 필터 바 -->
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+    <select id="historyPlatformFilter" style="height:36px;padding:0 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:'Noto Sans KR',sans-serif;color:var(--text2);background:var(--white);outline:none;cursor:pointer;">
+      <option value="all">전체 플랫폼</option>
+      <option value="instagram">📷 Instagram</option>
+      <option value="facebook">📘 Facebook</option>
+      <option value="naver">🟢 네이버 블로그</option>
+      <option value="kakao">💛 카카오 채널</option>
+      <option value="community">💬 커뮤니티</option>
+    </select>
+    <input type="month" id="historyMonthFilter"
+      style="height:36px;padding:0 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:'Noto Sans KR',sans-serif;color:var(--text2);background:var(--white);outline:none;"
+      value="2025-07"/>
+  </div>
+
+  <!-- 리스트 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">📂 발행 내역</div>
+      <span style="font-size:11px;color:var(--text3);">총 <strong id="historyCount">5</strong>건</span>
+    </div>
+    <div class="card-body" style="padding:0;">
+  <div id="historyList"></div>  <!-- ← 이것만 남기고 내부 아이템 전부 삭제 -->
+</div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+      <!-- ════ 3-4 SNS 계정 연동 관리 ════ -->
+      <div class="section" id="sec-sns">
+        <div class="section-header">
+          <h2>SNS 계정 <em>연동 관리</em></h2>
+          <p>연동된 계정 상태를 확인하고 추가·재연동·해제할 수 있습니다.</p>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🔗 연동 계정 목록</div>
+            <span style="font-size:11px;color:var(--text3);">마지막 동기화: 방금 전</span>
+          </div>
+          <div class="card-body">
+            <div class="sns-account-list" id="snsAccountList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ 3-5 문의 내역 ════ -->
+      <div class="section" id="sec-inquiry">
+        <div class="section-header">
+          <h2>문의 <em>내역</em></h2>
+          <p>접수한 문의 목록과 답변 상태를 확인합니다.</p>
+        </div>
+        <div class="inquiry-summary">
+          <div class="inq-stat"><div class="inq-stat-label">전체 문의</div><div class="inq-stat-val c-total" id="statTotal">0</div></div>
+          <div class="inq-stat"><div class="inq-stat-label">답변 대기</div><div class="inq-stat-val c-pending" id="statPending">0</div></div>
+          <div class="inq-stat"><div class="inq-stat-label">답변 완료</div><div class="inq-stat-val c-done" id="statDone">0</div></div>
+        </div>
+        
+        <div class="inq-filter-row">
+          <div class="inq-filter-tabs">
+            <button class="inq-tab active" onclick="filterInq('all',this)">전체</button>
+            <button class="inq-tab" onclick="filterInq('pending',this)">답변 대기</button>
+            <button class="inq-tab" onclick="filterInq('answered',this)">답변 완료</button>
+          </div>
+          <div class="inq-search-wrap">
+            <input class="inq-search" type="text" placeholder="🔍  문의 검색" oninput="searchInq(this.value)" />
+            <button class="btn-new-inq" onclick="toggleInqForm(true)">문의하기</button>
+          </div>
+        </div>
+        <div class="inq-list" id="inqList"></div>
+        <div class="inq-pagination" id="inqPagination"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 회원 탈퇴 Modal -->
+  <div class="modal-overlay" id="modalWithdraw">
+    <div class="modal">
+      <div class="modal-header"><span>⚠️ 회원 탈퇴 확인</span><button class="modal-close" onclick="closeModal('withdraw')">✕</button></div>
+      <div class="modal-body">
+        <div style="background:var(--red-light);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:18px;">
+          <strong style="font-size:13px;color:var(--red);display:block;margin-bottom:4px;">탈퇴 전 반드시 확인하세요</strong>
+          <span style="font-size:12px;color:#B91C1C;line-height:1.7;">• 모든 가게 정보 및 성과 데이터가 즉시 삭제됩니다<br/>• 연동된 SNS 계정 정보가 모두 해제됩니다<br/>• 이 작업은 되돌릴 수 없습니다</span>
+        </div>
+        <div class="field" style="margin-bottom:12px;">
+          <label>확인을 위해 비밀번호를 입력해 주세요</label>
+          <input type="password" id="withdrawPw" placeholder="현재 비밀번호" />
+        </div>
+        <div>
+          <label style="margin-bottom:6px;">탈퇴 사유 (선택)</label>
+          <select id="withdrawReason">
+            <option value="">선택하지 않음</option>
+            <option>서비스를 잘 사용하지 않아서</option><option>원하는 기능이 없어서</option>
+            <option>다른 서비스로 이동</option><option>개인정보 보호를 위해</option><option>기타</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('withdraw')">취소</button>
+        <button class="btn-danger" onclick="doWithdraw()">탈퇴 확정</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 계정 해제 Modal -->
+  <div class="modal-overlay" id="modalDisconnect">
+    <div class="modal">
+      <div class="modal-header"><span id="disconnectTitle">계정 연동 해제</span><button class="modal-close" onclick="closeModal('disconnect')">✕</button></div>
+      <div class="modal-body"><p style="font-size:13px;color:var(--text2);line-height:1.7;" id="disconnectMsg"></p></div>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="closeModal('disconnect')">취소</button>
+        <button class="btn-danger" onclick="doDisconnect()">연동 해제</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+  /* ═══ Nav ═══ */
+  
+  // 페이지 로드 시 ?sec=xxx 파라미터 확인
+window.addEventListener('DOMContentLoaded', () => {
+  const sec = new URLSearchParams(window.location.search).get('sec');
+  if (sec) {
+    const el = document.querySelector(`.snav-item[data-sec="${sec}"]`);
+    if (el) showSection(sec, el);
+  }
+});
+  
+  function showSection(id, el) {
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.snav-item').forEach(i=>i.classList.remove('active'));
+    document.getElementById('sec-'+id).classList.add('active');
+    el.classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  /* ═══ Hours ═══ */
+  const DAYS=['월','화','수','목','금','토','일'];
+  const HOURS_DEFAULTS=[
+    {o:'09:00',c:'22:00',on:true},{o:'09:00',c:'22:00',on:true},
+    {o:'09:00',c:'22:00',on:true},{o:'09:00',c:'22:00',on:true},
+    {o:'09:00',c:'22:00',on:true},{o:'10:00',c:'22:00',on:true},
+    {o:'10:00',c:'21:00',on:false},
+  ];
+  function buildHours(cid) {
+    document.getElementById(cid).innerHTML=DAYS.map((d,i)=>{
+      const h=HOURS_DEFAULTS[i];
+      return `<div class="hours-row ${h.on?'on-row':'closed'}" id="hr${cid}${i}">
+        <span class="day-name">${d}</span>
+        <button class="day-toggle ${h.on?'on':''}" onclick="toggleHourDay('${cid}',${i},this)"></button>
+        <div class="hours-time"><input type="time" value="${h.o}"/><span class="hours-sep">~</span><input type="time" value="${h.c}"/></div>
+        <span class="day-closed">휴무</span>
+      </div>`;
+    }).join('');
+  }
+  function toggleHourDay(cid,i,btn){
+    const row=document.getElementById('hr'+cid+i);
+    const on=btn.classList.toggle('on');
+    row.classList.toggle('closed',!on);row.classList.toggle('on-row',on);
+    row.querySelector('.hours-time').style.display=on?'flex':'none';
+    row.querySelector('.day-closed').style.display=on?'none':'block';
+  }
+  buildHours('shopHours');
+
+  /* ═══ Phone verify ═══ */
+  let mTimerIv=null,mTimerSec=180;
+  function sendVerify(){
+    document.getElementById('verifyCodeField').style.display='block';
+    startMTimer();showToast('📱 인증번호를 발송했습니다.','ok');
+  }
+  function startMTimer(){
+    clearInterval(mTimerIv);mTimerSec=180;
+    const el=document.getElementById('mTimer');
+    const tick=()=>{
+      const m=String(Math.floor(mTimerSec/60)).padStart(2,'0');
+      const s=String(mTimerSec%60).padStart(2,'0');
+      el.textContent=m+':'+s;
+      if(--mTimerSec<0){clearInterval(mTimerIv);el.textContent='만료';el.style.color='var(--red)';}
+    };
+    tick();mTimerIv=setInterval(tick,1000);
+  }
+  function verifyCode(){
+    const v=document.getElementById('m_code').value;
+    const msg=document.getElementById('codeMsg');
+    if(v==='123456'){
+      clearInterval(mTimerIv);document.getElementById('mTimer').textContent='';
+      document.getElementById('m_code').classList.add('success');
+      msg.className='field-msg ok';msg.textContent='✓ 휴대폰 번호가 인증되었습니다.';
+      showToast('✅ 인증 완료','ok');
+    }else{
+      document.getElementById('m_code').classList.add('error');
+      msg.className='field-msg err';msg.textContent='인증번호가 일치하지 않습니다.';
+    }
+  }
+
+  /* ═══ Password ═══ */
+  function getPwScore(v){
+    if(!v)return 0;let s=0;
+    if(v.length>=8)s++;if(/[A-Za-z]/.test(v))s++;if(/\d/.test(v))s++;if(/[^A-Za-z0-9]/.test(v))s++;
+    return Math.max(1,s);
+  }
+  function onNewPw(input){
+    const v=input.value,sc=getPwScore(v);
+    const labels=['','취약','보통','양호','강함'];
+    const colors=['','#EF4444','#F59E0B','#14B8A6','#22C55E'];
+    [1,2,3,4].forEach(i=>{const b=document.getElementById('pwb'+i);b.className='pw-bar';if(i<=sc)b.classList.add('s'+sc);});
+    const lbl=document.getElementById('pwLbl');
+    lbl.textContent=v?'강도: '+labels[sc]:'';lbl.style.color=colors[sc];
+    onPwConfirm();
+  }
+  function onPwConfirm(){
+    const n=document.getElementById('pw_new').value;
+    const c=document.getElementById('pw_confirm').value;
+    const msg=document.getElementById('pwConfirmMsg');
+    const inp=document.getElementById('pw_confirm');
+    inp.classList.remove('success','error');
+    if(!c){msg.textContent='';msg.className='field-msg info';return;}
+    if(n===c){inp.classList.add('success');msg.className='field-msg ok';msg.textContent='✓ 비밀번호가 일치합니다.';}
+    else{inp.classList.add('error');msg.className='field-msg err';msg.textContent='비밀번호가 일치하지 않습니다.';}
+  }
+  async function changePw(btn){
+    const cur=document.getElementById('pw_cur').value;
+    const nw=document.getElementById('pw_new').value;
+    const cf=document.getElementById('pw_confirm').value;
+    if(!cur||!nw||!cf){showToast('⚠️ 모든 항목을 입력해 주세요.','err');return;}
+    if(nw!==cf){showToast('⚠️ 새 비밀번호가 일치하지 않습니다.','err');return;}
+    if(getPwScore(nw)<2){showToast('⚠️ 비밀번호 강도가 너무 낮습니다.','err');return;}
+    await loadingBtn(btn);
+    showToast('🔒 비밀번호가 변경됐습니다.','ok');
+    ['pw_cur','pw_new','pw_confirm'].forEach(id=>document.getElementById(id).value='');
+    [1,2,3,4].forEach(i=>document.getElementById('pwb'+i).className='pw-bar');
+    document.getElementById('pwLbl').textContent='';
+    document.getElementById('pwConfirmMsg').textContent='';
+  }
+
+  /* ═══ Image ═══ */
+  function previewImage(e){
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=ev=>{const img=document.getElementById('previewImg');img.src=ev.target.result;img.style.display='block';document.getElementById('previewPlaceholder').style.display='none';};
+    r.readAsDataURL(f);showToast('🖼️ 이미지가 등록됐습니다.','ok');
+  }
+  function removeImg(){
+    document.getElementById('previewImg').style.display='none';
+    document.getElementById('previewPlaceholder').style.display='block';
+    document.getElementById('imgFile').value='';
+    showToast('이미지가 삭제됐습니다.','');
+  }
+
+  /* ═══ Address ═══ */
+  function mockAddr(){
+    const s=['서울특별시 강남구 테헤란로 456','서울특별시 마포구 합정동 123','서울특별시 서초구 반포대로 78'];
+    document.getElementById('s_addr').value=s[Math.floor(Math.random()*s.length)];
+    showToast('📍 주소가 변경됐습니다.','ok');
+  }
+
+  /* ═══ Tel ═══ */
+  function formatTel(inp){
+    let v=inp.value.replace(/\D/g,'');
+    if(v.length<=2)inp.value=v;
+    else if(v.length<=5)inp.value=v.slice(0,2)+'-'+v.slice(2);
+    else if(v.length<=9)inp.value=v.slice(0,2)+'-'+v.slice(2,5)+'-'+v.slice(5);
+    else inp.value=v.slice(0,2)+'-'+v.slice(2,6)+'-'+v.slice(6,10);
+  }
+
+  /* ═══ Style selectors ═══ */
+  function selectTone(el){
+    document.querySelectorAll('#cToneGrid .tone-card').forEach(c=>c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+  function selectEmoji(el){
+    document.querySelectorAll('#cEmojiGrid .tone-card').forEach(c=>c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+  function toggleSnsDefault(el){
+    const on=el.classList.toggle('checked');
+    el.querySelector('.check-circle').classList.toggle('on',on);
+  }
+
+  /* ═══ SNS accounts ═══ */
+  const SNS_ACCOUNTS=[
+    {id:'instagram',name:'Instagram',icon:'📸',bg:'linear-gradient(135deg,#f09433,#dc2743,#bc1888)',handle:'@sodamoa_cafe',status:'ok'},
+    {id:'naver',name:'네이버 블로그',icon:'📝',bg:'#03C75A',handle:'sodamoa_blog',status:'expired'},
+    {id:'kakao',name:'카카오채널',icon:'💬',bg:'#F9C000',handle:'@소셜다모아카페',status:'ok'},
+    {id:'facebook',name:'Facebook',icon:'👍',bg:'#1877F2',handle:'',status:'none'},
+  ];
+  let disconnectTarget=null;
+
+  function buildSnsAccounts(){
+    document.getElementById('snsAccountList').innerHTML=SNS_ACCOUNTS.map(a=>{
+      const sm={ok:{label:'정상 연동',cls:'ok',dot:'var(--green)'},expired:{label:'토큰 만료',cls:'expired',dot:'var(--yellow)'},none:{label:'미연동',cls:'none',dot:'var(--border2)'}};
+      const st=sm[a.status];
+      const actions=a.status==='none'
+        ?`<button class="btn-sns connect" onclick="doConnect('${a.id}')">+ 연동하기</button>`
+        :a.status==='expired'
+        ?`<button class="btn-sns reconnect" onclick="doReconnect('${a.id}')">재연동</button><button class="btn-sns disconnect" onclick="openDisconnect('${a.id}','${a.name}')">해제</button>`
+        :`<button class="btn-sns" onclick="doReconnect('${a.id}')">재연동</button><button class="btn-sns disconnect" onclick="openDisconnect('${a.id}','${a.name}')">해제</button>`;
+      return `<div class="sns-account-item" id="sai_${a.id}">
+        <div class="sns-acc-icon" style="background:${a.bg};">${a.icon}</div>
+        <div class="sns-acc-info">
+          <div class="sns-acc-name">${a.name}</div>
+          <div class="sns-acc-id">${a.handle||'미연동'}</div>
+          <div class="sns-acc-status ${st.cls}"><span class="sns-dot" style="background:${st.dot};"></span>${st.label}</div>
+        </div>
+        <div class="sns-acc-actions">${actions}</div>
+      </div>`;
+    }).join('');
+  }
+  buildSnsAccounts();
+
+  async function doConnect(id){
+    const acc=SNS_ACCOUNTS.find(a=>a.id===id);
+    showToast(`🔗 ${acc.name} 연동을 시작합니다...`,'ok');
+    await new Promise(r=>setTimeout(r,1400));
+    acc.status='ok';acc.handle='@new_account';buildSnsAccounts();showToast(`✅ ${acc.name} 연동이 완료됐습니다!`,'ok');
+  }
+  async function doReconnect(id){
+    const acc=SNS_ACCOUNTS.find(a=>a.id===id);
+    showToast(`🔄 ${acc.name} 재연동 중...`,'ok');
+    await new Promise(r=>setTimeout(r,1200));
+    acc.status='ok';buildSnsAccounts();showToast(`✅ ${acc.name} 재연동 완료!`,'ok');
+  }
+  function openDisconnect(id,name){
+    disconnectTarget=id;
+    document.getElementById('disconnectTitle').textContent=`${name} 연동 해제`;
+    document.getElementById('disconnectMsg').innerHTML=`<strong>${name}</strong> 계정 연동을 해제하시겠습니까?<br/><br/>해제 후에는 해당 채널의 성과 데이터 수집이 중단되며,<br/>콘텐츠 자동 게시 기능도 사용할 수 없습니다.`;
+    openModal('disconnect');
+  }
+  function doDisconnect(){
+    if(!disconnectTarget)return;
+    const acc=SNS_ACCOUNTS.find(a=>a.id===disconnectTarget);
+    acc.status='none';acc.handle='';buildSnsAccounts();closeModal('disconnect');
+    showToast(`🔓 ${acc.name} 연동이 해제됐습니다.`,'');disconnectTarget=null;
+  }
+
+  /* ═══ 문의 내역 ═══ */
+  const INQUIRIES=[
+    {id:1,status:'answered',cat:'결제·환불',title:'프리미엄 플랜 결제 후 기능이 활성화되지 않습니다',date:'2025-07-12',
+     content:'어제 프리미엄 플랜을 결제했는데 콘텐츠 생성 기능의 무제한 옵션이 여전히 잠겨 있습니다.',
+     answer:'확인 결과 캐시 동기화 지연이 발생했습니다. 로그아웃 후 재로그인 하시면 즉시 정상 이용 가능합니다.',answeredAt:'2025-07-12'},
+    {id:2,status:'pending',cat:'SNS 연동',title:'네이버 블로그 재연동 시 오류 코드 403 발생',date:'2025-07-18',
+     content:'네이버 블로그를 재연동하려고 했는데 "403 Forbidden" 오류가 발생합니다. 다른 브라우저에서도 동일합니다.',answer:null},
+    {id:3,status:'answered',cat:'기능 오류',title:'인스타그램 자동 게시 시간이 설정과 다르게 발행됩니다',date:'2025-07-05',
+     content:'오후 6시로 예약 설정했는데 오전 6시에 발행됐습니다. 같은 현상이 3번 반복됐습니다.',
+     answer:'서버 타임존 변환 버그로 확인되었습니다. 7월 8일 패치로 수정 완료되었습니다.',answeredAt:'2025-07-08'},
+    {id:4,status:'pending',cat:'요금제·플랜',title:'팀 플랜으로 업그레이드 시 기존 데이터 이관 방법 문의',date:'2025-07-20',
+     content:'현재 프리미엄 개인 플랜 사용 중인데 팀 플랜으로 전환할 예정입니다. 기존 설정이 이관되는지 확인하고 싶습니다.',answer:null},
+  ];
+  let inqFilter='all',inqSearch='';
+
+  function updateInqStats(){
+    document.getElementById('statTotal').textContent=INQUIRIES.length;
+    document.getElementById('statPending').textContent=INQUIRIES.filter(i=>i.status==='pending').length;
+    document.getElementById('statDone').textContent=INQUIRIES.filter(i=>i.status==='answered').length;
+    const b=document.getElementById('inqBadge');
+    if(b)b.textContent=INQUIRIES.filter(i=>i.status==='pending').length;
+  }
+  function getFiltered(){
+    return INQUIRIES.filter(i=>{
+      const mf=inqFilter==='all'||i.status===inqFilter;
+      const ms=!inqSearch||i.title.includes(inqSearch)||i.content.includes(inqSearch)||i.cat.includes(inqSearch);
+      return mf&&ms;
+    });
+  }
+  function renderInqList(){
+    const list=getFiltered();
+    const c=document.getElementById('inqList');
+    if(!list.length){
+      c.innerHTML=`<div class="inq-empty"><div class="inq-empty-icon">📭</div><div class="inq-empty-title">문의 내역이 없습니다</div><div class="inq-empty-desc">조건에 맞는 문의를 찾을 수 없습니다.<br/>새 문의를 접수해 보세요.</div></div>`;
+      document.getElementById('inqPagination').innerHTML='';return;
+    }
+    const lbl={pending:'답변 대기',answered:'답변 완료',closed:'종료'};
+    c.innerHTML=list.map(inq=>{
+      const ab=inq.answer
+        ?`<div class="inq-body-a"><div class="inq-body-a-label">🛎️ 고객지원팀 답변 <span style="font-size:10px;font-weight:500;color:var(--text3);margin-left:6px;">${inq.answeredAt||''}</span></div><div class="inq-body-a-text">${inq.answer}</div></div>`
+        :`<div class="inq-pending-msg"><div class="inq-pending-inner">⏳ 고객지원팀이 검토 중입니다. 보통 1~2 영업일 이내에 답변드립니다.</div></div>`;
+      return `<div class="inq-item" id="inqi_${inq.id}" onclick="toggleInqItem(${inq.id})">
+        <div class="inq-item-head">
+          <span class="inq-badge ${inq.status}">${lbl[inq.status]}</span>
+          <span class="inq-cat-badge">${inq.cat}</span>
+          <span class="inq-title">${inq.title}</span>
+          <span class="inq-date">${inq.date}</span>
+          <span class="inq-expand-icon">▼</span>
+        </div>
+        <div class="inq-body">
+          <div class="inq-body-q"><div class="inq-body-q-label">📝 문의 내용</div><div class="inq-body-q-text">${inq.content}</div></div>
+          ${ab}
+        </div>
+      </div>`;
+    }).join('');
+    document.getElementById('inqPagination').innerHTML=`<button class="inq-page-btn">‹</button><button class="inq-page-btn active">1</button><button class="inq-page-btn">›</button>`;
+  }
+  function toggleInqItem(id){document.getElementById('inqi_'+id).classList.toggle('open');}
+  function filterInq(f,btn){inqFilter=f;document.querySelectorAll('.inq-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderInqList();}
+  function searchInq(v){inqSearch=v.trim();renderInqList();}
+  function toggleInqForm(show){
+  if(show){ showToast('문의 페이지로 이동합니다.','ok'); return; }
+  const w=document.getElementById('inqFormWrap');w.classList.toggle('show',false);
+}
+  function selInqCat(el){document.querySelectorAll('#inqCatSelect .inq-cat-opt').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');}
+  async function submitInquiry(btn){
+    const title=document.getElementById('inqTitle').value.trim();
+    const content=document.getElementById('inqContent').value.trim();
+    const cat=document.querySelector('#inqCatSelect .selected')?.textContent?.trim()||'기타';
+    if(!title){showToast('⚠️ 제목을 입력해 주세요.','err');return;}
+    if(content.length<10){showToast('⚠️ 내용을 10자 이상 입력해 주세요.','err');return;}
+    await loadingBtn(btn);
+    INQUIRIES.unshift({id:Date.now(),status:'pending',cat,title,date:new Date().toISOString().slice(0,10),content,answer:null});
+    updateInqStats();renderInqList();toggleInqForm(false);
+    document.getElementById('inqTitle').value='';document.getElementById('inqContent').value='';
+    document.getElementById('inqTitleCount').textContent='0/80';document.getElementById('inqContentCount').textContent='0/1000';
+    document.querySelectorAll('#inqCatSelect .inq-cat-opt').forEach((o,i)=>o.classList.toggle('selected',i===0));
+    showToast('✅ 문의가 접수됐습니다. 1~2 영업일 내 답변드립니다.','ok');
+  }
+
+  /* ═══ Modal ═══ */
+  function openModal(id){document.getElementById('modal'+id.charAt(0).toUpperCase()+id.slice(1)).classList.add('show');}
+  function closeModal(id){document.getElementById('modal'+id.charAt(0).toUpperCase()+id.slice(1)).classList.remove('show');}
+  function doWithdraw(){
+    const pw=document.getElementById('withdrawPw').value;
+    if(!pw){showToast('⚠️ 비밀번호를 입력해 주세요.','err');return;}
+    closeModal('withdraw');showToast('탈퇴가 처리됐습니다. 이용해 주셔서 감사합니다.','');
+  }
+  document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');}));
+
+  /* ═══ Generic save ═══ */
+  function loadingBtn(btn){
+    return new Promise(res=>{btn.classList.add('loading');setTimeout(()=>{btn.classList.remove('loading');res();},1000);});
+  }
+  async function saveSection(btn,label){await loadingBtn(btn);showToast(`✅ ${label}이(가) 저장됐습니다.`,'ok');}
+
+  /* ═══ Toast ═══ */
+  function showToast(msg,cls){
+    const t=document.getElementById('toast');
+    t.textContent=msg;t.className='toast show '+(cls||'');
+    clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2800);
+  }
+
+  /* ═══ Init ═══ */
+  updateInqStats();
+  renderInqList();
+    
+    /* ═══ Plan ═══ */
+let currentBilling = 'monthly';
+const PRICES = {
+  pro:  { monthly: '₩29,000', annual: '₩23,200' },
+  biz:  { monthly: '₩79,000', annual: '₩63,200' },
+};
+function setBilling(type) {
+  currentBilling = type;
+  const mBtn = document.getElementById('billingMonthly');
+  const aBtn = document.getElementById('billingAnnual');
+  const active = 'background:linear-gradient(135deg,var(--teal),var(--indigo));color:#fff;box-shadow:0 2px 6px rgba(20,184,166,.3);';
+  const inactive = 'background:transparent;color:var(--text3);';
+  mBtn.style.cssText = mBtn.style.cssText.replace(/background[^;]+;|color[^;]+;|box-shadow[^;]+;/g,'') + (type==='monthly' ? active : inactive);
+  aBtn.style.cssText = aBtn.style.cssText.replace(/background[^;]+;|color[^;]+;|box-shadow[^;]+;/g,'') + (type==='annual'  ? active : inactive);
+  document.getElementById('proPrice').innerHTML = PRICES.pro[type] + '<span style="font-size:12px;font-weight:500;color:var(--text3);">/월</span>';
+  document.getElementById('bizPrice').innerHTML = PRICES.biz[type] + '<span style="font-size:12px;font-weight:500;color:var(--text3);">/월</span>';
+  showToast(type==='annual' ? '🎉 연간 결제 시 20% 할인 적용됩니다.' : '월간 결제로 변경됐습니다.', 'ok');
+}
+function selectPlan(plan) {
+  if(plan==='pro') return; // 현재 플랜
+  if(plan==='free') { showToast('무료 플랜으로 다운그레이드하려면 구독을 취소해 주세요.','err'); return; }
+  showToast('비즈니스 플랜 업그레이드 페이지로 이동합니다.','ok');
+}
+
+/* ═══ 콘텐츠 히스토리 필터 ═══ */
+const HISTORY_DATA = [
+  { date:'2025-07-20', platform:'instagram', label:'Instagram',   icon:'📷', text:'여름 신메뉴 출시 🍹 시원한 피치 에이드와 함께하는 여름',  url:'#' },
+  { date:'2025-07-18', platform:'naver',     label:'네이버 블로그', icon:'🟢', text:'소셜다모아 카페의 여름 인테리어 변경 소식을 전합니다',      url:'#' },
+  { date:'2025-07-15', platform:'kakao',     label:'카카오 채널',   icon:'💛', text:'7월 멤버십 이벤트 안내 — 적립 2배 혜택 놓치지 마세요!',   url:'#' },
+  { date:'2025-07-10', platform:'facebook',  label:'Facebook',     icon:'📘', text:'카페 오픈 3주년 기념 감사 이벤트를 진행합니다 🎉',         url:'#' },
+  { date:'2025-07-05', platform:'community', label:'커뮤니티',      icon:'💬', text:'강남 카페 추천 — 소셜다모아 카페를 소개합니다',             url:'#' },
+  { date:'2025-02-14', platform:'instagram', label:'Instagram',   icon:'📷', text:'발렌타인데이 특별 음료 이벤트 안내',                        url:'#' },
+  { date:'2025-02-08', platform:'naver',     label:'네이버 블로그', icon:'🟢', text:'2월 신메뉴 소개 — 딸기 라떼 시즌 시작',                    url:'#' },
+];
+
+const PLATFORM_STYLES = {
+  instagram: { bg:'#FDF2F8', border:'#FBCFE8', color:'#E1306C' },
+  facebook:  { bg:'#EFF6FF', border:'#BFDBFE', color:'#1877F2' },
+  naver:     { bg:'#F0FFF4', border:'#86EFAC', color:'#03C75A' },
+  kakao:     { bg:'#FFFBEB', border:'#FDE68A', color:'#92400E' },
+  community: { bg:'#EEF2FF', border:'#C7D2FE', color:'#4F46E5' },
+};
+
+function renderHistory() {
+  const platform = document.getElementById('historyPlatformFilter').value;
+  const month    = document.getElementById('historyMonthFilter').value; // e.g. "2025-07"
+
+  const filtered = HISTORY_DATA.filter(h => {
+    const matchPlatform = platform === 'all' || h.platform === platform;
+    const matchMonth    = !month || h.date.startsWith(month);
+    return matchPlatform && matchMonth;
+  });
+
+  document.getElementById('historyCount').textContent = filtered.length;
+
+  const list = document.getElementById('historyList');
+  if (!filtered.length) {
+    list.innerHTML = `<div style="text-align:center;padding:40px;font-size:13px;color:var(--text3);">해당 조건의 콘텐츠가 없습니다.</div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map((h, i) => {
+    const s = PLATFORM_STYLES[h.platform];
+    const isLast = i === filtered.length - 1;
+    return `
+      <div style="display:flex;align-items:center;gap:14px;padding:14px 22px;${isLast ? '' : 'border-bottom:1px solid var(--border);'}transition:background .15s;"
+           onmouseover="this.style.background='var(--slate)'" onmouseout="this.style.background=''">
+        <div style="font-size:11px;color:var(--text3);white-space:nowrap;min-width:86px;">${h.date.replace(/-/g,'.')}</div>
+        <div style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;background:${s.bg};border:1px solid ${s.border};font-size:11px;font-weight:700;color:${s.color};white-space:nowrap;">
+          ${h.icon} ${h.label}
+        </div>
+        <div style="flex:1;font-size:13px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.text}</div>
+        <a href="${h.url}" target="_blank"
+           style="flex-shrink:0;height:30px;padding:0 12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--white);font-size:11px;font-weight:700;color:var(--text2);text-decoration:none;display:inline-flex;align-items:center;gap:4px;"
+           onmouseover="this.style.borderColor='var(--teal)';this.style.color='var(--teal-dark)'"
+           onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">원문 보기 ↗</a>
+      </div>`;
+  }).join('');
+}
+
+// 필터 변경 시 자동 적용
+document.getElementById('historyPlatformFilter').addEventListener('change', renderHistory);
+document.getElementById('historyMonthFilter').addEventListener('change', renderHistory);
+
+// 초기 렌더
+renderHistory();
+  </script>
+</body>
+</html>

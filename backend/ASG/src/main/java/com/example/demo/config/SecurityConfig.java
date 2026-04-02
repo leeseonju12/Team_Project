@@ -43,7 +43,7 @@ public class SecurityConfig {
 	        // 2. 요청 권한 설정
 	        .authorizeHttpRequests(auth -> auth
 	            // 공통 허용 경로
-	            .requestMatchers("/", "/login_test", "/logout-success", "/error", "/landing-page").permitAll()
+	            .requestMatchers("/", "/login_test", "/logout-success", "/error", "/landing-page", "/mypage").permitAll()
 	            .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
 	            .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
 	            
@@ -57,7 +57,7 @@ public class SecurityConfig {
 	            .requestMatchers("/signup", "/signup/complete").permitAll()
 	            
 	            // 인증이 필요한 페이지들
-	            .requestMatchers("/signup_form", "/dashboard", "/admin/**", "/mypage/**").authenticated()
+	            .requestMatchers("/signup_form", "/dashboard", "/admin/**").authenticated()
 	            
 	            // 나머지는 일단 모두 허용 (개발 편의를 위해 permitAll 사용하거나, 보안을 위해 authenticated 사용)
 	            .anyRequest().permitAll() 
