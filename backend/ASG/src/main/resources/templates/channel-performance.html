@@ -1147,6 +1147,19 @@
     .mm-tip-name { font-weight: 700; font-size: 13px; margin-bottom: 2px; }
     .mm-tip-plt { font-size: 10px; opacity: .65; margin-bottom: 4px; letter-spacing: .05em; text-transform: uppercase; }
     .mm-tip-desc { font-size: 11px; opacity: .87; }
+    
+        /* 모든 이탤릭 강조 텍스트에 숨구멍(패딩)을 미리 뚫어놓기 */
+em {
+  font-style: italic;
+  padding-right: 0.15em; /* inline 상태에서도 오른쪽 패딩은 먹힙니다! */
+  margin-right: -0.15em;
+  
+  /* 그라데이션 잘림 방지를 위한 추가 팁 
+  줄바꿈이 일어날 때, 잘린 각각의 조각들에 테두리나 패딩을 똑같이 다시 적용*/
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+    
   </style>
 </head>
 

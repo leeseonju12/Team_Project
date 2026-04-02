@@ -629,6 +629,18 @@
       .btn { font-size: 13px; height: 46px; }
       .social-btn { font-size: 12px; }
     }
+    
+        /* 모든 이탤릭 강조 텍스트에 숨구멍(패딩)을 미리 뚫어놓기 */
+em {
+  font-style: italic;
+  padding-right: 0.15em; /* inline 상태에서도 오른쪽 패딩은 먹힙니다! */
+  margin-right: -0.15em;
+  
+  /* 그라데이션 잘림 방지를 위한 추가 팁 
+  줄바꿈이 일어날 때, 잘린 각각의 조각들에 테두리나 패딩을 똑같이 다시 적용*/
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
   </style>
 </head>
 
@@ -647,7 +659,7 @@
       <span class="logo-name">소셜다모아</span>
     </a>
     <div class="header-right">
-      <a href="login.html" class="header-login-link">이미 계정이 있으신가요? <strong>로그인 →</strong></a>
+      <a href="login_test" class="header-login-link">이미 계정이 있으신가요? <strong>로그인 →</strong></a>
     </div>
   </header>
 

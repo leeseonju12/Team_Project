@@ -30,8 +30,3 @@ spring:
         - optional:classpath*:schema.sql
       data-locations: classpath:db/channel-performance-data.sql
       continue-on-error: true
-  thymeleaf:
-    servlet:
-      produce-partial-output-while-processing: false
-
-# api 키 삭제
