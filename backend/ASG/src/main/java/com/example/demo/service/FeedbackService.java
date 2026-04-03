@@ -1,13 +1,18 @@
 package com.example.demo.service; // 본인 패키지명으로 변경하세요
 
 import com.example.demo.domain.CustomerFeedback;
+import com.example.demo.domain.enums.AiStatus;
 import com.example.demo.domain.enums.FeedbackStatus;
+import com.example.demo.domain.enums.FeedbackType;
 import com.example.demo.domain.enums.Platform;
 import com.example.demo.dto.FeedbackDto;
 import com.example.demo.repository.FeedbackRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -19,6 +24,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.client.RestTemplate;
 
+import jakarta.persistence.criteria.Predicate;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -169,6 +177,65 @@ public class FeedbackService {
         feedback.sendReply(); // 엔티티 비즈니스 로직 호출 (상태 변경 및 sentReply 세팅)
 
         return convertToDto(feedback);
+    }
+    
+    @Transactional(readOnly = true)
+    public Page<CustomerFeedback> getFeedbacks(String sourceGroup, String sourceValue, String statusValue, String keyword, Pageable pageable) {
+        Specification<CustomerFeedback> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // 1. 리뷰/댓글 출처 필터
+            if ("review_group".equals(sourceGroup)) {
+                predicates.add(cb.equal(root.get("type"), FeedbackType.REVIEW));
+                if (sourceValue != null && !sourceValue.isEmpty() && !sourceValue.equals("review_all")) {
+                    String plat = sourceValue.split("_")[0].toUpperCase();
+                    predicates.add(cb.equal(root.get("platform"), Platform.valueOf(plat)));
+                }
+            } else if ("comment_group".equals(sourceGroup)) {
+                predicates.add(cb.equal(root.get("type"), FeedbackType.COMMENT));
+                if (sourceValue != null && !sourceValue.isEmpty() && !sourceValue.equals("comment_all")) {
+                    String plat = sourceValue.split("_")[0].toUpperCase();
+                    predicates.add(cb.equal(root.get("platform"), Platform.valueOf(plat)));
+                }
+            }
+
+            // 2. 처리 상태 필터
+            if ("answer_done".equals(statusValue)) {
+                predicates.add(cb.or(
+                    cb.equal(root.get("aiStatus"), AiStatus.DONE),
+                    cb.equal(root.get("status"), FeedbackStatus.COMPLETED)
+                ));
+            } else if ("answer_needed".equals(statusValue)) {
+                predicates.add(cb.and(
+                    cb.notEqual(root.get("aiStatus"), AiStatus.DONE),
+                    cb.notEqual(root.get("status"), FeedbackStatus.COMPLETED)
+                ));
+            }
+
+            // 3. 검색어 필터
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String pattern = "%" + keyword.toLowerCase() + "%";
+                predicates.add(cb.or(
+                    cb.like(cb.lower(root.get("authorName")), pattern),
+                    cb.like(cb.lower(root.get("originalText")), pattern),
+                    cb.like(cb.lower(root.get("aiReply")), pattern)
+                ));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return feedbackRepository.findAll(spec, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Long> getKpiSummary() {
+        long total = feedbackRepository.count();
+        long completed = feedbackRepository.countByStatus(FeedbackStatus.COMPLETED);
+        long ready = feedbackRepository.countByAiStatusAndStatusNot(AiStatus.DONE, FeedbackStatus.COMPLETED);
+        long need = total - completed - ready;
+        
+        return Map.of("total", total, "need", need, "ready", ready, "completed", completed);
     }
 
 }

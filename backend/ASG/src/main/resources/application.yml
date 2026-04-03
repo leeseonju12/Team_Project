@@ -28,9 +28,12 @@ spring:
         - optional:classpath*:db/gather-full-init.sql
         - optional:classpath*:gather-full-init.sql
         - optional:classpath*:schema.sql
-      data-locations: classpath:db/channel-performance-data.sql
+      data-locations:
+        -classpath:db/channel-performance-data.sql
+        - classpath:db/upload-guide-data.sql
       continue-on-error: true
   thymeleaf:
+    cache: false
     servlet:
       produce-partial-output-while-processing: false
 

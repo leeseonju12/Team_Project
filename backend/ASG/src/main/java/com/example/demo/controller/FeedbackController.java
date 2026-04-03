@@ -12,6 +12,10 @@ import com.example.demo.domain.enums.Platform;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -54,10 +58,20 @@ public class FeedbackController {
 //    }
     
     @GetMapping
-    public List<FeedbackDto> getFeedbacks() {
-        return feedbackService.getAllFeedbacks().stream()
-                .map(FeedbackDto::fromEntity)
-                .collect(Collectors.toList());
+    public Page<FeedbackDto> getFeedbacks(
+            @RequestParam(required = false) String sourceGroup,
+            @RequestParam(required = false) String sourceValue,
+            @RequestParam(required = false) String statusValue,
+            @RequestParam(required = false) String keyword,
+            @PageableDefault(size = 5, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        
+        return feedbackService.getFeedbacks(sourceGroup, sourceValue, statusValue, keyword, pageable)
+                .map(FeedbackDto::fromEntity);
+    }
+
+    @GetMapping("/kpi")
+    public Map<String, Long> getKpi() {
+        return feedbackService.getKpiSummary();
     }
 
     @PutMapping("/{id}/ai-reply")
