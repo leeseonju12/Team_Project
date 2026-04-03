@@ -1410,7 +1410,10 @@ em {
         </div>
       </div>
     </div>
-
+    
+    <th:block th:replace="~{fragments/ai-strategy :: aiStrategy}"></th:block>
+	
+	<!-- AI 전략 추천 시작 
     <div class="section-label">✦ AI 다음 액션 추천</div>
     <div class="ai-section">
       <div class="ai-card">
@@ -1444,6 +1447,8 @@ em {
       </div>
     </div>
   </div>
+  
+   AI 전략 추천 끝 -->
 
   <div class="toast" id="toast"></div>
   <div id="mm-tip">
@@ -2189,6 +2194,7 @@ function renderNaverSummary(summary, period) {
       };
     }
 
+    /* AI 전략 추천 시작
     function getTopPlatforms(scores, count = 3) {
       return PLATFORMS.map((p, i) => ({ ...p, score: scores[i] })).sort((a, b) => b.score - a.score).slice(0, count);
     }
@@ -2308,6 +2314,7 @@ function renderNaverSummary(summary, period) {
       t.className = 'toast show ' + (type || '');
       setTimeout(() => t.classList.remove('show'), 3200);
     }
+     AI 전략 추천 끝 */
 
     /* ── KEYWORD MINDMAP ── */
 

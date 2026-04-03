@@ -45,7 +45,7 @@ public class CsrfCookieConfig {
 
         http
             // 이 FilterChain이 처리할 경로 (content-generate-new 템플릿 포함)
-            .securityMatcher("/content/**")
+            .securityMatcher("/content/**", "/api/gemini/**")
 
             .csrf(csrf -> csrf
                 // 세션 대신 쿠키 기반 CSRF 토큰 저장소 사용
