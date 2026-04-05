@@ -1,3 +1,5 @@
+## 실행 문제 없음
+
 DROP DATABASE IF EXISTS gather;
 CREATE DATABASE gather;
 USE gather;
@@ -262,6 +264,49 @@ CREATE TABLE `strategy_recommendation_item` (
   `created_at` DATETIME NOT NULL COMMENT '생성일시'
 );
 
+-- ① user 테이블
+CREATE TABLE `user` (
+  `user_id`     BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '유저 ID',
+  `email`       VARCHAR(255) UNIQUE NOT NULL      COMMENT '이메일',
+  `name`        VARCHAR(100)                      COMMENT '이름',
+  `phone`       VARCHAR(20)                       COMMENT '휴대폰 번호',
+  `provider`    VARCHAR(30) NOT NULL              COMMENT 'kakao / naver / google',
+  `provider_id` VARCHAR(255) NOT NULL             COMMENT 'OAuth 제공자 고유 ID',
+  `role`        VARCHAR(20) NOT NULL DEFAULT 'USER' COMMENT 'USER / ADMIN',
+  `created_at`  DATETIME NOT NULL                 COMMENT '생성일시',
+  `updated_at`  DATETIME NOT NULL                 COMMENT '수정일시',
+  `deleted_at`  DATETIME                          COMMENT '탈퇴일시 (soft delete)'
+);
+
+-- ② content_settings 테이블
+CREATE TABLE `content_settings` (
+  `settings_id`       BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '설정 ID',
+  `brand_id`          BIGINT UNIQUE NOT NULL            COMMENT '브랜드 ID',
+  `tone`              VARCHAR(30)                       COMMENT 'formal / casual / friendly / witty',
+  `emoji_level`       VARCHAR(20)                       COMMENT 'none / low / medium / high',
+  `char_limit`        INT                               COMMENT '기본 글자수',
+  `intro_template`    TEXT                              COMMENT '인트로 양식',
+  `outro_template`    TEXT                              COMMENT '아웃트로 양식',
+  `default_platforms` VARCHAR(255)                      COMMENT '기본 SNS JSON ex) ["instagram","kakao"]',
+  `created_at`        DATETIME NOT NULL                 COMMENT '생성일시',
+  `updated_at`        DATETIME NOT NULL                 COMMENT '수정일시'
+);
+
+-- ③ brand 컬럼 추가
+ALTER TABLE `brand`
+  ADD COLUMN `user_id`           BIGINT       COMMENT '유저 ID'        AFTER `brand_id`,
+  ADD COLUMN `address`           VARCHAR(255) COMMENT '도로명 주소'     AFTER `location_name`,
+  ADD COLUMN `phone`             VARCHAR(20)  COMMENT '가게 전화번호'   AFTER `address`,
+  ADD COLUMN `profile_image_url` VARCHAR(500) COMMENT '대표 이미지 URL' AFTER `phone`;
+
+-- ④ brand_platform 컬럼 추가
+ALTER TABLE `brand_platform`
+  ADD COLUMN `access_token`     TEXT        COMMENT 'SNS 액세스 토큰' AFTER `is_connected`,
+  ADD COLUMN `refresh_token`    TEXT        COMMENT 'SNS 리프레시 토큰' AFTER `access_token`,
+  ADD COLUMN `token_expires_at` DATETIME    COMMENT '토큰 만료 일시'   AFTER `refresh_token`,
+  ADD COLUMN `token_status`     VARCHAR(20) COMMENT 'ACTIVE / EXPIRED' DEFAULT 'ACTIVE' AFTER `token_expires_at`;
+
+
 CREATE UNIQUE INDEX `brand_platform_index_0` ON `brand_platform` (`brand_id`, `platform_id`);
 
 CREATE INDEX `brand_platform_index_1` ON `brand_platform` (`brand_id`);
@@ -412,30 +457,40 @@ ALTER TABLE `strategy_recommendation_item` ADD FOREIGN KEY (`strategy_id`) REFER
 
 ALTER TABLE `strategy_recommendation_item` ADD FOREIGN KEY (`platform_id`) REFERENCES `platform` (`platform_id`);
 
+-- ⑤ FK 추가
+ALTER TABLE `brand`
+  ADD FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`);
+
+ALTER TABLE `content_settings`
+  ADD FOREIGN KEY (`brand_id`) REFERENCES `brand` (`brand_id`);
+
+-- ⑥ content_settings seed (기존 brand_id=1)
+SET FOREIGN_KEY_CHECKS = 0;
+
+INSERT IGNORE INTO `content_settings`
+  (brand_id, tone, emoji_level, char_limit, intro_template, outro_template, default_platforms, created_at, updated_at)
+VALUES
+  (1, 'friendly', 'low', 300, '', '', '["instagram","kakao"]', NOW(), NOW());
+
+SET FOREIGN_KEY_CHECKS = 1;
+
 -- seed data
 INSERT IGNORE INTO brand (brand_id, brand_name, service_name, industry_type, location_name, created_at, updated_at) VALUES
-(1, '어글리베이커리',  'uglybakery',              'CAFE_BAKERY',          '서울 마포구 망원동',       NOW(), NOW()),
-(2, '을밀대',          'eulmildae',               'FOOD_RESTAURANT',      '서울 마포구 염리동',       NOW(), NOW()),
-(3, '와드',            'wad_seongsu',             'BEAUTY_SALON',         '서울 성동구 서울숲',       NOW(), NOW()),
-(4, '선데이클로즈',    'sundayclothes_official',  'FASHION_CLOTHING',     '서울 중구 을지로',         NOW(), NOW()),
-(5, '산방댁게스트하우스', 'sanbangdaek',          'ACCOMMODATION_PENSION','제주 서귀포시 안덕면',     NOW(), NOW()),
-(6, '필라테스서울',    'pilatesseoul',            'FITNESS_SPORTS',       '서울 송파구 잠실',         NOW(), NOW()),
-(7, '잉글리쉬가든',   'englishgarden_21',         'EDUCATION_ACADEMY',    '강원 춘천시',              NOW(), NOW()),
-(8, '서울SY피부과',   'sydermatology',            'MEDICAL_HOSPITAL',     '서울 강남구 압구정',       NOW(), NOW()),
-(9, '인덱스숍',       'indexshop.kr',             'RETAIL_SHOPPING',      '서울 광진구 건대',         NOW(), NOW()),
-(10,'플로애',         '_floae_',                  'ETC',                  '서울 강남구 역삼동',       NOW(), NOW());
-
-INSERT IGNORE INTO brand (brand_id, brand_name, service_name, industry_type, location_name, created_at, updated_at) VALUES
-(11, '몽심',          '_creative_mongsim',      'CAFE_BAKERY',          '대전 대덕구 한남대',        NOW(), NOW()),
-(12, '연돈',          'yeondon2014',            'FOOD_RESTAURANT',      '제주 서귀포시',             NOW(), NOW()),
-(13, '헤어웰',        'hairwell',               'BEAUTY_SALON',         '전북 전주시 서신동',        NOW(), NOW()),
-(14, '너겟',          'nugget_min',             'FASHION_CLOTHING',     '강원 강릉시 원대로',        NOW(), NOW()),
-(15, '한옥스테이소화', 'tdesign71',             'ACCOMMODATION_PENSION','경북 경주시 황남동',        NOW(), NOW()),
-(16, '요가베르데',    'yoga__verde',             'FITNESS_SPORTS',       '제주 제주시 비자림',        NOW(), NOW()),
-(17, '씨앤씨미술학원', 'suwan_cnc',             'EDUCATION_ACADEMY',    '광주 광산구 수완지구',      NOW(), NOW()),
-(18, '서산연세치과',  'seosan_yonsei',           'MEDICAL_HOSPITAL',     '충남 서산시',               NOW(), NOW()),
-(19, '책방오늘',      'onulbooks_in_seochon',   'RETAIL_SHOPPING',      '서울 종로구 서촌',          NOW(), NOW()),
-(20, '삶은감자',      'life_gamja',             'ETC',                  '강원 강릉시 임영로',        NOW(), NOW());
+(1, '오월의종', '오월의종 베이커리', 'CAFE', '합정점', NOW(), NOW()),
+(2, '런던베이글뮤지엄', '런던베이글뮤지엄', 'CAFE', '안국점', NOW(), NOW()),
+(3, '을밀대', '을밀대 평양냉면', 'RESTAURANT', '마포점', NOW(), NOW()),
+(4, '광화문국밥', '광화문국밥', 'RESTAURANT', '광화문점', NOW(), NOW()),
+(5, '살롱 드 헤어', '살롱 드 헤어', 'HAIR_SALON', '연남점', NOW(), NOW()),
+(6, '문네일살롱', '문네일살롱', 'NAIL', '명동점', NOW(), NOW()),
+(7, '레이어드라운지', '레이어드라운지 편집샵', 'CLOTHING', '가로수길점', NOW(), NOW()),
+(8, '달고나게스트하우스', '달고나게스트하우스', 'PENSION', '북촌점', NOW(), NOW()),
+(9, '버핏그라운드', '버핏그라운드 피트니스', 'FITNESS', '광화문점', NOW(), NOW()),
+(10, '그라운드요가', '그라운드요가 스튜디오', 'PILATES_YOGA', '이태원점', NOW(), NOW()),
+(11, '와이모어크래프트', '와이모어 크래프트연구소', 'EDUCATION', '성수점', NOW(), NOW()),
+(12, '서촌한옥한의원', '서촌 한옥한의원', 'MEDICAL', '서촌점', NOW(), NOW()),
+(13, '유어마인드', '유어마인드 독립서점', 'RETAIL', '서촌점', NOW(), NOW()),
+(14, '더북소사이어티', '더북소사이어티', 'RETAIL', '한남점', NOW(), NOW()),
+(15, '론드리프로젝트', '론드리프로젝트 세탁카페', 'ETC', '해방촌점', NOW(), NOW());
 
 INSERT IGNORE INTO platform (platform_id, platform_code, platform_name, brand_color, is_active)
 VALUES
