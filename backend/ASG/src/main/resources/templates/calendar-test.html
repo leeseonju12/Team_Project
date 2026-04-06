@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>All Social Gather - Calendar</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <style>
+    /* 드래그 앤 드롭을 위한 커서 및 레이어 설정 */
+    .fc-event { 
+      cursor: grab !important; 
+      transition: all 0.2s; 
+      border-left-width: 5px !important; 
+      margin-bottom: 10px; 
+      z-index: 100;
+    }
+    .fc-event:active { cursor: grabbing !important; }
+    .fc-event:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+    
+    /* 드래그 중인 그림자 스타일 */
+    .fc-event-dragging { opacity: 0.8; z-index: 9999 !important; }
+    
+    /* 모달 스타일 */
+    #preview-modal { display: none; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); }
+    
+    .fc-event-main, 
+	.fc-event-title, 
+	.fc-event-time {
+  		color: #000000 !important;
+}
+  </style>
+</head>
+
+<body class="bg-slate-50 p-6 min-h-screen">
+
+  <div class="max-w-7xl mx-auto flex gap-6">
+    <div id="external-events" class="w-80 bg-white p-5 rounded-2xl shadow-sm border border-slate-200 h-[850px] flex flex-col">
+      <div class="mb-6">
+        <h3 class="text-lg font-bold text-slate-800">미배정 포스트</h3>
+        <p id="pending-count-text" class="text-xs text-blue-500 font-bold" 
+           th:text="|${#lists.size(pendingPosts)} 건의 대기중인 포스트|">0 건의 대기중인 포스트</p>
+      </div>
+
+      <div id="pending-list" class="flex-1 overflow-y-auto pr-1">
+        <div th:each="post : ${pendingPosts}" 
+             class="fc-event p-3 rounded-r-lg shadow-sm border border-slate-200 bg-white"
+             th:style="|border-left-color: ${post.borderColor}; background-color: ${post.platform == 'INSTAGRAM' ? '#FFF5F7' : (post.platform == 'FACEBOOK' ? '#F0F7FF' : (post.platform == 'BLOG' ? '#F2FAF0' : (post.platform == 'KAKAO' ? '#FFFDEB' : '#F9FAFB'))) }|"
+             th:data-id="${post.id}"
+             th:data-title="${post.title}"
+             th:data-color="${post.borderColor}"
+             th:data-content="${post.content}"
+             th:data-platform="${post.platform}">
+          
+          <div class="text-[10px] font-bold mb-1" th:style="|color: ${post.borderColor}|" th:text="${post.platform}">PLATFORM</div>
+          <p class="text-sm font-semibold text-slate-800 truncate" th:text="${post.title}">Post Title</p>
+        </div>
+        
+        <div th:if="${#lists.isEmpty(pendingPosts)}" class="text-center py-10 text-slate-400 text-sm">
+          모든 포스트가 배정되었습니다.
+        </div>
+      </div>
+    </div>
+
+    <div class="flex-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+      <div id="calendar"></div>
+    </div>
+  </div>
+
+  <div id="preview-modal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
+      <div id="modal-header" class="p-4 text-white flex justify-between items-center">
+        <span id="modal-platform-name" class="font-bold text-xs tracking-widest uppercase">PREVIEW</span>
+        <button onclick="closeModal()" class="text-white hover:opacity-50">✕</button>
+      </div>
+      <div class="p-6">
+        <h2 id="modal-title" class="text-xl font-bold text-slate-900 leading-tight mb-4"></h2>
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 min-h-[180px]">
+          <p id="modal-body" class="text-sm text-slate-700 whitespace-pre-wrap"></p>
+        </div>
+        <div class="mt-6">
+           <button onclick="copyContent()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-sm hover:bg-slate-700 transition-colors">본문 내용 복사</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+      const containerEl = document.getElementById('pending-list');
+      const calendarEl = document.getElementById('calendar');
+
+      // 1. 외부 드래그 요소 활성화 (Draggable)
+      new FullCalendar.Draggable(containerEl, {
+        itemSelector: '.fc-event',
+        eventData: function(eventEl) {
+          // dataset을 사용하여 JSON 파싱 에러를 원천 차단
+          return {
+            id: eventEl.dataset.id,
+            title: eventEl.dataset.title,
+            borderColor: eventEl.dataset.color,
+            backgroundColor: eventEl.style.backgroundColor,
+            create: true, // 외부 드롭 시 이벤트 객체 생성을 보장 (중요)
+            extendedProps: {
+              content: eventEl.dataset.content,
+              platform: eventEl.dataset.platform
+            }
+          };
+        }
+      });
+
+      // 2. 캘린더 초기화
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'ko',
+        editable: true,
+        droppable: true,
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek'
+        },
+        
+        // 중요: 컨트롤러에서 설정한 API 경로와 일치해야 함
+        events: '/api/posts/events',
+
+        // 리스트에서 캘린더로 이동 시 DB 업데이트
+        eventReceive: function(info) {
+          updateSchedule(info.event.id, info.event.startStr, info.draggedEl);
+        },
+
+        // 캘린더 내에서 날짜 변경 시 DB 업데이트
+        eventDrop: function(info) {
+          updateSchedule(info.event.id, info.event.startStr);
+        },
+
+        // 이벤트 클릭 시 상세 모달 열기
+        eventClick: function(info) {
+          openModal(info.event);
+        }
+      });
+
+      calendar.render();
+
+      // 서버 DB 업데이트 함수 (Fetch API)
+      function updateSchedule(postId, date, elToRemove = null) {
+        fetch('/api/posts/schedule', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            postId: postId,
+            scheduledDate: date
+          })
+        }).then(res => {
+          if(res.ok) {
+            console.log("일정 업데이트 성공");
+            if(elToRemove) {
+              elToRemove.remove();
+              updateCountUI();
+            }
+          } else {
+            console.error("서버 응답 오류:", res.status);
+            alert('저장 중 오류가 발생했습니다.');
+            location.reload();
+          }
+        }).catch(err => {
+          console.error("네트워크 에러:", err);
+        });
+      }
+
+      function updateCountUI() {
+        const count = containerEl.querySelectorAll('.fc-event').length;
+        document.getElementById('pending-count-text').innerText = `${count} 건의 대기중인 포스트`;
+      }
+    });
+
+    // --- 모달 관련 유틸리티 함수 ---
+    function openModal(event) {
+      const modal = document.getElementById('preview-modal');
+      const props = event.extendedProps;
+      
+      document.getElementById('modal-title').innerText = event.title;
+      document.getElementById('modal-body').innerText = props.content || '내용이 없습니다.';
+      document.getElementById('modal-platform-name').innerText = props.platform || 'UNKNOWN';
+      document.getElementById('modal-header').style.backgroundColor = event.borderColor || '#334155';
+      
+      modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('preview-modal').style.display = 'none';
+    }
+
+    function copyContent() {
+      const content = document.getElementById('modal-body').innerText;
+      navigator.clipboard.writeText(content).then(() => {
+        alert('본문 내용이 복사되었습니다.');
+      });
+    }
+  </script>
+</body>
+</html>
