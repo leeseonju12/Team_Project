@@ -975,6 +975,19 @@ background: rgba(255, 255, 255, 0.98);
         flex-direction: column;
       }
     }
+    
+        /* 모든 이탤릭 강조 텍스트에 숨구멍(패딩)을 미리 뚫어놓기 */
+em {
+  font-style: italic;
+  padding-right: 0.15em; /* inline 상태에서도 오른쪽 패딩은 먹힙니다! */
+  margin-right: -0.15em;
+  
+  /* 그라데이션 잘림 방지를 위한 추가 팁 
+  줄바꿈이 일어날 때, 잘린 각각의 조각들에 테두리나 패딩을 똑같이 다시 적용*/
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+    
   </style>
 </head>
 

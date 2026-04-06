@@ -1147,6 +1147,24 @@
     .mm-tip-name { font-weight: 700; font-size: 13px; margin-bottom: 2px; }
     .mm-tip-plt { font-size: 10px; opacity: .65; margin-bottom: 4px; letter-spacing: .05em; text-transform: uppercase; }
     .mm-tip-desc { font-size: 11px; opacity: .87; }
+    
+        /* 모든 이탤릭 강조 텍스트에 숨구멍(패딩)을 미리 뚫어놓기 */
+em {
+  font-style: italic;
+  padding-right: 0.15em; /* inline 상태에서도 오른쪽 패딩은 먹힙니다! */
+  margin-right: -0.15em;
+  
+  /* 그라데이션 잘림 방지를 위한 추가 팁 
+  줄바꿈이 일어날 때, 잘린 각각의 조각들에 테두리나 패딩을 똑같이 다시 적용*/
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.header-user{display:flex;align-items:center;gap:10px;}
+    .user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--indigo));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;cursor:pointer;}
+    .user-name{font-size:13px;font-weight:600;color:var(--text2);}
+
+    
   </style>
 </head>
 
@@ -1154,18 +1172,20 @@
   <div class="top-stripe"></div>
 
   <header>
-    <div class="logo">
+    <a href="#" class="logo">
       <div class="logo-mark">S</div>
       <span class="logo-name">소셜다모아</span>
       <span class="logo-sub">All Social Gather</span>
-    </div>
+    </a>
     <nav class="nav-pills">
-      <a href="#" class="nav-pill">✏️ 콘텐츠 생성</a>
-      <a href="/feedback" class="nav-pill">💬 리뷰 관리</a>
-      <a href="/channel-performance" class="nav-pill active">📊 성과 분석</a>
+      <a href="content-generate" class="nav-pill">✏️ 콘텐츠 생성</a>
+      <a href="feedback.html" class="nav-pill">💬 리뷰 관리</a>
+      <a href="channel-performance" class="nav-pill active">📊 성과 분석</a>
+      <a href="mypage" class="nav-pill">👤 마이페이지</a>
     </nav>
-    <div class="status-pill">
-      <span class="status-dot"></span>데이터 동기화 완료
+    <div class="header-user">
+      <div class="user-avatar">김</div>
+      <span class="user-name">김소셜 님</span>
     </div>
   </header>
 

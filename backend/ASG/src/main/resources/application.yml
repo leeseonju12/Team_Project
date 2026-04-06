@@ -32,6 +32,7 @@ spring:
         - classpath:db/channel-performance-data.sql
         - classpath:db/upload-guide-data.sql
       continue-on-error: true
+
   thymeleaf:
     cache: false
     servlet:
