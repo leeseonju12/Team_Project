@@ -386,18 +386,18 @@ em {
             <div class="grid-2">
               <div class="field">
                 <label>이름 (담당자명) <span class="req">*</span></label>
-                <input type="text" id="m_name" value="김소셜" />
+                <input type="text" id="m_name" th:value="${userInfo.name}" />
               </div>
               <div class="field">
                 <label>이메일</label>
-                <input type="email" id="m_email" value="kim@social.com" disabled />
+                <input type="email" id="m_email" th:value="${userInfo.email}" disabled />
                 <div class="field-msg info">소셜 로그인 연동 계정으로 변경이 불가합니다.</div>
               </div>
             </div>
             <div class="field" style="margin-bottom:0;">
               <label>휴대폰 번호 <span class="req">*</span></label>
               <div class="input-row">
-                <input type="tel" id="m_phone" value="010-1234-5678" maxlength="13" oninput="formatTel(this)" />
+                <input type="tel" id="m_phone" th:value="${userInfo.contactPhone}" maxlength="13" oninput="formatTel(this)" />
                 <button class="btn-inline" onclick="sendVerify()">인증번호 발송</button>
               </div>
               <div class="field-msg info" id="phoneVerifyMsg"></div>
@@ -458,81 +458,90 @@ em {
       </div>
 
       <!-- ════ 3-2 가게 정보 ════ -->
-      <div class="section" id="sec-shop">
-        <div class="section-header">
-          <h2>가게 <em>정보</em></h2>
-          <p>가게 기본 정보와 영업시간을 수정합니다.</p>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">🖼️ 대표 이미지</div>
-            <span style="font-size:11px;color:var(--text3);">콘텐츠 생성 시 참고 이미지로 활용됩니다</span>
-          </div>
-          <div class="card-body">
-            <div class="img-upload-wrap">
-              <div>
-                <div class="img-preview" id="imgPreview" onclick="document.getElementById('imgFile').click()">
-                  <img id="previewImg" /><span id="previewPlaceholder">🏪</span>
-                </div>
-              </div>
-              <div class="img-upload-info">
-                <strong style="font-size:13px;font-weight:700;display:block;margin-bottom:6px;">가게 대표 이미지 등록</strong>
-                권장 크기: 800 × 800px 이상<br/>지원 형식: JPG, PNG, WEBP<br/>
-                <span>최대 파일 크기: 5MB</span>
-                <div class="img-upload-btns">
-                  <button class="btn-inline" style="height:36px;font-size:12px;" onclick="document.getElementById('imgFile').click()">📁 이미지 선택</button>
-                  <button class="btn-outline" style="height:36px;font-size:12px;" onclick="removeImg()">삭제</button>
-                </div>
-              </div>
-            </div>
-            <input type="file" id="imgFile" accept="image/*" onchange="previewImage(event)" />
+<div class="section" id="sec-shop">
+  <div class="section-header">
+    <h2>가게 <em>정보</em></h2>
+    <p>가게 기본 정보와 영업시간을 수정합니다.</p>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">🖼️ 대표 이미지</div>
+      <span style="font-size:11px;color:var(--text3);">콘텐츠 생성 시 참고 이미지로 활용됩니다</span>
+    </div>
+    <div class="card-body">
+      <div class="img-upload-wrap">
+        <div>
+          <div class="img-preview" id="imgPreview" onclick="document.getElementById('imgFile').click()">
+            <img id="previewImg" th:src="${brandInfo.profileImageUrl}" th:style="${brandInfo.profileImageUrl != null} ? 'display:block' : 'display:none'" />
+            <span id="previewPlaceholder" th:style="${brandInfo.profileImageUrl != null} ? 'display:none' : ''">🏪</span>
           </div>
         </div>
-        <div class="card">
-          <div class="card-header"><div class="card-title">🏷️ 기본 정보</div></div>
-          <div class="card-body">
-            <div class="grid-2">
-              <div class="field">
-                <label>가게명 <span class="req">*</span></label>
-                <input type="text" id="s_name" value="소셜다모아 카페" />
-              </div>
-              <div class="field">
-                <label>업종 <span class="req">*</span></label>
-                <select id="s_category">
-                  <option selected>카페 / 베이커리</option>
-                  <option>음식점 / 식당</option><option>미용 / 뷰티</option><option>패션 / 의류</option>
-                  <option>숙박 / 펜션</option><option>피트니스 / 스포츠</option><option>교육 / 학원</option>
-                  <option>의료 / 병원</option><option>소매 / 쇼핑</option><option>기타</option>
-                </select>
-              </div>
-            </div>
-            <div class="field">
-              <label>전화번호 <span class="req">*</span></label>
-              <input type="tel" id="s_tel" value="02-1234-5678" maxlength="13" oninput="formatTel(this)" />
-            </div>
-            <div class="field" style="margin-bottom:0;">
-              <label>주소 <span class="req">*</span></label>
-              <div class="input-row" style="margin-bottom:8px;">
-                <input type="text" id="s_addr" value="서울특별시 강남구 테헤란로 123" readonly style="background:var(--slate);" />
-                <button class="btn-inline" onclick="mockAddr()">주소 변경</button>
-              </div>
-              <input type="text" id="s_addr_detail" value="4층 401호" placeholder="상세 주소" />
-            </div>
-            <div class="save-row">
-              <button class="btn-save" onclick="saveSection(this,'가게 기본 정보')"><span class="spin"></span>저장하기</button>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><div class="card-title">⏰ 영업시간</div></div>
-          <div class="card-body">
-            <div class="hours-grid" id="shopHours"></div>
-            <div class="save-row">
-              <button class="btn-save" onclick="saveSection(this,'영업시간')"><span class="spin"></span>저장하기</button>
-            </div>
+        <div class="img-upload-info">
+          <strong style="font-size:13px;font-weight:700;display:block;margin-bottom:6px;">가게 대표 이미지 등록</strong>
+          권장 크기: 800 × 800px 이상<br/>지원 형식: JPG, PNG, WEBP<br/>
+          <span>최대 파일 크기: 5MB</span>
+          <div class="img-upload-btns">
+            <button class="btn-inline" style="height:36px;font-size:12px;" onclick="document.getElementById('imgFile').click()">📁 이미지 선택</button>
+            <button class="btn-outline" style="height:36px;font-size:12px;" onclick="removeImg()">삭제</button>
           </div>
         </div>
       </div>
+      <input type="file" id="imgFile" accept="image/*" onchange="previewImage(event)" />
+    </div>
+  </div>
+
+<div class="card">
+  <div class="card-header"><div class="card-title">🏷️ 기본 정보</div></div>
+  <div class="card-body">
+    <div class="grid-2">
+      <div class="field">
+        <label>가게명 <span class="req">*</span></label>
+        <input type="text" id="s_name" th:value="${brandInfo.brandName}" />
+      </div>
+      <div class="field">
+        <label>업종 <span class="req">*</span></label>
+        <select id="s_category">
+          <option value="CAFE_BAKERY"           th:selected="${brandInfo.industryType == 'CAFE_BAKERY'}">카페 / 베이커리</option>
+          <option value="FOOD_RESTAURANT"       th:selected="${brandInfo.industryType == 'FOOD_RESTAURANT'}">음식점 / 식당</option>
+          <option value="BEAUTY_SALON"          th:selected="${brandInfo.industryType == 'BEAUTY_SALON'}">미용 / 뷰티</option>
+          <option value="FASHION_CLOTHING"      th:selected="${brandInfo.industryType == 'FASHION_CLOTHING'}">패션 / 의류</option>
+          <option value="ACCOMMODATION_PENSION" th:selected="${brandInfo.industryType == 'ACCOMMODATION_PENSION'}">숙박 / 펜션</option>
+          <option value="FITNESS_SPORTS"        th:selected="${brandInfo.industryType == 'FITNESS_SPORTS'}">피트니스 / 스포츠</option>
+          <option value="EDUCATION_ACADEMY"     th:selected="${brandInfo.industryType == 'EDUCATION_ACADEMY'}">교육 / 학원</option>
+          <option value="MEDICAL_HOSPITAL"      th:selected="${brandInfo.industryType == 'MEDICAL_HOSPITAL'}">의료 / 병원</option>
+          <option value="RETAIL_SHOPPING"       th:selected="${brandInfo.industryType == 'RETAIL_SHOPPING'}">소매 / 쇼핑</option>
+          <option value="ETC"                   th:selected="${brandInfo.industryType == 'ETC'}">기타</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>전화번호 <span class="req">*</span></label>
+      <input type="tel" id="s_tel" th:value="${brandInfo.phone}" maxlength="13" oninput="formatTel(this)" />
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label>주소 <span class="req">*</span></label>
+      <div class="input-row" style="margin-bottom:8px;">
+        <input type="text" id="s_addr" th:value="${brandInfo.address}" readonly style="background:var(--slate);" />
+        <button type="button" class="btn-inline" onclick="mockAddr()">주소 변경</button>
+      </div>
+      <input type="text" id="s_addr_detail" th:value="${brandInfo.locationName}" placeholder="상세 주소" />
+    </div>
+    <div class="save-row">
+      <button class="btn-save" onclick="saveBrandInfo(this)"><span class="spin"></span>저장하기</button>
+    </div>
+  </div>
+</div>
+
+  <div class="card">
+  <div class="card-header"><div class="card-title">⏰ 영업시간</div></div>
+  <div class="card-body">
+    <div class="hours-grid" id="shopHours"></div>
+    <div class="save-row">
+      <button class="btn-save" onclick="saveBusinessHours(this)"><span class="spin"></span>저장하기</button>
+    </div>
+  </div>
+</div>
+</div>
 
       <!-- ════ 3-3 콘텐츠 개인 설정 ════ -->
       <div class="section" id="sec-content">
@@ -819,6 +828,39 @@ window.addEventListener('DOMContentLoaded', () => {
     row.querySelector('.day-closed').style.display=on?'none':'block';
   }
   buildHours('shopHours');
+  
+  async function saveBusinessHours(btn) {
+	  await loadingBtn(btn);
+	  const rows = document.querySelectorAll('#shopHours .hours-row');
+	  const hours = Array.from(rows).map((row, i) => {
+	    const isOpen = row.classList.contains('on-row');
+	    const times = row.querySelectorAll('input[type="time"]');
+	    return {
+	      dayOfWeek: i,
+	      isOpen: isOpen,
+	      openTime:  times[0] ? times[0].value : '09:00',
+	      closeTime: times[1] ? times[1].value : '22:00'
+	    };
+	  });
+
+	  try {
+	    const res = await fetch('/mypage/business-hours', {
+	      method: 'POST',
+	      headers: {
+	        'Content-Type': 'application/json',
+	        'X-XSRF-TOKEN': getCsrfToken()
+	      },
+	      body: JSON.stringify(hours)
+	    });
+	    if (res.ok) {
+	      showToast('✅ 영업시간이 저장됐습니다.', 'ok');
+	    } else {
+	      showToast('❌ 저장에 실패했습니다.', 'err');
+	    }
+	  } catch(e) {
+	    showToast('❌ 저장 중 오류가 발생했습니다.', 'err');
+	  }
+	}
 
   /* ═══ Phone verify ═══ */
   let mTimerIv=null,mTimerSec=180;
@@ -1087,6 +1129,41 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   async function saveSection(btn,label){await loadingBtn(btn);showToast(`✅ ${label}이(가) 저장됐습니다.`,'ok');}
 
+//CSRF 토큰 쿠키에서 읽기
+  function getCsrfToken() {
+    const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+
+  // 가게 기본 정보 저장
+  async function saveBrandInfo(btn) {
+    await loadingBtn(btn);
+    const body = new URLSearchParams({
+      brandName:    document.getElementById('s_name').value,
+      industryType: document.getElementById('s_category').value,
+      phone:        document.getElementById('s_tel').value,
+      address:      document.getElementById('s_addr').value,
+      locationName: document.getElementById('s_addr_detail').value,
+    });
+    try {
+      const res = await fetch('/mypage/brand', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-XSRF-TOKEN': getCsrfToken()
+        },
+        body: body.toString()
+      });
+      if (res.ok || res.redirected) {
+        showToast('✅ 가게 기본 정보가 저장됐습니다.', 'ok');
+      } else {
+        showToast('❌ 저장에 실패했습니다.', 'err');
+      }
+    } catch(e) {
+      showToast('❌ 저장 중 오류가 발생했습니다.', 'err');
+    }
+  }
+  
   /* ═══ Toast ═══ */
   function showToast(msg,cls){
     const t=document.getElementById('toast');
@@ -1097,30 +1174,6 @@ window.addEventListener('DOMContentLoaded', () => {
   /* ═══ Init ═══ */
   updateInqStats();
   renderInqList();
-    
-    /* ═══ Plan ═══ */
-let currentBilling = 'monthly';
-const PRICES = {
-  pro:  { monthly: '₩29,000', annual: '₩23,200' },
-  biz:  { monthly: '₩79,000', annual: '₩63,200' },
-};
-function setBilling(type) {
-  currentBilling = type;
-  const mBtn = document.getElementById('billingMonthly');
-  const aBtn = document.getElementById('billingAnnual');
-  const active = 'background:linear-gradient(135deg,var(--teal),var(--indigo));color:#fff;box-shadow:0 2px 6px rgba(20,184,166,.3);';
-  const inactive = 'background:transparent;color:var(--text3);';
-  mBtn.style.cssText = mBtn.style.cssText.replace(/background[^;]+;|color[^;]+;|box-shadow[^;]+;/g,'') + (type==='monthly' ? active : inactive);
-  aBtn.style.cssText = aBtn.style.cssText.replace(/background[^;]+;|color[^;]+;|box-shadow[^;]+;/g,'') + (type==='annual'  ? active : inactive);
-  document.getElementById('proPrice').innerHTML = PRICES.pro[type] + '<span style="font-size:12px;font-weight:500;color:var(--text3);">/월</span>';
-  document.getElementById('bizPrice').innerHTML = PRICES.biz[type] + '<span style="font-size:12px;font-weight:500;color:var(--text3);">/월</span>';
-  showToast(type==='annual' ? '🎉 연간 결제 시 20% 할인 적용됩니다.' : '월간 결제로 변경됐습니다.', 'ok');
-}
-function selectPlan(plan) {
-  if(plan==='pro') return; // 현재 플랜
-  if(plan==='free') { showToast('무료 플랜으로 다운그레이드하려면 구독을 취소해 주세요.','err'); return; }
-  showToast('비즈니스 플랜 업그레이드 페이지로 이동합니다.','ok');
-}
 
 /* ═══ 콘텐츠 히스토리 필터 ═══ */
 const HISTORY_DATA = [

@@ -4,13 +4,20 @@ import com.example.demo.dto.myPage.BrandInfoRequest;
 import com.example.demo.dto.myPage.ContentSettingsRequest;
 import com.example.demo.service.myPage.MypageService;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 @RequestMapping("/mypage")
@@ -25,6 +32,7 @@ public class MypageController {
         model.addAttribute("brandInfo", mypageService.getBrandInfo());
         //model.addAttribute("contentSettings", mypageService.getContentSettings());
         model.addAttribute("snsAccounts", mypageService.getSnsAccounts());
+        model.addAttribute("userInfo", mypageService.getUserInfo());
         return "mypage";
     }
 
@@ -47,5 +55,15 @@ public class MypageController {
     public String disconnectSns(@PathVariable Long brandPlatformId) {
         mypageService.disconnectSns(brandPlatformId);
         return "redirect:/mypage";
+    }
+    
+	// ── 영업 시간대 설정 ───────────────────────────────────────
+    @PostMapping("/business-hours")
+    @ResponseBody
+    public ResponseEntity<String> updateBusinessHours (
+        @RequestBody List<Map<String, Object>> hours) {
+        // 일단 데이터 확인용으로 로그만 출력
+        System.out.println("영업시간 수신: " + hours);
+        return ResponseEntity.ok("ok");
     }
 }
