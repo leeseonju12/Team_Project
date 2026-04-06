@@ -31,11 +31,10 @@ public class CloudinaryService {
      */
     public String uploadImage(MultipartFile file) {
         try {
-            // 1. Cloudinary 서버로 파일 전송 (빈 Map은 기본 옵션을 의미)
-            //Map<?, ?> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
+
             Map<?, ?> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
                     "format", "jpg"));
-            // 2. 인스타그램이 가장 좋아하는 완벽한 직링크(secure_url) 반환
+
             return uploadResult.get("secure_url").toString();
             
         } catch (IOException e) {

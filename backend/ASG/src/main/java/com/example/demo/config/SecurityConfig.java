@@ -37,6 +37,7 @@ public class SecurityConfig {
 	                "/api/feedbacks/**", 
 	                "/api/sns/**", 
 	                "/search-test"
+	                ,"/api/v1/content/generate", "/api/v1/content/**"
 	            )
 	        )
 	        
@@ -47,11 +48,13 @@ public class SecurityConfig {
 	            .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
 	            .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
 	            
-	            // 피드백 및 SNS API 관련 (Illellu님 작업분)
+	            // 피드백 및 SNS API 관련
 	            .requestMatchers("/feedback.html", "/api/feedbacks/**", "/feedback", "/feedbacks").permitAll()
 	            .requestMatchers("/content/**", "/api/sns/**", "/api/analytics/**").permitAll()
 	            .requestMatchers("/search-test", "/imgSearchTest.html", "/pexels_test.html", "/sns/pexels").permitAll()
 	            .requestMatchers("/channel-performance", "/api/channel-performance").permitAll()
+	            .requestMatchers("/api/v1/content/**").permitAll()
+	            
 	            
 	            // 회원가입 관련
 	            .requestMatchers("/signup", "/signup/complete").permitAll()

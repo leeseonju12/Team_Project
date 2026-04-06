@@ -28,4 +28,10 @@ public class PageController {
     public String showPexelsPage() {
         return "pexels"; 
     }
+	
+
+    @GetMapping("/temp")
+    public String index() {
+        return "index"; 
+    }
 }
