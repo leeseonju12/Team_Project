@@ -12,6 +12,8 @@ import com.example.demo.domain.user.entity.BusinessHours;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.dto.SignupRequest;
 import com.example.demo.repository.auth.UserRepository;
+import com.example.demo.entity.myPage.Brand;
+import com.example.demo.repository.myPage.BrandRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,91 +23,86 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class UserService {
 
-    private final UserRepository userRepository;
+	private final UserRepository userRepository;
+	private final BrandRepository brandRepository;
 
-    @Transactional(readOnly = true)
-    public User findById(Long userId) {
-        return userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. id=" + userId));
-    }
+	@Transactional(readOnly = true)
+	public User findById(Long userId) {
+		return userRepository.findById(userId)
+				.orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. id=" + userId));
+	}
 
-    @Transactional(readOnly = true)
-    public boolean isNicknameDuplicated(String nickname) {
-        return userRepository.existsByNickname(nickname);
-    }
+	@Transactional(readOnly = true)
+	public boolean isNicknameDuplicated(String nickname) {
+		return userRepository.existsByNickname(nickname);
+	}
 
-    @Transactional
-    public void completeSignup(Long userId, SignupRequest dto) {
+	@Transactional
+	public void completeSignup(Long userId, SignupRequest dto) {
 
-        // ── 1. 기존 영속 User 조회 ───────────────────────────
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. id=" + userId));
+		// ── 1. 기존 영속 User 조회 ───────────────────────────
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. id=" + userId));
 
-        // ── 2. 기본 정보 + 동의 ───────────────────────────
-        user.completeSignup(
-                dto.getNickname(),
-                dto.getContactPhone(),
-                dto.getCompanyName(),
-                dto.getBusinessCategory(),
-                dto.getPreferredChannel(),
-                dto.getStorePhoneNumber(),
-                
-                dto.isTermsAgreed(), 
-                dto.isPrivacyAgreed(), 
-                dto.isLocationAgreed(),
-                
-                "true".equalsIgnoreCase(dto.getMarketingConsent()) || "1".equals(dto.getMarketingConsent()),
-                "true".equalsIgnoreCase(dto.getEventConsent()) || "1".equals(dto.getEventConsent())
-            );
+		// ── 2. 기본 정보 + 동의 ───────────────────────────
+		user.completeSignup(dto.getNickname(), dto.getContactPhone(), dto.getCompanyName(), dto.getBusinessCategory(),
+				dto.getPreferredChannel(), dto.getStorePhoneNumber(),
 
-        // ── 3. 주소 저장 (수정: 엔티티의 updateAddress(zipNo, roadAddr, detail) 순서에 맞춤) ──
-        user.updateAddress(
-            dto.getRoadAddrPart1(),   // 2. 도로명주소
-            dto.getAddrDetail()       // 3. 상세주소
-        );
+				dto.isTermsAgreed(), dto.isPrivacyAgreed(), dto.isLocationAgreed(),
 
-        // ── 4. 영업시간 저장 ─────────────────────────────────
-        user.replaceBusinessHours(buildBusinessHours(user, dto));
+				"true".equalsIgnoreCase(dto.getMarketingConsent()) || "1".equals(dto.getMarketingConsent()),
+				"true".equalsIgnoreCase(dto.getEventConsent()) || "1".equals(dto.getEventConsent()));
 
-        // ── 5. AI 콘텐츠 설정 저장 ───────────────────────────
-        user.applyContentSettings(buildContentSettings(user, dto));
+		// ── 3. 주소 저장 (수정: 엔티티의 updateAddress(zipNo, roadAddr, detail) 순서에 맞춤) ──
+		user.updateAddress(dto.getRoadAddrPart1(), // 2. 도로명주소
+				dto.getAddrDetail() // 3. 상세주소
+		);
 
-        log.info("회원가입 온보딩 완료 - userId={}, nickname={}", userId, user.getNickname());
-    }
+		// ── 4. 영업시간 저장 ─────────────────────────────────
+		user.replaceBusinessHours(buildBusinessHours(user, dto));
 
-    // ── private helpers (변경 없음) ──────────────────────────────
+		// ── 5. AI 콘텐츠 설정 저장 ───────────────────────────
+		user.applyContentSettings(buildContentSettings(user, dto));
 
-    private List<BusinessHours> buildBusinessHours(User user, SignupRequest dto) {
-        if (dto.getBusinessHours() == null) {
-            log.warn("영업시간 데이터가 전달되지 않았습니다. userId={}", user.getId());
-            return List.of();
-        }
+		// ── 6. 브랜드 생성 ───────────────────────────────────
+		// 회원 가입과 함께 brand 테이블도 데이터가 채워짐
+		Brand brand = new Brand();
+		brand.setUser(user);
+		brand.setBrandName(dto.getCompanyName());
+		brand.setIndustryType(dto.getBusinessCategory());
+		brand.setAddress(dto.getRoadAddrPart1());
+		brand.setLocationName(dto.getAddrDetail());
+		brand.setPhone(dto.getStorePhoneNumber());
+		brandRepository.save(brand);
 
-        return dto.getBusinessHours().stream()
-            .map(item -> item.isOpen()
-                ? BusinessHours.openDay(user, item.getDayOfWeek(), item.getOpenTime(), item.getCloseTime())
-                : BusinessHours.closedDay(user, item.getDayOfWeek()))
-            .collect(Collectors.toList());
-    }
+		log.info("회원가입 온보딩 완료 - userId={}, nickname={}", userId, user.getNickname());
+	}
 
-    private ContentSettings buildContentSettings(User user, SignupRequest dto) {
-        boolean hasInput = StringUtils.hasText(dto.getIntroTemplate())
-            || StringUtils.hasText(dto.getOutroTemplate())
-            || StringUtils.hasText(dto.getTone())
-            || StringUtils.hasText(dto.getEmojiLevel())
-            || dto.getTargetLength() != null;
+	// ── private helpers (변경 없음) ──────────────────────────────
 
-        if (!hasInput) {
-            return ContentSettings.createDefault(user);
-        }
+	private List<BusinessHours> buildBusinessHours(User user, SignupRequest dto) {
+		if (dto.getBusinessHours() == null) {
+			log.warn("영업시간 데이터가 전달되지 않았습니다. userId={}", user.getId());
+			return List.of();
+		}
 
-        return ContentSettings.createFromOnboarding(
-            user,
-            dto.getIntroTemplate(),
-            dto.getOutroTemplate(),
-            dto.getTone(),
-            dto.getEmojiLevel(),
-            dto.getTargetLength()
-        );
-    }
+		return dto.getBusinessHours().stream()
+				.map(item -> item.isOpen()
+						? BusinessHours.openDay(user, item.getDayOfWeek(), item.getOpenTime(), item.getCloseTime())
+						: BusinessHours.closedDay(user, item.getDayOfWeek()))
+				.collect(Collectors.toList());
+	}
+
+	private ContentSettings buildContentSettings(User user, SignupRequest dto) {
+		boolean hasInput = StringUtils.hasText(dto.getIntroTemplate()) || StringUtils.hasText(dto.getOutroTemplate())
+				|| StringUtils.hasText(dto.getTone()) || StringUtils.hasText(dto.getEmojiLevel())
+				|| dto.getTargetLength() != null;
+
+		if (!hasInput) {
+			return ContentSettings.createDefault(user);
+		}
+
+		return ContentSettings.createFromOnboarding(user, dto.getIntroTemplate(), dto.getOutroTemplate(), dto.getTone(),
+				dto.getEmojiLevel(), dto.getTargetLength());
+	}
 }

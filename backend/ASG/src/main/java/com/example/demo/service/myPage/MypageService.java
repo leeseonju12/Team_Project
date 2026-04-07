@@ -114,7 +114,23 @@ public class MypageService {
 	// ── 회원 정보 조회 ──────────────────────────────────────
 	@Transactional(readOnly = true)
 	public User getUserInfo() {
-	    return userRepository.findById(USER_ID)
+	    User user = userRepository.findById(USER_ID)
 	            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+	    return user;
+	}
+
+	@Transactional(readOnly = true)
+	public String getBrandName() {
+	    Brand brand = brandRepository.findById(BRAND_ID)
+	            .orElseThrow(() -> new IllegalArgumentException("브랜드를 찾을 수 없습니다."));
+	    return brand.getBrandName();
+	}
+	
+	// ── 회원 탈퇴 ──────────────────────────────────────
+	@Transactional
+	public void withdrawUser() {
+	    User user = userRepository.findById(USER_ID)
+	            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+	    user.withdraw(); // status = 'INACTIVE'== 탈퇴 상태
 	}
 }

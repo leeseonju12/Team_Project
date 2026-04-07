@@ -417,31 +417,21 @@ em {
           </div>
         </div>
         <div class="card">
-          <div class="card-header"><div class="card-title">🔒 비밀번호 변경</div></div>
-          <div class="card-body">
-            <div class="field">
-              <label>현재 비밀번호 <span class="req">*</span></label>
-              <input type="password" id="pw_cur" placeholder="현재 비밀번호 입력" />
-            </div>
-            <div class="field">
-              <label>새 비밀번호 <span class="req">*</span></label>
-              <input type="password" id="pw_new" placeholder="영문·숫자·특수문자 8자 이상" oninput="onNewPw(this)" />
-              <div class="pw-strength">
-                <div class="pw-bar" id="pwb1"></div><div class="pw-bar" id="pwb2"></div>
-                <div class="pw-bar" id="pwb3"></div><div class="pw-bar" id="pwb4"></div>
-              </div>
-              <div class="pw-strength-label" id="pwLbl"></div>
-            </div>
-            <div class="field" style="margin-bottom:0;">
-              <label>새 비밀번호 확인 <span class="req">*</span></label>
-              <input type="password" id="pw_confirm" placeholder="새 비밀번호 재입력" oninput="onPwConfirm()" />
-              <div class="field-msg info" id="pwConfirmMsg"></div>
-            </div>
-            <div class="save-row">
-              <button class="btn-save" onclick="changePw(this)"><span class="spin"></span>비밀번호 변경</button>
-            </div>
-          </div>
-        </div>
+  <div class="card-header"><div class="card-title">🔗 연동 계정</div></div>
+  <div class="card-body">
+    <div class="field-msg info" style="margin-bottom:12px;">
+      소셜 로그인으로 연동된 계정은 별도 비밀번호를 사용하지 않습니다.
+    </div>
+    <div class="field">
+      <label>연동 서비스</label>
+      <input type="text" th:value="${userInfo.provider == 'kakao' ? '카카오' : userInfo.provider == 'naver' ? '네이버' : '구글'}" disabled />
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label>연동 이메일</label>
+      <input type="text" th:value="${userInfo.email}" disabled />
+    </div>
+  </div>
+</div>
         
         <div class="danger-zone">
           <div class="danger-header"><span>⚠️ 위험 구역</span></div>
@@ -496,7 +486,7 @@ em {
     <div class="grid-2">
       <div class="field">
         <label>가게명 <span class="req">*</span></label>
-        <input type="text" id="s_name" th:value="${brandInfo.brandName}" />
+        <input type="text" id="m_company" th:value="${brandName}" />
       </div>
       <div class="field">
         <label>업종 <span class="req">*</span></label>
@@ -738,34 +728,36 @@ em {
     </div>
   </div>
 
-  <!-- 회원 탈퇴 Modal -->
-  <div class="modal-overlay" id="modalWithdraw">
-    <div class="modal">
-      <div class="modal-header"><span>⚠️ 회원 탈퇴 확인</span><button class="modal-close" onclick="closeModal('withdraw')">✕</button></div>
-      <div class="modal-body">
-        <div style="background:var(--red-light);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:18px;">
-          <strong style="font-size:13px;color:var(--red);display:block;margin-bottom:4px;">탈퇴 전 반드시 확인하세요</strong>
-          <span style="font-size:12px;color:#B91C1C;line-height:1.7;">• 모든 가게 정보 및 성과 데이터가 즉시 삭제됩니다<br/>• 연동된 SNS 계정 정보가 모두 해제됩니다<br/>• 이 작업은 되돌릴 수 없습니다</span>
-        </div>
-        <div class="field" style="margin-bottom:12px;">
-          <label>확인을 위해 비밀번호를 입력해 주세요</label>
-          <input type="password" id="withdrawPw" placeholder="현재 비밀번호" />
-        </div>
-        <div>
-          <label style="margin-bottom:6px;">탈퇴 사유 (선택)</label>
-          <select id="withdrawReason">
-            <option value="">선택하지 않음</option>
-            <option>서비스를 잘 사용하지 않아서</option><option>원하는 기능이 없어서</option>
-            <option>다른 서비스로 이동</option><option>개인정보 보호를 위해</option><option>기타</option>
-          </select>
-        </div>
+<!-- 회원 탈퇴 Modal -->
+<div class="modal-overlay" id="modalWithdraw">
+  <div class="modal">
+    <div class="modal-header"><span>⚠️ 회원 탈퇴 확인</span><button class="modal-close" onclick="closeModal('withdraw')">✕</button></div>
+    <div class="modal-body">
+      <div style="background:var(--red-light);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:18px;">
+        <strong style="font-size:13px;color:var(--red);display:block;margin-bottom:4px;">탈퇴 전 반드시 확인하세요</strong>
+        <span style="font-size:12px;color:#B91C1C;line-height:1.7;">• 모든 가게 정보 및 성과 데이터가 즉시 삭제됩니다<br/>• 연동된 SNS 계정 정보가 모두 해제됩니다<br/>• 이 작업은 되돌릴 수 없습니다</span>
       </div>
-      <div class="modal-footer">
-        <button class="btn-outline" onclick="closeModal('withdraw')">취소</button>
-        <button class="btn-danger" onclick="doWithdraw()">탈퇴 확정</button>
+      <div>
+        <label style="margin-bottom:6px;">탈퇴 사유 (선택)</label>
+        <select id="withdrawReason">
+          <option value="">선택하지 않음</option>
+          <option>서비스를 잘 사용하지 않아서</option>
+          <option>원하는 기능이 없어서</option>
+          <option>다른 서비스로 이동</option>
+          <option>개인정보 보호를 위해</option>
+          <option>기타</option>
+        </select>
       </div>
     </div>
+<div class="modal-footer">
+  <button class="btn-outline" onclick="closeModal('withdraw')">취소</button>
+  <form id="withdrawForm" th:action="@{/mypage/withdraw}" method="post" style="display:inline;">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+    <button type="submit" class="btn-danger" onclick="closeModal('withdraw')">탈퇴 확정</button>
+  </form>
+</div>
   </div>
+</div>
 
   <!-- 계정 해제 Modal -->
   <div class="modal-overlay" id="modalDisconnect">
@@ -1116,11 +1108,10 @@ window.addEventListener('DOMContentLoaded', () => {
   /* ═══ Modal ═══ */
   function openModal(id){document.getElementById('modal'+id.charAt(0).toUpperCase()+id.slice(1)).classList.add('show');}
   function closeModal(id){document.getElementById('modal'+id.charAt(0).toUpperCase()+id.slice(1)).classList.remove('show');}
-  function doWithdraw(){
-    const pw=document.getElementById('withdrawPw').value;
-    if(!pw){showToast('⚠️ 비밀번호를 입력해 주세요.','err');return;}
-    closeModal('withdraw');showToast('탈퇴가 처리됐습니다. 이용해 주셔서 감사합니다.','');
-  }
+  function doWithdraw() {
+	    closeModal('withdraw');
+	    document.getElementById('withdrawForm').submit();
+	}
   document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');}));
 
   /* ═══ Generic save ═══ */

@@ -19,9 +19,9 @@ public class Brand {
     @Column(name = "brand_id")
     private Long brandId;
 
-    /*@ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User user;*/
+    private User user;
 
     @Column(name = "brand_name", nullable = false, length = 100)
     private String brandName;

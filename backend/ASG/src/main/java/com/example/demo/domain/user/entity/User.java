@@ -188,6 +188,11 @@ public class User {
     public void applyContentSettings(ContentSettings settings) {
         this.contentSettings = settings;
     }
+    
+    // 탈퇴 관련 메서드
+    public void withdraw() {
+        this.status = UserStatus.INACTIVE;
+    }
 
     public static User createSocialUser(String provider, String providerId,
                                          String email, String name) {

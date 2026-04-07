@@ -33,6 +33,7 @@ public class MypageController {
         //model.addAttribute("contentSettings", mypageService.getContentSettings());
         model.addAttribute("snsAccounts", mypageService.getSnsAccounts());
         model.addAttribute("userInfo", mypageService.getUserInfo());
+        model.addAttribute("brandName", mypageService.getBrandName());
         return "mypage";
     }
 
@@ -65,5 +66,12 @@ public class MypageController {
         // 일단 데이터 확인용으로 로그만 출력
         System.out.println("영업시간 수신: " + hours);
         return ResponseEntity.ok("ok");
+    }
+    
+ // ── 탈퇴하기 ───────────────────────────────────────
+    @PostMapping("/withdraw")
+    public String withdraw() {
+        mypageService.withdrawUser();
+        return "redirect:/landing-page?withdrawn=true";
     }
 }
