@@ -401,7 +401,7 @@
             <div class="field">
               <label>키워드 <span class="required">*</span></label>
               <div class="keyword-grid" id="keywordGroup">
-                <div class="keyword-item"><input type="checkbox" id="kw-food" value="맛집"><label class="keyword-label" for="kw-food">🍽️ 맛집</label></div>
+                <div class="keyword-item"><input type="checkbox" id="kw-food" value="맛집" class="active" checked><label class="keyword-label" for="kw-food">🍽️ 맛집</label></div>
                 <div class="keyword-item"><input type="checkbox" id="kw-clean" value="청결"><label class="keyword-label" for="kw-clean">🧼 청결</label></div>
                 <div class="keyword-item"><input type="checkbox" id="kw-mood" value="분위기"><label class="keyword-label" for="kw-mood">✨ 분위기</label></div>
                 <div class="keyword-item"><input type="checkbox" id="kw-price" value="가성비"><label class="keyword-label" for="kw-price">💸 가성비</label></div>
@@ -430,8 +430,8 @@
               <div class="chip-group" id="snsChips">
                 <div class="chip chip-ig active" data-sns="instagram">🔴 Instagram</div>
                 <div class="chip chip-fb" data-sns="facebook">🔵 Facebook</div>
-                <div class="chip chip-nv active" data-sns="naver">🟢 네이버 블로그</div>
-                <div class="chip chip-kk active" data-sns="kakao">🟡 카카오</div>
+                <div class="chip chip-nv" data-sns="naver">🟢 네이버 블로그</div>
+                <div class="chip chip-kk" data-sns="kakao">🟡 카카오</div>
                 <div class="chip" data-sns="community" style="border-color:rgba(99,102,241,0.3);color:#6366F1;" id="communityChip">🟣 커뮤니티</div>
               </div>
             </div>
@@ -472,8 +472,8 @@
             <div class="field">
               <label>글자 수 제한</label>
               <div class="range-wrap">
-                <input type="range" id="lengthRange" min="100" max="500" step="50" value="300">
-                <span class="range-val" id="rangeVal">300자</span>
+                <input type="range" id="lengthRange" min="100" max="500" step="50" value="150">
+                <span class="range-val" id="rangeVal">150자</span>
               </div>
             </div>
             <div class="gen-progress-bar" id="genProgressBar">
@@ -488,140 +488,174 @@
         </div>
       </div>
 
-      <div class="center-col">
-        <div class="panel" style="min-height:800px;">
-          <div class="tab-bar" id="tabBar">
-            <button class="tab-btn active" data-tab="instagram"><span class="dot"></span>Instagram</button>
-            <button class="tab-btn" data-tab="facebook"><span class="dot"></span>Facebook</button>
-            <button class="tab-btn" data-tab="naver"><span class="dot"></span>네이버</button>
-            <button class="tab-btn" data-tab="kakao"><span class="dot"></span>카카오</button>
-            <button class="tab-btn" data-tab="community"><span class="dot"></span>커뮤니티</button>
-          </div>
+<div class="center-col">
+  <div class="panel" style="min-height:800px;">
+    
+    <div class="tab-bar" id="tabBar">
+      <button class="tab-btn active" data-tab="instagram"><span class="dot"></span>Instagram</button>
+      <button class="tab-btn" data-tab="facebook"><span class="dot"></span>Facebook</button>
+      <button class="tab-btn" data-tab="naver"><span class="dot"></span>네이버</button>
+      <button class="tab-btn" data-tab="kakao"><span class="dot"></span>카카오</button>
+      <button class="tab-btn" data-tab="community"><span class="dot"></span>커뮤니티</button>
+    </div>
 
-          <div class="output-pane active" id="pane-instagram">
-            <div class="empty-state" id="empty-instagram">
-              <div class="icon">📷</div>
-              <p>AI 콘텐츠 생성하기를<br>눌러주세요.</p>
-            </div>
-            <div id="result-instagram" style="display:none;">
-              <div class="output-meta">
-                <div class="platform-badge"><span class="badge-dot" style="background:#E1306C;"></span>Instagram</div>
-                <div class="output-actions">
-                  <button class="btn-sm primary" style="background:#E1306C;border-color:#E1306C;" onclick="publishPost('instagram')">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:middle;margin-right:3px;">
-                      <line x1="22" y1="2" x2="11" y2="13" />
-                      <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                    </svg>게시하기
-                  </button>
-                </div>
-              </div>
-              <div id="tone-badge-instagram" class="tone-badge" style="display:none;"></div>
-              <div class="output-text" id="text-instagram"></div>
-              <div class="hashtag-section">
-                <div class="hashtag-label">추천 해시태그</div>
-                <div class="hashtag-list" id="hash-instagram"></div>
-              </div>
-              <div class="guide-box ig"><strong>📌 Instagram 가이드</strong>첫 문장에서 시선을 끌고, 감성적인 문장과 해시태그를 배치하세요.<br><span class="time-tip" style="margin-top:7px;display:inline-flex;border-color:rgba(225,48,108,0.28);">⏰ 추천 시간: <b style="color:var(--text);margin-left:4px;">20:00</b></span></div>
-            </div>
-          </div>
+    <div class="result-header" style="display:flex; justify-content:space-between; align-items:center; padding:15px 20px; border-bottom:1px solid #f1f5f9;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div class="panel-icon" style="background:rgba(99,102,241,0.14); padding:5px; border-radius:6px;">✨</div>
+        <h2 style="font-size:16px; font-weight:700; color:#1e293b; margin:0;">생성 결과</h2>
+      </div>
+      
+      <button class="btn-history-load" onclick="loadCenterHistory()" style="display:flex; align-items:center; gap:5px; padding:6px 12px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; font-size:12px; font-weight:600; color:#64748b; cursor:pointer; transition:all 0.2s;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        기록 불러오기
+      </button>
+    </div>
 
-          <div class="output-pane" id="pane-facebook">
-            <div class="empty-state" id="empty-facebook">
-              <div class="icon">📘</div>
-              <p>AI 콘텐츠 생성하기를<br>눌러주세요.</p>
-            </div>
-            <div id="result-facebook" style="display:none;">
-              <div class="output-meta">
-                <div class="platform-badge"><span class="badge-dot" style="background:#1877F2;"></span>Facebook</div>
-                <div class="output-actions">
-                  <button class="btn-sm primary" style="background:#1877F2;border-color:#1877F2;" onclick="publishPost('facebook')">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:middle;margin-right:3px;">
-                      <line x1="22" y1="2" x2="11" y2="13" />
-                      <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                    </svg>게시하기
-                  </button>
-                </div>
-              </div>
-              <div id="tone-badge-facebook" class="tone-badge" style="display:none;"></div>
-              <div class="output-text" id="text-facebook"></div>
-              <div class="guide-box fb"><strong>📌 Facebook 가이드</strong>스토리텔링과 질문형 문장으로 커뮤니티 반응 유도하세요.<br><span class="time-tip" style="margin-top:7px;display:inline-flex;border-color:rgba(24,119,242,0.28);">⏰ 추천 시간: <b style="color:var(--text);margin-left:4px;">13:00 / 19:00</b></span></div>
+    <div class="panes-container">
+      
+      <div class="output-pane active" id="pane-instagram">
+        <div class="empty-state" id="empty-instagram">
+          <div class="icon">📷</div>
+          <p>AI 콘텐츠 생성하기를<br>눌러주세요.</p>
+        </div>
+        <div id="result-instagram" style="display:none;">
+          <div class="output-meta">
+            <div class="platform-badge"><span class="badge-dot" style="background:#E1306C;"></span>Instagram</div>
+            <div class="output-actions">
+              <button class="btn-sm primary" style="background:#E1306C;border-color:#E1306C;" onclick="publishPost('instagram')">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:middle;margin-right:3px;">
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>게시하기
+              </button>
             </div>
           </div>
-
-          <div class="output-pane" id="pane-naver">
-            <div class="empty-state" id="empty-naver">
-              <div class="icon">🟢</div>
-              <p>AI 콘텐츠 생성하기를<br>눌러주세요.</p>
-            </div>
-            <div id="result-naver" style="display:none;">
-              <div class="output-meta">
-                <div class="platform-badge"><span class="badge-dot" style="background:#03C75A;"></span>네이버 블로그</div>
-                <div class="output-actions">
-                  <button class="btn-sm primary" style="background:#03C75A;border-color:#03C75A;color:#062714;" onclick="copyAndPublish('naver')">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:middle;margin-right:3px;">
-                      <rect x="9" y="9" width="13" height="13" rx="2" />
-                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                    </svg>복사 후 발행
-                  </button>
-                </div>
-              </div>
-              <div id="tone-badge-naver" class="tone-badge" style="display:none;"></div>
-              <div class="output-text" id="text-naver"></div>
-              <div class="hashtag-section">
-                <div class="hashtag-label">추천 키워드</div>
-                <div class="hashtag-list" id="hash-naver"></div>
-              </div>
-              <div class="guide-box nv"><strong>📌 네이버 가이드</strong>검색 키워드를 제목과 본문 초반에 자연스럽게 넣어 노출을 강화하세요.<br><span class="time-tip" style="margin-top:7px;display:inline-flex;border-color:rgba(3,199,90,0.28);">⏰ 추천 시간: <b style="color:var(--text);margin-left:4px;">10:00 / 12:00</b></span></div>
-            </div>
+          <div id="tone-badge-instagram" class="tone-badge" style="display:none;"></div>
+          <div class="output-text" id="text-instagram"></div>
+          <div class="hashtag-section">
+            <div class="hashtag-label">추천 해시태그</div>
+            <div class="hashtag-list" id="hash-instagram"></div>
           </div>
-
-          <div class="output-pane" id="pane-kakao">
-            <div class="empty-state" id="empty-kakao">
-              <div class="icon">💛</div>
-              <p>AI 콘텐츠 생성하기를<br>눌러주세요.</p>
-            </div>
-            <div id="result-kakao" style="display:none;">
-              <div class="output-meta">
-                <div class="platform-badge"><span class="badge-dot" style="background:#FEE500;"></span>카카오 채널</div>
-                <div class="output-actions">
-                  <button class="btn-sm primary" style="background:#FEE500;border-color:#FEE500;color:#3A1D1D;" onclick="copyAndPublish('kakao')">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#3A1D1D" stroke-width="2.5" style="display:inline;vertical-align:middle;margin-right:3px;">
-                      <rect x="9" y="9" width="13" height="13" rx="2" />
-                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                    </svg>복사 후 발행
-                  </button>
-                </div>
-              </div>
-              <div id="tone-badge-kakao" class="tone-badge" style="display:none;"></div>
-              <div class="output-text" id="text-kakao"></div>
-              <div class="guide-box kk"><strong>📌 카카오 가이드</strong>핵심 정보와 행동 유도 문구를 앞부분에 두어 즉시 반응을 끌어내세요.<br><span class="time-tip" style="margin-top:7px;display:inline-flex;border-color:rgba(254,229,0,0.24);">⏰ 추천 시간: <b style="color:var(--accent-kk-text);margin-left:4px;">09:00 / 12:00</b></span></div>
-            </div>
-          </div>
-
-          <div class="output-pane" id="pane-community">
-            <div class="empty-state" id="empty-community">
-              <div class="icon">💬</div>
-              <p>커뮤니티를 선택하고<br>AI 콘텐츠 생성하기를 눌러주세요.</p>
-            </div>
-            <div id="result-community" style="display:none;">
-              <div class="output-meta">
-                <div class="platform-badge"><span class="badge-dot" style="background:#6366F1;"></span>커뮤니티 <span id="comm-target-name" style="font-size:10px;color:var(--text3);font-weight:400;margin-left:4px;"></span></div>
-                <div class="output-actions">
-                  <button class="btn-sm primary" style="background:#6366F1;border-color:#6366F1;" onclick="copyAndPublish('community')">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:middle;margin-right:3px;">
-                      <rect x="9" y="9" width="13" height="13" rx="2" />
-                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                    </svg>복사 후 발행
-                  </button>
-                </div>
-              </div>
-              <div id="tone-badge-community" class="tone-badge" style="display:none;"></div>
-              <div class="output-text" id="text-community"></div>
-              <div class="guide-box comm"><strong>📌 커뮤니티 가이드</strong>해당 커뮤니티의 톤앤매너에 맞게 자동 변환된 글입니다.<br><span class="time-tip" style="margin-top:7px;display:inline-flex;border-color:rgba(99,102,241,0.28);">⏰ 추천 시간: <b style="color:var(--text);margin-left:4px;" id="comm-golden-time">11:30</b></span></div>
-            </div>
+          <div class="guide-box ig">
+            <strong>📌 Instagram 가이드</strong>첫 문장에서 시선을 끌고, 감성적인 문장과 해시태그를 배치하세요.<br>
+            <span class="time-tip" style="margin-top:7px;display:inline-flex;border-color:rgba(225,48,108,0.28);">⏰ 추천 시간: <b style="color:var(--text);margin-left:4px;">20:00</b></span>
           </div>
         </div>
       </div>
+
+      <div class="output-pane" id="pane-facebook">
+        <div class="empty-state" id="empty-facebook">
+          <div class="icon">📘</div>
+          <p>AI 콘텐츠 생성하기를<br>눌러주세요.</p>
+        </div>
+        <div id="result-facebook" style="display:none;">
+          <div class="output-meta">
+            <div class="platform-badge"><span class="badge-dot" style="background:#1877F2;"></span>Facebook</div>
+            <div class="output-actions">
+              <button class="btn-sm primary" style="background:#1877F2;border-color:#1877F2;" onclick="publishPost('facebook')">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:middle;margin-right:3px;">
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>게시하기
+              </button>
+            </div>
+          </div>
+          <div id="tone-badge-facebook" class="tone-badge" style="display:none;"></div>
+          <div class="output-text" id="text-facebook"></div>
+          <div class="guide-box fb">
+            <strong>📌 Facebook 가이드</strong>스토리텔링과 질문형 문장으로 커뮤니티 반응 유도하세요.<br>
+            <span class="time-tip" style="margin-top:7px;display:inline-flex;border-color:rgba(24,119,242,0.28);">⏰ 추천 시간: <b style="color:var(--text);margin-left:4px;">13:00 / 19:00</b></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="output-pane" id="pane-naver">
+        <div class="empty-state" id="empty-naver">
+          <div class="icon">🟢</div>
+          <p>AI 콘텐츠 생성하기를<br>눌러주세요.</p>
+        </div>
+        <div id="result-naver" style="display:none;">
+          <div class="output-meta">
+            <div class="platform-badge"><span class="badge-dot" style="background:#03C75A;"></span>네이버 블로그</div>
+            <div class="output-actions">
+              <button class="btn-sm primary" style="background:#03C75A;border-color:#03C75A;color:#062714;" onclick="copyAndPublish('naver')">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:middle;margin-right:3px;">
+                  <rect x="9" y="9" width="13" height="13" rx="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>복사 후 발행
+              </button>
+            </div>
+          </div>
+          <div id="tone-badge-naver" class="tone-badge" style="display:none;"></div>
+          <div class="output-text" id="text-naver"></div>
+          <div class="hashtag-section">
+            <div class="hashtag-label">추천 키워드</div>
+            <div class="hashtag-list" id="hash-naver"></div>
+          </div>
+          <div class="guide-box nv">
+            <strong>📌 네이버 가이드</strong>검색 키워드를 제목과 본문 초반에 자연스럽게 넣어 노출을 강화하세요.<br>
+            <span class="time-tip" style="margin-top:7px;display:inline-flex;border-color:rgba(3,199,90,0.28);">⏰ 추천 시간: <b style="color:var(--text);margin-left:4px;">10:00 / 12:00</b></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="output-pane" id="pane-kakao">
+        <div class="empty-state" id="empty-kakao">
+          <div class="icon">💛</div>
+          <p>AI 콘텐츠 생성하기를<br>눌러주세요.</p>
+        </div>
+        <div id="result-kakao" style="display:none;">
+          <div class="output-meta">
+            <div class="platform-badge"><span class="badge-dot" style="background:#FEE500;"></span>카카오 채널</div>
+            <div class="output-actions">
+              <button class="btn-sm primary" style="background:#FEE500;border-color:#FEE500;color:#3A1D1D;" onclick="copyAndPublish('kakao')">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#3A1D1D" stroke-width="2.5" style="display:inline;vertical-align:middle;margin-right:3px;">
+                  <rect x="9" y="9" width="13" height="13" rx="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>복사 후 발행
+              </button>
+            </div>
+          </div>
+          <div id="tone-badge-kakao" class="tone-badge" style="display:none;"></div>
+          <div class="output-text" id="text-kakao"></div>
+          <div class="guide-box kk">
+            <strong>📌 카카오 가이드</strong>핵심 정보와 행동 유도 문구를 앞부분에 두어 즉시 반응을 끌어내세요.<br>
+            <span class="time-tip" style="margin-top:7px;display:inline-flex;border-color:rgba(254,229,0,0.24);">⏰ 추천 시간: <b style="color:var(--accent-kk-text);margin-left:4px;">09:00 / 12:00</b></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="output-pane" id="pane-community">
+        <div class="empty-state" id="empty-community">
+          <div class="icon">💬</div>
+          <p>커뮤니티를 선택하고<br>AI 콘텐츠 생성하기를 눌러주세요.</p>
+        </div>
+        <div id="result-community" style="display:none;">
+          <div class="output-meta">
+            <div class="platform-badge"><span class="badge-dot" style="background:#6366F1;"></span>커뮤니티 <span id="comm-target-name" style="font-size:10px;color:var(--text3);font-weight:400;margin-left:4px;"></span></div>
+            <div class="output-actions">
+              <button class="btn-sm primary" style="background:#6366F1;border-color:#6366F1;" onclick="copyAndPublish('community')">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:middle;margin-right:3px;">
+                  <rect x="9" y="9" width="13" height="13" rx="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>복사 후 발행
+              </button>
+            </div>
+          </div>
+          <div id="tone-badge-community" class="tone-badge" style="display:none;"></div>
+          <div class="output-text" id="text-community"></div>
+          <div class="guide-box comm">
+            <strong>📌 커뮤니티 가이드</strong>해당 커뮤니티의 톤앤매너에 맞게 자동 변환된 글입니다.<br>
+            <span class="time-tip" style="margin-top:7px;display:inline-flex;border-color:rgba(99,102,241,0.28);">⏰ 추천 시간: <b style="color:var(--text);margin-left:4px;" id="comm-golden-time">11:30</b></span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 
       <div class="calendar-col">
         <div class="calendar-panel">
@@ -645,6 +679,12 @@
           <div class="pending-header">
             <div class="panel-icon" style="background:rgba(99,102,241,0.14);font-size:12px;">📋</div>
             <h3>미배정 포스트 (Pending)</h3>
+            <button class="btn-load-pending" onclick="loadPendingFromDB()" title="과거 내역 불러오기">
+	            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+		        	<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+		      	</svg>
+		      불러오기
+		    </button>
             <div class="pending-count-badge" id="pendingCountBadge">0</div>
           </div>
           <div id="pendingList" class="pending-list">
@@ -669,8 +709,10 @@
       </div>
     </div>
   </div>
-
+  
+ 
   <script src="/js/app4.js" defer></script>
+  
 </body>
 
 </html>

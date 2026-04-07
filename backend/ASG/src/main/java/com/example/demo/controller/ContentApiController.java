@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -9,11 +10,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.demo.dto.ContentRequest;
 import com.example.demo.dto.SnsResult;
+import com.example.demo.repository.GeneratedContentRepository;
 import com.example.demo.service.CloudinaryService;
 import com.example.demo.service.ContentService;
 import com.example.demo.service.FacebookApiService;
-// 💡 기존에 잘 만들어두신 InstagramApiService를 임포트합니다.
 import com.example.demo.service.InstagramApiService; 
+import com.example.demo.entity.GeneratedContent;
 
 import lombok.RequiredArgsConstructor;
 import java.util.List;
@@ -29,6 +31,7 @@ public class ContentApiController {
     private final InstagramApiService instagramService; 
     private final FacebookApiService facebookService;
     private final CloudinaryService cloudinaryService;
+    private final GeneratedContentRepository contentRepository;
 
     // 1. AI 생성 로직 (수정 없음)
     @PostMapping("/generate")
@@ -87,4 +90,10 @@ public class ContentApiController {
             return Map.of("status", "fail", "message", e.getMessage());
         }
     }
+    
+    @GetMapping("/pending")
+    public List<GeneratedContent> getPendingContents() {
+        return contentRepository.findAllByOrderByCreatedAtDesc();
+    }
+    
 }

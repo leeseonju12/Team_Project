@@ -19,6 +19,7 @@ const MOCK_DATA = {
   communities: {} 
 };
 
+
 /* --------------------------------------------------------------------------
    2. State Management (상태 관리)
    -------------------------------------------------------------------------- */
@@ -94,6 +95,7 @@ const apiService = {
 
   async publishToChannel(snsType, contentData) {
     console.log(`[${snsType}] 발행 요청:`, contentData);
+	updatePlatformVisibility();
     return { success: true };
   }
 };
@@ -282,6 +284,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 캘린더 데이터 세팅
   const dashboardData = await apiService.fetchDashboardData();
   initCalendar(dashboardData.events);
+  
+  try {
+      const response = await fetch('/api/v1/content/pending');
+      const data = await response.json();
+      
+      state.pendingPosts = data.map(item => ({
+        id: `pending-${item.id}`,
+        sns: item.platform,
+        menu: item.menuName,
+        bodyText: item.content,
+        // PLATFORM_CONFIG에서 아이콘과 색상 매핑
+        label: PLATFORM_CONFIG[item.platform].label,
+        icon: PLATFORM_CONFIG[item.platform].icon,
+        color: PLATFORM_CONFIG[item.platform].color
+      }));
+      
+      renderPendingHTML(); // 화면 갱신
+    } catch (err) {
+      console.error("데이터 로드 실패:", err);
+    }
 });
 
 /* --------------------------------------------------------------------------
@@ -439,26 +461,30 @@ window.applyRetouchAndClose = function() { closeRetouchModal(); };
 /* --------------------------------------------------------------------------
    10. Calendar & Drag-and-Drop (스케줄링 기능)
    -------------------------------------------------------------------------- */
-function initCalendar(eventsData) {
-  const calEl = document.getElementById('fullcalendar');
-  if(!calEl || typeof FullCalendar === 'undefined') return;
+   function initCalendar(eventsData) {
+     const calEl = document.getElementById('fullcalendar');
+     if(!calEl || typeof FullCalendar === 'undefined') return;
 
-  state.calendarInstance = new FullCalendar.Calendar(calEl, {
-    initialView: 'dayGridMonth',
-    locale: 'ko',
-    headerToolbar: { left: 'prev', center: 'title', right: 'next' },
-    height: 'auto',
-    editable: true,
-    droppable: true,
-    events: eventsData,
-    eventDrop: (info) => {
-      const newDate = info.event.startStr.slice(0, 10);
-      uiManager.showToast(`📅 일정이 ${newDate}(으)로 이동됐습니다.`);
-    }
-  });
-  state.calendarInstance.render();
-  setupCalendarDropZones();
-}
+     state.calendarInstance = new FullCalendar.Calendar(calEl, {
+       initialView: 'dayGridMonth',
+       locale: 'ko',
+       headerToolbar: { left: 'prev', center: 'title', right: 'next' },
+       height: 'auto',
+       editable: true,
+       droppable: true,
+       events: eventsData,
+       eventDrop: (info) => {
+         const newDate = info.event.startStr.slice(0, 10);
+         uiManager.showToast(`📅 일정이 ${newDate}(으)로 이동됐습니다.`);
+       },
+       // 💡 클릭 시 모달창 열기 부활!
+       eventClick: (info) => {
+         openEventModal(info);
+       }
+     });
+     state.calendarInstance.render();
+     setupCalendarDropZones();
+   }
 
 window.toggleCalendarExpand = function() {
   const grid = document.getElementById('dashboardGrid');
@@ -539,19 +565,26 @@ function setupCalendarDropZones() {
   calEl.addEventListener('drop', e => {
     e.preventDefault();
     document.querySelectorAll('.fc-day.drag-over').forEach(el => el.classList.remove('drag-over'));
-    
+	
     const dayCell = e.target.closest('.fc-day');
     if (!draggedPendingItem || !state.calendarInstance || !dayCell) return;
     
     const dateStr = dayCell.getAttribute('data-date');
     const post = draggedPendingItem;
     
-    state.calendarInstance.addEvent({
-      id: `sched-${post.sns}-${Date.now()}`,
-      title: `${post.icon} ${post.menu}`,
-      start: `${dateStr}T12:00:00`, 
-      classNames: [`fc-event-${post.sns === 'community' ? 'comm' : post.sns.substring(0,2)}`]
-    });
+	state.calendarInstance.addEvent({
+	      id: `sched-${post.sns}-${Date.now()}`,
+	      title: `${post.icon} ${post.menu}`,
+	      start: `${dateStr}T12:00:00`, 
+	      classNames: [`fc-event-${post.sns === 'community' ? 'comm' : post.sns.substring(0,2)}`],
+	      
+	      // 💡 잃어버렸던 포스트 원본 데이터 저장소 부활!
+	      extendedProps: { 
+	        sns: post.sns, 
+	        bodyText: post.bodyText, 
+	        menu: post.menu 
+	      }
+	    });
     
     removePending(post.id);
     uiManager.showToast(`📅 ${post.label} 포스트가 ${dateStr}에 스케줄링 되었습니다.`);
@@ -577,3 +610,233 @@ window.applyFilter = function(filterType) {
     default:          previewImg.style.filter = 'none'; break;
   }
 };
+
+/* --------------------------------------------------------------------------
+   캘린더 미리보기 모달 제어
+   -------------------------------------------------------------------------- */
+window.openEventModal = function(info) {
+  const modal = document.getElementById('previewModal');
+  if (!modal) return;
+
+  // 모달 내부에 데이터 채워넣기 (HTML의 ID에 맞게 수정 가능합니다)
+  const props = info.event.extendedProps;
+  
+  // 예: 모달의 제목과 본문을 표시할 HTML 요소가 있다면 값을 넣어줍니다.
+  const modalTitle = document.getElementById('modalTitle'); // 제목 요소 ID
+  const modalBody = document.getElementById('modalBody');   // 본문 요소 ID
+
+  if (modalTitle) modalTitle.textContent = info.event.title;
+  if (modalBody) {
+    // 줄바꿈을 유지하며 출력하기 위해 innerHTML 사용
+    modalBody.innerHTML = (props.bodyText || '내용이 없습니다.').replace(/\n/g, '<br>');
+  }
+
+  modal.classList.remove('hidden');
+};
+
+window.closeEventModal = function() {
+  document.getElementById('previewModal')?.classList.add('hidden');
+};
+
+/* --------------------------------------------------------------------------
+   DB에서 저장된 콘텐츠 불러오기
+   -------------------------------------------------------------------------- */
+window.loadPendingFromDB = async function() {
+  uiManager.showToast("⏳ 저장된 데이터를 불러오는 중...");
+  
+  try {
+    const response = await fetch('/api/v1/content/pending');
+    if (!response.ok) throw new Error("데이터 로드 실패");
+    
+    const dbData = await response.json();
+    
+    // 서버 데이터를 프론트엔드 state 형식으로 변환
+    const loadedPosts = dbData.map(item => {
+      // 쉼표로 저장된 해시태그를 다시 배열로 변환
+      const tagArray = item.hashtags ? item.hashtags.split(',').map(t => t.trim()) : [];
+      
+      return {
+        id: `db-${item.id}`,
+        sns: item.platform,
+        menu: item.menuName,
+        bodyText: item.content,
+        hashtags: tagArray,
+        imageUrl: item.imageUrl,
+        originUrl: item.originUrl,
+        label: PLATFORM_CONFIG[item.platform]?.label || item.platform,
+        icon: PLATFORM_CONFIG[item.platform]?.icon || '📄',
+        color: PLATFORM_CONFIG[item.platform]?.color || '#cbd5e1'
+      };
+    });
+
+    // 기존 목록에 합치거나 새로 교체 (여기서는 교체로 진행)
+    state.pendingPosts = loadedPosts;
+    
+    // 화면 갱신 함수 호출 (기존에 구현된 함수)
+    renderPendingHTML();
+    
+    uiManager.showToast(`✅ ${loadedPosts.length}개의 포스트를 불러왔습니다.`);
+  } catch (error) {
+    console.error(error);
+    uiManager.showToast("❌ 데이터를 불러오지 못했습니다.");
+  }
+};
+
+/* --------------------------------------------------------------------------
+   1. 플랫폼 노출 필터링 함수
+   -------------------------------------------------------------------------- */
+function updatePlatformVisibility() {
+  const platforms = ['instagram', 'facebook', 'naver', 'kakao', 'community'];
+  let firstVisible = null;
+
+  platforms.forEach(sns => {
+    const pane = document.getElementById(`pane-${sns}`);
+    const tab = document.querySelector(`.tab-btn[data-target="pane-${sns}"]`); // 탭 버튼도 있다고 가정
+    
+    // 해당 플랫폼에 생성된 콘텐츠가 있는지 확인
+    const hasContent = state.generatedContent && state.generatedContent[sns];
+
+    if (hasContent) {
+      if (pane) pane.style.display = 'block';
+      if (tab) tab.style.display = 'flex';
+      if (!firstVisible) firstVisible = sns; // 가장 첫 번째로 보이는 플랫폼 저장
+    } else {
+      if (pane) pane.style.display = 'none';
+      if (tab) tab.style.display = 'none';
+    }
+  });
+
+  // 아무것도 없다면 인스타그램을 기본으로 보여줌 (Empty State)
+  if (!firstVisible) {
+    const igPane = document.getElementById('pane-instagram');
+    if (igPane) igPane.style.display = 'block';
+  } else {
+    // 첫 번째로 유효한 플랫폼 탭을 강제로 활성화 (선택 사항)
+    // switchTab(firstVisible); 
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. center-col 전용 기록 불러오기 함수
+   -------------------------------------------------------------------------- */
+window.loadCenterHistory = async function() {
+  uiManager.showToast("⏳ 최근 기록을 불러오는 중...");
+  
+  try {
+    const response = await fetch('/api/v1/content/pending');
+    const data = await response.json();
+    
+    if (data.length === 0) return uiManager.showToast("저장된 기록이 없습니다.");
+
+    // 가장 최근의 생성 그룹(동일한 menuName 또는 시간대)을 찾거나 
+    // 여기서는 간단하게 모든 플랫폼 데이터를 state에 로드합니다.
+    state.generatedContent = {}; // 기존 데이터 초기화
+
+    data.forEach(item => {
+      state.generatedContent[item.platform] = {
+        text: item.content,
+        hashtags: item.hashtags ? item.hashtags.split(',') : []
+      };
+      
+      // UI에 데이터 꽂아넣기
+      const textEl = document.getElementById(`text-${item.platform}`);
+      const resultDiv = document.getElementById(`result-${item.platform}`);
+      const emptyDiv = document.getElementById(`empty-${item.platform}`);
+      
+      if (textEl) textEl.textContent = item.content;
+      if (resultDiv) resultDiv.style.display = 'block';
+      if (emptyDiv) emptyDiv.style.display = 'none';
+    });
+
+    // 💡 생성된 플랫폼만 보이도록 필터링 실행!
+    updatePlatformVisibility();
+    
+    uiManager.showToast("✅ 과거 기록이 로드되었습니다.");
+  } catch (err) {
+    uiManager.showToast("❌ 기록 로드 실패");
+  }
+};
+
+// 💡 기존 generateContent의 성공 콜백 마지막에도 updatePlatformVisibility(); 를 추가해 주세요!
+
+
+/* --------------------------------------------------------------------------
+   중앙 영역용 기록 불러오기 (개선판)
+   -------------------------------------------------------------------------- */
+   
+   /*
+
+// 1. 모달 열고 목록 가져오기
+window.loadCenterHistory = async function() {
+  const container = document.getElementById('historyContainer');
+  if(!container) return;
+  
+  container.innerHTML = '<p style="text-align:center; padding:20px;">불러오는 중...</p>';
+  document.getElementById('historyListModal').classList.remove('hidden');
+
+  try {
+    const response = await fetch('/api/v1/content/pending');
+    const data = await response.json();
+    
+    if (data.length === 0) {
+      container.innerHTML = '<p style="text-align:center; padding:20px;">기록이 없습니다.</p>';
+      return;
+    }
+
+    // 목록 생성
+    container.innerHTML = data.map(item => `
+      <div class="history-card" onclick='applyHistoryItem(${JSON.stringify(item).replace(/'/g, "&apos;")})'>
+        <div class="history-info">
+          <img src="${item.imageUrl || 'https://via.placeholder.com/50?text=No+Img'}" class="history-thumb">
+          <div class="history-details">
+            <h4>${item.menuName}</h4>
+            <p><span class="platform-dot" style="background:${PLATFORM_CONFIG[item.platform].color}"></span>${PLATFORM_CONFIG[item.platform].label} · ${new Date(item.createdAt).toLocaleDateString()}</p>
+          </div>
+        </div>
+        <div style="color:#6366f1; font-size:12px; font-weight:600;">선택 →</div>
+      </div>
+    `).join('');
+
+  } catch (err) {
+    uiManager.showToast("❌ 기록을 불러오지 못했습니다.");
+  }
+};
+
+// 2. 선택한 기록을 실제 화면(Center-col)에 적용
+window.applyHistoryItem = function(item) {
+  // state 업데이트 (텍스트 + 해시태그)
+  if (!state.generatedContent) state.generatedContent = {};
+  state.generatedContent[item.platform] = {
+    text: item.content,
+    hashtags: item.hashtags ? item.hashtags.split(',') : []
+  };
+
+  // 💡 [핵심] 이미지 URL 복구
+  if (item.imageUrl) {
+    // state.uploadedImages의 첫 번째 값을 이 URL로 교체하여 프리뷰에 띄움
+    state.uploadedImages = [item.imageUrl];
+    // 만약 화면에 이미지 프리뷰 함수가 있다면 호출
+    if (typeof renderImagePreviews === 'function') renderImagePreviews();
+  }
+
+  // UI 요소에 텍스트 주입
+  const textEl = document.getElementById(`text-${item.platform}`);
+  const resultDiv = document.getElementById(`result-${item.platform}`);
+  const emptyDiv = document.getElementById(`empty-${item.platform}`);
+  
+  if (textEl) textEl.textContent = item.content;
+  if (resultDiv) resultDiv.style.display = 'block';
+  if (emptyDiv) emptyDiv.style.display = 'none';
+
+  // 생성된 플랫폼만 보이도록 필터링
+  updatePlatformVisibility();
+  
+  closeHistoryModal();
+  uiManager.showToast(`✅ '${item.menuName}' (${item.platform}) 기록을 불러왔습니다.`);
+};
+
+window.closeHistoryModal = function() {
+  document.getElementById('historyListModal').classList.add('hidden');
+};
+
+*/

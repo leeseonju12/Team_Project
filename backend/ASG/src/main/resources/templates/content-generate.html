@@ -975,19 +975,6 @@ background: rgba(255, 255, 255, 0.98);
         flex-direction: column;
       }
     }
-    
-        /* 모든 이탤릭 강조 텍스트에 숨구멍(패딩)을 미리 뚫어놓기 */
-em {
-  font-style: italic;
-  padding-right: 0.15em; /* inline 상태에서도 오른쪽 패딩은 먹힙니다! */
-  margin-right: -0.15em;
-  
-  /* 그라데이션 잘림 방지를 위한 추가 팁 
-  줄바꿈이 일어날 때, 잘린 각각의 조각들에 테두리나 패딩을 똑같이 다시 적용*/
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
-}
-    
   </style>
 </head>
 
@@ -1038,7 +1025,7 @@ em {
               <div class="field">
                 <label>추가 정보 키워드 <span class="required">*</span></label>
                 <div class="keyword-grid" id="keywordGroup">
-					<div class="keyword-item">
+					<div class="keywoㄹrd-item">
 					    <input type="checkbox" name="keywords" id="kw-food" value="맛집" th:checked="${req?.keywords?.contains('맛집') == true}">
 					    <label class="keyword-label" for="kw-food">🍽️ 맛집</label>
 					  </div>

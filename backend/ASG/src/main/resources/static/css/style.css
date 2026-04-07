@@ -3270,3 +3270,17 @@ input[type=range]::-webkit-slider-thumb {
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
+
+/* 불러오기 카드 */
+.history-grid { display: flex; flex-direction: column; gap: 12px; }
+.history-card {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0;
+  border-radius: 12px; cursor: pointer; transition: 0.2s;
+}
+.history-card:hover { border-color: #6366f1; background: #fff; transform: translateY(-2px); }
+.history-info { display: flex; align-items: center; gap: 12px; }
+.history-thumb { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; background: #e2e8f0; }
+.history-details h4 { font-size: 14px; margin: 0 0 4px; color: #1e293b; }
+.history-details p { font-size: 11px; color: #94a3b8; margin: 0; }
+.platform-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }

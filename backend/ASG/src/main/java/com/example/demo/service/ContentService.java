@@ -5,10 +5,13 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 
 import com.example.demo.dto.ContentRequest;
 import com.example.demo.dto.SnsResult;
+import com.example.demo.entity.GeneratedContent;
+import com.example.demo.repository.GeneratedContentRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -20,7 +23,10 @@ public class ContentService {
 
 	private final GeminiApiClient geminiClient; // 공통 모듈 주입!
     private final ObjectMapper objectMapper = new ObjectMapper();
+    
+    private final GeneratedContentRepository contentRepository;
 	
+    @Transactional
     public List<SnsResult> generateAllSnsContent(ContentRequest request) {
     	
     	// 커스텀 속성 하드코딩 (추후 request DTO에서 받아오도록 변경 가능)
@@ -51,8 +57,22 @@ public class ContentService {
         // 2. 공통 모듈에게 질문 던지고 답변 받기 (통신 로직을 직접 안 짜도 됨!)
         String rawJsonContent = geminiClient.requestToGemini(prompt);
         
+        List<SnsResult> results = parseAndEnrichResults(rawJsonContent);
+
+        // 3. 💡 DB 저장 로직 추가
+        for (SnsResult res : results) {
+            GeneratedContent entity = GeneratedContent.builder()
+                .menuName(request.getMenuName())
+                .platform(res.getPlatform())
+                .content(res.getContent())
+                .hashtags(res.getHashtags() != null ? String.join(",", res.getHashtags()) : "")
+                .imageUrl("") // 생성 시점엔 이미지가 없을 수 있으므로 빈값
+                .build();
+            contentRepository.save(entity);
+        } 
+        
         // 3. 답변 파싱해서 돌려주기
-        return parseAndEnrichResults(rawJsonContent);
+        return results;
     }
     
     private List<SnsResult> parseAndEnrichResults(String rawJsonContent) {
@@ -105,6 +125,5 @@ public class ContentService {
         }
 
         return results;
-
     }
 }
