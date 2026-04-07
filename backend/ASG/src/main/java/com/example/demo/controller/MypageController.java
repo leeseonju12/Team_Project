@@ -5,6 +5,7 @@ import com.example.demo.dto.myPage.ContentSettingsRequest;
 import com.example.demo.service.myPage.MypageService;
 import lombok.RequiredArgsConstructor;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -17,7 +18,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 
 @Controller
 @RequestMapping("/mypage")
@@ -68,10 +71,30 @@ public class MypageController {
         return ResponseEntity.ok("ok");
     }
     
- // ── 탈퇴하기 ───────────────────────────────────────
+    // ── 탈퇴하기 ───────────────────────────────────────
     @PostMapping("/withdraw")
     public String withdraw() {
         mypageService.withdrawUser();
         return "redirect:/landing-page?withdrawn=true";
     }
+    
+    // ── 대표이미지 ───────────────────────────────────────
+    @PostMapping("/brand/image")
+    @ResponseBody
+    public ResponseEntity<String> uploadImage(@RequestParam("file") MultipartFile file) throws IOException {
+        String imageUrl = mypageService.uploadProfileImage(file);
+        return ResponseEntity.ok(imageUrl);
+    }
+    
+    // ── 주소 저장 ───────────────────────────────────────────
+    @PostMapping("/address")
+    @ResponseBody
+    public ResponseEntity<String> updateAddress(
+            @RequestParam String roadAddrPart1,
+            @RequestParam String addrDetail) {
+        mypageService.updateAddress(roadAddrPart1, addrDetail);
+        return ResponseEntity.ok("ok");
+    }
+    
+    
 }

@@ -73,7 +73,6 @@ CREATE TABLE `brand` (
   `brand_id`          BIGINT       NOT NULL AUTO_INCREMENT,
   `user_id`           BIGINT       NULL         COMMENT '유저 ID (로그인 연동 후 사용)',
   `brand_name`        VARCHAR(100) NOT NULL     COMMENT '브랜드명',
-  `service_name`      VARCHAR(100) NULL         COMMENT '서비스명',
   `industry_type`     VARCHAR(50)  NULL         COMMENT '업종',
   `location_name`     VARCHAR(150) NULL         COMMENT '매장명/지점명',
   `address`           VARCHAR(255) NULL         COMMENT '도로명 주소',
@@ -480,8 +479,8 @@ INSERT INTO `users` (
   signup_completed, STATUS, ROLE,
   created_at, updated_at
 ) VALUES (
-  'kim@social.com', '어글리', '베이커리', 'kakao', 'kakao_test_001',
-  '010-1234-5678', '어글리베이커리', 'CAFE_BAKERY',
+  'test@social.com', '어글리', '베이커리', 'kakao', 'kakao_test_001',
+  '010-4568-5246', '어글리베이커리', 'CAFE_BAKERY',
   1, 1, 1,
   1, 'ACTIVE', 'ROLE_USER',
   NOW(), NOW()

@@ -30,5 +30,3 @@ spring:
         - optional:classpath*:schema.sql
       data-locations: classpath:db/channel-performance-data.sql
       continue-on-error: true
-
-# 키 삭제

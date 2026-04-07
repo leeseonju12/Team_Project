@@ -316,6 +316,9 @@ em {
     
   </style>
 </head>
+
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+
 <body>
   <div class="top-stripe"></div>
   <header>
@@ -486,7 +489,7 @@ em {
     <div class="grid-2">
       <div class="field">
         <label>가게명 <span class="req">*</span></label>
-        <input type="text" id="m_company" th:value="${brandName}" />
+        <input type="text" id="s_name" th:value="${brandName}" />
       </div>
       <div class="field">
         <label>업종 <span class="req">*</span></label>
@@ -506,15 +509,17 @@ em {
     </div>
     <div class="field">
       <label>전화번호 <span class="req">*</span></label>
-      <input type="tel" id="s_tel" th:value="${brandInfo.phone}" maxlength="13" oninput="formatTel(this)" />
+      <input type="tel" id="s_tel" th:value="${userInfo.storePhoneNumber}"
+       placeholder="지점 대표 전화번호를 입력하세요"
+       maxlength="13" oninput="formatTel(this)" />
     </div>
     <div class="field" style="margin-bottom:0;">
       <label>주소 <span class="req">*</span></label>
       <div class="input-row" style="margin-bottom:8px;">
-        <input type="text" id="s_addr" th:value="${brandInfo.address}" readonly style="background:var(--slate);" />
+        <input type="text" id="s_addr" th:value="${userInfo.roadAddrPart1}" readonly style="background:var(--slate);" />
         <button type="button" class="btn-inline" onclick="mockAddr()">주소 변경</button>
       </div>
-      <input type="text" id="s_addr_detail" th:value="${brandInfo.locationName}" placeholder="상세 주소" />
+      <input type="text" id="s_addr_detail" th:value="${userInfo.addrDetail}" placeholder="상세 주소" />
     </div>
     <div class="save-row">
       <button class="btn-save" onclick="saveBrandInfo(this)"><span class="spin"></span>저장하기</button>
@@ -885,65 +890,40 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  /* ═══ Password ═══ */
-  function getPwScore(v){
-    if(!v)return 0;let s=0;
-    if(v.length>=8)s++;if(/[A-Za-z]/.test(v))s++;if(/\d/.test(v))s++;if(/[^A-Za-z0-9]/.test(v))s++;
-    return Math.max(1,s);
-  }
-  function onNewPw(input){
-    const v=input.value,sc=getPwScore(v);
-    const labels=['','취약','보통','양호','강함'];
-    const colors=['','#EF4444','#F59E0B','#14B8A6','#22C55E'];
-    [1,2,3,4].forEach(i=>{const b=document.getElementById('pwb'+i);b.className='pw-bar';if(i<=sc)b.classList.add('s'+sc);});
-    const lbl=document.getElementById('pwLbl');
-    lbl.textContent=v?'강도: '+labels[sc]:'';lbl.style.color=colors[sc];
-    onPwConfirm();
-  }
-  function onPwConfirm(){
-    const n=document.getElementById('pw_new').value;
-    const c=document.getElementById('pw_confirm').value;
-    const msg=document.getElementById('pwConfirmMsg');
-    const inp=document.getElementById('pw_confirm');
-    inp.classList.remove('success','error');
-    if(!c){msg.textContent='';msg.className='field-msg info';return;}
-    if(n===c){inp.classList.add('success');msg.className='field-msg ok';msg.textContent='✓ 비밀번호가 일치합니다.';}
-    else{inp.classList.add('error');msg.className='field-msg err';msg.textContent='비밀번호가 일치하지 않습니다.';}
-  }
-  async function changePw(btn){
-    const cur=document.getElementById('pw_cur').value;
-    const nw=document.getElementById('pw_new').value;
-    const cf=document.getElementById('pw_confirm').value;
-    if(!cur||!nw||!cf){showToast('⚠️ 모든 항목을 입력해 주세요.','err');return;}
-    if(nw!==cf){showToast('⚠️ 새 비밀번호가 일치하지 않습니다.','err');return;}
-    if(getPwScore(nw)<2){showToast('⚠️ 비밀번호 강도가 너무 낮습니다.','err');return;}
-    await loadingBtn(btn);
-    showToast('🔒 비밀번호가 변경됐습니다.','ok');
-    ['pw_cur','pw_new','pw_confirm'].forEach(id=>document.getElementById(id).value='');
-    [1,2,3,4].forEach(i=>document.getElementById('pwb'+i).className='pw-bar');
-    document.getElementById('pwLbl').textContent='';
-    document.getElementById('pwConfirmMsg').textContent='';
-  }
-
-  /* ═══ Image ═══ */
-  function previewImage(e){
-    const f=e.target.files[0];if(!f)return;
-    const r=new FileReader();
-    r.onload=ev=>{const img=document.getElementById('previewImg');img.src=ev.target.result;img.style.display='block';document.getElementById('previewPlaceholder').style.display='none';};
-    r.readAsDataURL(f);showToast('🖼️ 이미지가 등록됐습니다.','ok');
-  }
-  function removeImg(){
-    document.getElementById('previewImg').style.display='none';
-    document.getElementById('previewPlaceholder').style.display='block';
-    document.getElementById('imgFile').value='';
-    showToast('이미지가 삭제됐습니다.','');
-  }
-
   /* ═══ Address ═══ */
-  function mockAddr(){
-    const s=['서울특별시 강남구 테헤란로 456','서울특별시 마포구 합정동 123','서울특별시 서초구 반포대로 78'];
-    document.getElementById('s_addr').value=s[Math.floor(Math.random()*s.length)];
-    showToast('📍 주소가 변경됐습니다.','ok');
+  function mockAddr() {
+    new daum.Postcode({
+      oncomplete: function(data) {
+        document.getElementById('s_addr').value = data.roadAddress || data.jibunAddress;
+        document.getElementById('s_addr_detail').focus();
+        showToast('📍 주소가 선택됐습니다.', 'ok');
+      }
+    }).open();
+  }
+
+  async function saveAddress(btn) {
+    await loadingBtn(btn);
+    const body = new URLSearchParams({
+      roadAddrPart1: document.getElementById('s_addr').value,
+      addrDetail:    document.getElementById('s_addr_detail').value,
+    });
+    try {
+      const res = await fetch('/mypage/address', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-XSRF-TOKEN': getCsrfToken()
+        },
+        body: body.toString()
+      });
+      if (res.ok) {
+        showToast('✅ 주소가 저장됐습니다.', 'ok');
+      } else {
+        showToast('❌ 저장에 실패했습니다.', 'err');
+      }
+    } catch(e) {
+      showToast('❌ 저장 중 오류가 발생했습니다.', 'err');
+    }
   }
 
   /* ═══ Tel ═══ */
@@ -967,6 +947,48 @@ window.addEventListener('DOMContentLoaded', () => {
   function toggleSnsDefault(el){
     const on=el.classList.toggle('checked');
     el.querySelector('.check-circle').classList.toggle('on',on);
+  }
+  
+  /* ═══ Image ═══ */
+  function previewImage(e){
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      const img=document.getElementById('previewImg');
+      img.src=ev.target.result;
+      img.style.display='block';
+      document.getElementById('previewPlaceholder').style.display='none';
+    };
+    r.readAsDataURL(f);
+    uploadImage(f);
+  }
+
+  async function uploadImage(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch('/mypage/brand/image', {
+        method: 'POST',
+        headers: { 'X-XSRF-TOKEN': getCsrfToken() },
+        body: formData
+      });
+      if (res.ok) {
+        const url = await res.text();
+        document.getElementById('previewImg').src = url;
+        showToast('✅ 이미지가 업로드됐습니다.', 'ok');
+      } else {
+        showToast('❌ 이미지 업로드에 실패했습니다.', 'err');
+      }
+    } catch(e) {
+      showToast('❌ 업로드 중 오류가 발생했습니다.', 'err');
+    }
+  }
+
+  function removeImg(){
+    document.getElementById('previewImg').style.display='none';
+    document.getElementById('previewPlaceholder').style.display='block';
+    document.getElementById('imgFile').value='';
+    showToast('이미지가 삭제됐습니다.','');
   }
 
   /* ═══ SNS accounts ═══ */
