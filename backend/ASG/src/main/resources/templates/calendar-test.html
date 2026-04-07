@@ -68,115 +68,214 @@
     </div>
   </div>
 
-  <div id="preview-modal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
-      <div id="modal-header" class="p-4 text-white flex justify-between items-center">
-        <span id="modal-platform-name" class="font-bold text-xs tracking-widest uppercase">PREVIEW</span>
-        <button onclick="closeModal()" class="text-white hover:opacity-50">✕</button>
+  <div id="preview-modal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 hidden" style="background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);">
+  <div class="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
+    <div id="modal-header" class="p-4 text-white flex justify-between items-center">
+      <span id="modal-platform-name" class="font-bold text-xs tracking-widest uppercase">PREVIEW</span>
+      <button onclick="closeModal()" class="text-white hover:opacity-50">✕</button>
+    </div>
+    <div class="p-6">
+      <h2 id="modal-title" class="text-xl font-bold text-slate-900 leading-tight mb-4"></h2>
+      <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 min-h-[180px]">
+        <p id="modal-body" class="text-sm text-slate-700 whitespace-pre-wrap"></p>
       </div>
-      <div class="p-6">
-        <h2 id="modal-title" class="text-xl font-bold text-slate-900 leading-tight mb-4"></h2>
-        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 min-h-[180px]">
-          <p id="modal-body" class="text-sm text-slate-700 whitespace-pre-wrap"></p>
-        </div>
-        <div class="mt-6">
-           <button onclick="copyContent()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-sm hover:bg-slate-700 transition-colors">본문 내용 복사</button>
-        </div>
+      <div class="mt-6">
+         <button onclick="copyContent()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-bold shadow-sm hover:bg-slate-700 transition-colors">본문 내용 복사</button>
       </div>
     </div>
   </div>
+</div>
+
+<div id="time-selection-modal" class="fixed inset-0 z-[10000] flex items-center justify-center p-4 hidden" style="background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);">
+  <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl p-6">
+    <h3 class="text-xl font-bold text-slate-900 mb-2">게시 시간 설정</h3>
+    <p class="text-sm text-slate-500 mb-6" id="selected-date-display"></p>
+    
+    <div class="mb-6">
+      <label class="block text-xs font-semibold text-slate-400 uppercase mb-2">시간 선택</label>
+      <input type="time" id="scheduled-time" 
+             class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xl font-bold focus:outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
+
+    <div class="flex gap-3">
+      <button onclick="cancelTimeSelection()" class="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-colors">취소</button>
+      <button onclick="confirmTimeSelection()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition-colors">저장하기</button>
+    </div>
+  </div>
+</div>
 
   <script th:inline="javascript">
-    document.addEventListener('DOMContentLoaded', function() {
-      const containerEl = document.getElementById('pending-list');
-      const calendarEl = document.getElementById('calendar');
+  document.addEventListener('DOMContentLoaded', function() {
+    const containerEl = document.getElementById('pending-list');
+    const calendarEl = document.getElementById('calendar');
+    
+    // 현재 진행 중인 스케줄링 정보를 담을 임시 객체
+    let currentSchedulingInfo = null;
 
-      // 1. 외부 드래그 요소 활성화 (Draggable)
-      new FullCalendar.Draggable(containerEl, {
-        itemSelector: '.fc-event',
-        eventData: function(eventEl) {
-          // dataset을 사용하여 JSON 파싱 에러를 원천 차단
-          return {
-            id: eventEl.dataset.id,
-            title: eventEl.dataset.title,
-            borderColor: eventEl.dataset.color,
-            backgroundColor: eventEl.style.backgroundColor,
-            create: true, // 외부 드롭 시 이벤트 객체 생성을 보장 (중요)
-            extendedProps: {
-              content: eventEl.dataset.content,
-              platform: eventEl.dataset.platform
-            }
-          };
-        }
-      });
-
-      // 2. 캘린더 초기화
-      const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        locale: 'ko',
-        editable: true,
-        droppable: true,
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek'
-        },
-        
-        // 중요: 컨트롤러에서 설정한 API 경로와 일치해야 함
-        events: '/api/posts/events',
-
-        // 리스트에서 캘린더로 이동 시 DB 업데이트
-        eventReceive: function(info) {
-          updateSchedule(info.event.id, info.event.startStr, info.draggedEl);
-        },
-
-        // 캘린더 내에서 날짜 변경 시 DB 업데이트
-        eventDrop: function(info) {
-          updateSchedule(info.event.id, info.event.startStr);
-        },
-
-        // 이벤트 클릭 시 상세 모달 열기
-        eventClick: function(info) {
-          openModal(info.event);
-        }
-      });
-
-      calendar.render();
-
-      // 서버 DB 업데이트 함수 (Fetch API)
-      function updateSchedule(postId, date, elToRemove = null) {
-        fetch('/api/posts/schedule', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            postId: postId,
-            scheduledDate: date
-          })
-        }).then(res => {
-          if(res.ok) {
-            console.log("일정 업데이트 성공");
-            if(elToRemove) {
-              elToRemove.remove();
-              updateCountUI();
-            }
-          } else {
-            console.error("서버 응답 오류:", res.status);
-            alert('저장 중 오류가 발생했습니다.');
-            location.reload();
+    // 1. 외부 드래그 요소 활성화 (Draggable)
+    new FullCalendar.Draggable(containerEl, {
+      itemSelector: '.fc-event',
+      eventData: function(eventEl) {
+        return {
+          id: eventEl.dataset.id,
+          title: eventEl.dataset.title,
+          borderColor: eventEl.dataset.color,
+          backgroundColor: eventEl.style.backgroundColor,
+          create: true, 
+          extendedProps: {
+            content: eventEl.dataset.content,
+            platform: eventEl.dataset.platform
           }
-        }).catch(err => {
-          console.error("네트워크 에러:", err);
-        });
-      }
-
-      function updateCountUI() {
-        const count = containerEl.querySelectorAll('.fc-event').length;
-        document.getElementById('pending-count-text').innerText = `${count} 건의 대기중인 포스트`;
+        };
       }
     });
 
-    // --- 모달 관련 유틸리티 함수 ---
-    function openModal(event) {
+    // 2. 캘린더 초기화
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      locale: 'ko',
+      editable: true,
+      droppable: true,
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek'
+      },
+      events: '/api/posts/events',
+
+      // 리스트 -> 캘린더 드롭 시
+	     eventReceive: function(info) {
+	  // [수정] 드롭되자마자 달력에 생기는 'All-day' 이벤트를 일단 화면에서 제거합니다.
+	    // 이렇게 하면 팝업이 떠 있는 동안 달력에 중복된 일정이 보이지 않습니다.
+	    const tempEvent = info.event;
+	    tempEvent.remove();
+	 // 시간 설정 팝업 준비 (제거한 이벤트의 정보를 넘겨줌)
+	    prepareScheduleUpdate(tempEvent, info.draggedEl);
+	  },
+
+      // 캘린더 내에서 드래그 이동 시
+      eventDrop: function(info) {
+        prepareScheduleUpdate(info.event, null, info.revert);
+      },
+
+      // 이벤트 클릭 시 상세 모달 열기
+      eventClick: function(info) {
+        openModal(info.event);
+      }
+    });
+
+    calendar.render();
+
+    /**
+     * [확장] 팝업을 띄우고 스케줄링 정보를 임시 저장하는 함수
+     */
+    function prepareScheduleUpdate(event, elToRemove, revertFunc = null) {
+      // FullCalendar의 startStr에서 날짜 부분만 추출 (yyyy-MM-dd)
+      const dateStr = event.startStr.split('T')[0];
+      
+      currentSchedulingInfo = {
+        event: event,
+        postId: event.id,
+        date: dateStr,
+        elToRemove: elToRemove, // 외부 리스트에서 온 경우 해당 엘리먼트
+        revert: revertFunc      // 내부 이동 시 취소하면 되돌릴 함수
+      };
+
+      // 모달 UI 세팅
+      const timeModal = document.getElementById('time-selection-modal');
+      document.getElementById('selected-date-display').innerText = `${dateStr} 게시 일정을 설정합니다.`;
+      
+      // 기본 시간 설정 (예: 현재 시간의 다음 정각 혹은 09:00)
+      document.getElementById('scheduled-time').value = "09:00";
+      
+      timeModal.classList.remove('hidden');
+    }
+
+    /**
+     * [확장] 시간 설정 취소 시 호출
+     */
+    window.cancelTimeSelection = function() {
+      if (currentSchedulingInfo) {
+        if (currentSchedulingInfo.revert) {
+          currentSchedulingInfo.revert(); // 캘린더 내부 이동이었으면 원래 위치로
+        } else {
+          currentSchedulingInfo.event.remove(); // 외부 신규 추가였으면 이벤트 제거
+        }
+      }
+      closeTimeModal();
+    };
+
+    /**
+     * [확장] 시간 설정 확인(저장) 시 호출
+     */
+    window.confirmTimeSelection = function() {
+      const timeInput = document.getElementById('scheduled-time').value;
+      if (!timeInput) {
+        alert("시간을 선택해주세요.");
+        return;
+      }
+
+      const fullDateTimeStr = `${currentSchedulingInfo.date}T${timeInput}:00`;
+      const selectedDate = new Date(fullDateTimeStr);
+      const now = new Date();
+
+      // [Future Expansion 1] 과거 시간 Validation
+      if (selectedDate < now) {
+        alert("과거 시간으로는 예약할 수 없습니다. 현재 시간 이후로 설정해주세요.");
+        return;
+      }
+
+      // 최종 DB 업데이트 요청
+      updateSchedule(
+        currentSchedulingInfo.postId, 
+        fullDateTimeStr, 
+        currentSchedulingInfo.elToRemove
+      );
+      
+      closeTimeModal();
+    };
+
+    function closeTimeModal() {
+      document.getElementById('time-selection-modal').classList.add('hidden');
+      currentSchedulingInfo = null;
+    }
+
+    // 서버 DB 업데이트 함수 (Fetch API)
+    function updateSchedule(postId, dateTimeStr, elToRemove = null) {
+      fetch('/api/posts/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          postId: postId,
+          scheduledDate: dateTimeStr // 이제 시간 정보가 포함된 문자열 전송
+        })
+      }).then(res => {
+        if(res.ok) {
+          console.log("일정 업데이트 성공");
+          if(elToRemove) {
+            elToRemove.remove();
+            updateCountUI();
+          }
+          // 성공 시 캘린더 데이터 최신화 (성공 메시지를 보고 싶다면 Toast 추가 권장)
+          calendar.refetchEvents(); 
+        } else {
+          console.error("서버 응답 오류:", res.status);
+          alert('저장 중 오류가 발생했습니다.');
+          location.reload();
+        }
+      }).catch(err => {
+        console.error("네트워크 에러:", err);
+      });
+    }
+
+    function updateCountUI() {
+      const count = containerEl.querySelectorAll('.fc-event').length;
+      const countText = document.getElementById('pending-count-text');
+      if(countText) countText.innerText = `${count} 건의 대기중인 포스트`;
+    }
+
+    // --- 기존 모달 관련 유틸리티 함수 ---
+    window.openModal = function(event) {
       const modal = document.getElementById('preview-modal');
       const props = event.extendedProps;
       
@@ -185,19 +284,22 @@
       document.getElementById('modal-platform-name').innerText = props.platform || 'UNKNOWN';
       document.getElementById('modal-header').style.backgroundColor = event.borderColor || '#334155';
       
-      modal.style.display = 'flex';
-    }
+      modal.classList.remove('hidden');
+      modal.style.display = 'flex'; // 기존 display 로직 유지
+    };
 
-    function closeModal() {
+    window.closeModal = function() {
+      document.getElementById('preview-modal').classList.add('hidden');
       document.getElementById('preview-modal').style.display = 'none';
-    }
+    };
 
-    function copyContent() {
+    window.copyContent = function() {
       const content = document.getElementById('modal-body').innerText;
       navigator.clipboard.writeText(content).then(() => {
         alert('본문 내용이 복사되었습니다.');
       });
-    }
-  </script>
+    };
+  });
+</script>
 </body>
 </html>
