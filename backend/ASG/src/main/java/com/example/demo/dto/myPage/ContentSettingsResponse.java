@@ -12,6 +12,7 @@ public class ContentSettingsResponse {
     private final Integer targetLength;
     private final String introTemplate;
     private final String outroTemplate;
+    private final String preferredSns;
 
     public ContentSettingsResponse(ContentSettings settings) {
         this.settingsId    = settings.getId();
@@ -20,5 +21,6 @@ public class ContentSettingsResponse {
         this.targetLength  = settings.getTargetLength();
         this.introTemplate = settings.getIntroTemplate();
         this.outroTemplate = settings.getOutroTemplate();
+        this.preferredSns  = settings.getPreferredSns();  // ← 추가
     }
 }

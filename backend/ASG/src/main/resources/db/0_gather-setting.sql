@@ -66,6 +66,9 @@ CREATE TABLE `content_settings` (
     REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
 
+ALTER TABLE `content_settings`
+  ADD COLUMN `preferred_sns` VARCHAR(100) NULL COMMENT 'comma-separated: instagram,naver,kakao,facebook';
+
 -- ══════════════════════════════════════════════
 -- brand
 -- ══════════════════════════════════════════════
@@ -73,6 +76,7 @@ CREATE TABLE `brand` (
   `brand_id`          BIGINT       NOT NULL AUTO_INCREMENT,
   `user_id`           BIGINT       NULL         COMMENT '유저 ID (로그인 연동 후 사용)',
   `brand_name`        VARCHAR(100) NOT NULL     COMMENT '브랜드명',
+  `service_name`	  TEXT         NULL         COMMENT 'sns 계정 아이디',
   `industry_type`     VARCHAR(50)  NULL         COMMENT '업종',
   `location_name`     VARCHAR(150) NULL         COMMENT '매장명/지점명',
   `address`           VARCHAR(255) NULL         COMMENT '도로명 주소',

@@ -116,7 +116,8 @@ public class MypageService {
 	            request.getOutroTemplate(),
 	            request.getTone(),
 	            request.getEmojiLevel(),
-	            request.getTargetLength()
+	            request.getTargetLength(),
+	            request.getPreferredSns()
 	    );
 	    contentSettingsRepository.save(settings);
 	} 

@@ -621,33 +621,34 @@ em {
             <div class="save-row">
               <button class="btn-save" onclick="saveContentStyle(this)"><span class="spin"></span>저장하기</button>
             </div>
-          </div>
+          </div> 
         </div>
         <div class="card">
+        
           <div class="card-header"><div class="card-title">📢 게시할 SNS 기본 선택값</div></div>
           <div class="card-body">
             <div class="info-notice">
               <span>💡</span>
               <span>콘텐츠 생성 후 게시 화면에서 기본으로 선택될 채널을 설정합니다. 게시 시 직접 변경도 가능합니다.</span>
             </div>
-            <div class="sns-check-grid">
-              <div class="sns-check-item checked" onclick="toggleSnsDefault(this)">
-                <div class="sns-icon" style="background:linear-gradient(135deg,#f09433,#dc2743,#bc1888);">📸</div>
-                <span class="sns-label">Instagram</span><div class="check-circle on"></div>
-              </div>
-              <div class="sns-check-item checked" onclick="toggleSnsDefault(this)">
-                <div class="sns-icon" style="background:#03C75A;">📝</div>
-                <span class="sns-label">네이버 블로그</span><div class="check-circle on"></div>
-              </div>
-              <div class="sns-check-item" onclick="toggleSnsDefault(this)">
-                <div class="sns-icon" style="background:#F9C000;">💬</div>
-                <span class="sns-label">카카오채널</span><div class="check-circle"></div>
-              </div>
-              <div class="sns-check-item" onclick="toggleSnsDefault(this)">
-                <div class="sns-icon" style="background:#1877F2;">👍</div>
-                <span class="sns-label">Facebook</span><div class="check-circle"></div>
-              </div>
-            </div>
+<div class="sns-check-grid" id="snsDefaultGrid">
+  <div class="sns-check-item checked" data-sns="instagram" onclick="toggleSnsDefault(this)">
+    <div class="sns-icon" style="background:linear-gradient(135deg,#f09433,#dc2743,#bc1888);">📸</div>
+    <span class="sns-label">Instagram</span><div class="check-circle on"></div>
+  </div>
+  <div class="sns-check-item checked" data-sns="naver" onclick="toggleSnsDefault(this)">
+    <div class="sns-icon" style="background:#03C75A;">📝</div>
+    <span class="sns-label">네이버 블로그</span><div class="check-circle on"></div>
+  </div>
+  <div class="sns-check-item" data-sns="kakao" onclick="toggleSnsDefault(this)">
+    <div class="sns-icon" style="background:#F9C000;">💬</div>
+    <span class="sns-label">카카오채널</span><div class="check-circle"></div>
+  </div>
+  <div class="sns-check-item" data-sns="facebook" onclick="toggleSnsDefault(this)">
+    <div class="sns-icon" style="background:#1877F2;">👍</div>
+    <span class="sns-label">Facebook</span><div class="check-circle"></div>
+  </div>
+</div>
             <div class="save-row">
               <button class="btn-save" onclick="saveContentSettings(this,'스타일 설정')"><span class="spin"></span>저장하기</button>
             </div>
@@ -1239,6 +1240,16 @@ window.addEventListener('DOMContentLoaded', () => {
           slider.value = data.targetLength;
           document.getElementById('cCharLenVal').textContent = data.targetLength + '자';
         }
+        
+        if (data.preferredSns) {
+        	  const selected = data.preferredSns.split(',').map(s => s.trim());
+        	  document.querySelectorAll('#snsDefaultGrid .sns-check-item').forEach(item => {
+        	    const val = item.dataset.sns;
+        	    const on = selected.includes(val);
+        	    item.classList.toggle('checked', on);
+        	    item.querySelector('.check-circle').classList.toggle('on', on);
+        	  });
+        	}
       })
       .catch(e => console.warn('콘텐츠 설정 로드 실패:', e));
   }
@@ -1252,6 +1263,17 @@ window.addEventListener('DOMContentLoaded', () => {
     const sel = document.querySelector('#cEmojiGrid .tone-card.selected');
     return sel ? (EMOJI_KO_MAP[sel.dataset.emoji] || '적당히') : '적당히';
   }
+  
+  // 기본 SNS 세팅 함수 추가 (현재 미구현)
+  async function saveContentSettings(btn, label) {
+  const selected = Array.from(
+    document.querySelectorAll('#snsDefaultGrid .sns-check-item.checked')
+  ).map(el => el.dataset.sns).join(',');
+
+  await postContentSettings(btn, label, {
+    preferredSns: selected
+  });
+}
 
   // 공통 POST 함수
   async function postContentSettings(btn, label, body) {

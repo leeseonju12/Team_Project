@@ -12,4 +12,5 @@ public class ContentSettingsRequest {
     private Integer targetLength; // 100 ~ 500
     private String introTemplate;
     private String outroTemplate;
+    private String preferredSns;
 }
