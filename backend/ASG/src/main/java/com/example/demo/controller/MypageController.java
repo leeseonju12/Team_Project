@@ -47,12 +47,26 @@ public class MypageController {
         return "redirect:/mypage";
     }
 
-    // ── 콘텐츠 설정 수정 ────────────────────────────────────
-    /*@PostMapping("/content-settings")
-    public String updateContentSettings(@ModelAttribute ContentSettingsRequest request) {
-        mypageService.updateContentSettings(request);
-        return "redirect:/mypage";
-    }*/
+ // ── 콘텐츠 설정 조회 ────────────────────────────────────
+    @GetMapping("/content-settings")
+    @ResponseBody
+    public ResponseEntity<?> getContentSettings() {
+        com.example.demo.dto.myPage.ContentSettingsResponse res = mypageService.getContentSettings();
+        return res != null ? ResponseEntity.ok(res) : ResponseEntity.noContent().build();
+    }
+
+    // ── 콘텐츠 설정 저장 ────────────────────────────────────
+    @PostMapping("/content-settings")
+    @ResponseBody
+    public ResponseEntity<String> updateContentSettings(
+            @RequestBody com.example.demo.dto.myPage.ContentSettingsRequest request) {
+        try {
+            mypageService.updateContentSettings(request);
+            return ResponseEntity.ok("ok");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
 
     // ── SNS 연동 해제 ───────────────────────────────────────
     /*@PostMapping("/sns/{brandPlatformId}/disconnect")

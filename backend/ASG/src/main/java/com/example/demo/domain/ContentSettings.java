@@ -123,8 +123,8 @@ public class ContentSettings {
             String emojiLevel,
             Integer targetLength
     ) {
-        this.introTemplate = introTemplate;
-        this.outroTemplate = outroTemplate;
+        if (introTemplate != null) this.introTemplate = introTemplate;
+        if (outroTemplate != null) this.outroTemplate = outroTemplate;
         if (tone != null) this.tone = tone;
         if (emojiLevel != null) this.emojiLevel = emojiLevel;
         if (targetLength != null) this.targetLength = targetLength;

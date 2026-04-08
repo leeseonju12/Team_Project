@@ -415,7 +415,7 @@ em {
               <div class="field-msg info" id="codeMsg">인증번호를 입력해 주세요. (테스트: 123456)</div>
             </div>
             <div class="save-row">
-              <button class="btn-save" onclick="saveSection(this,'기본 정보')"><span class="spin"></span>저장하기</button>
+              <button class="btn-save" onclick="saveContentIntroOutro(this)"><span class="spin"></span>저장하기</button>
             </div>
           </div>
         </div>
@@ -564,20 +564,18 @@ em {
               <div>
                 <div class="template-box">
                   <div class="template-box-header">✨ 인트로</div>
-                  <textarea id="c_intro">안녕하세요 😊 소셜다모아 카페입니다!
-오늘도 맛있는 소식 전해드려요 ☕</textarea>
+                  <textarea id="c_intro" placeholder="인트로 문구를 입력하세요"></textarea>
                 </div>
               </div>
               <div>
                 <div class="template-box">
                   <div class="template-box-header">🎯 아웃트로</div>
-                  <textarea id="c_outro">방문해 주셔서 감사합니다 🙏
-다음에도 좋은 소식으로 찾아올게요!</textarea>
+                  <textarea id="c_outro" placeholder="아웃트로 문구를 입력하세요"></textarea>
                 </div>
               </div>
             </div>
             <div class="save-row" style="margin-top:14px;">
-              <button class="btn-save" onclick="saveSection(this,'인트로·아웃트로')"><span class="spin"></span>저장하기</button>
+              <button class="btn-save" onclick="saveIntroOutro(this)"><span class="spin"></span>저장하기</button>
             </div>
           </div>
         </div>
@@ -621,7 +619,7 @@ em {
             </div>
 
             <div class="save-row">
-              <button class="btn-save" onclick="saveSection(this,'스타일 설정')"><span class="spin"></span>저장하기</button>
+              <button class="btn-save" onclick="saveContentStyle(this)"><span class="spin"></span>저장하기</button>
             </div>
           </div>
         </div>
@@ -651,7 +649,7 @@ em {
               </div>
             </div>
             <div class="save-row">
-              <button class="btn-save" onclick="saveSection(this,'SNS 기본 선택값')"><span class="spin"></span>저장하기</button>
+              <button class="btn-save" onclick="saveContentSettings(this,'스타일 설정')"><span class="spin"></span>저장하기</button>
             </div>
           </div>
         </div>
@@ -1212,6 +1210,82 @@ window.addEventListener('DOMContentLoaded', () => {
     t.textContent=msg;t.className='toast show '+(cls||'');
     clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2800);
   }
+  
+  /* ═══ 콘텐츠 설정 로드 & 저장 ═══ */
+  const TONE_KO_MAP   = { 'default':'기본', 'friendly':'친근', 'clean':'깔끔', 'formal':'격식', 'trendy':'트렌디' };
+  const TONE_KEY_MAP  = { '기본':'default', '친근':'friendly', '깔끔':'clean', '격식':'formal', '트렌디':'trendy' };
+  const EMOJI_KO_MAP  = { 'few':'적게', 'moderate':'적당히', 'many':'많이' };
+  const EMOJI_KEY_MAP = { '적게':'few', '적당히':'moderate', '많이':'many' };
+
+  function loadContentSettings() {
+    fetch('/mypage/content-settings')
+      .then(res => { if (res.status === 204) return null; return res.json(); })
+      .then(data => {
+        if (!data) return;
+        if (data.introTemplate != null) document.getElementById('c_intro').value = data.introTemplate;
+        if (data.outroTemplate != null) document.getElementById('c_outro').value = data.outroTemplate;
+        if (data.tone) {
+          const key = TONE_KEY_MAP[data.tone];
+          document.querySelectorAll('#cToneGrid .tone-card').forEach(c =>
+            c.classList.toggle('selected', c.dataset.tone === key));
+        }
+        if (data.emojiLevel) {
+          const key = EMOJI_KEY_MAP[data.emojiLevel];
+          document.querySelectorAll('#cEmojiGrid .tone-card').forEach(c =>
+            c.classList.toggle('selected', c.dataset.emoji === key));
+        }
+        if (data.targetLength) {
+          const slider = document.getElementById('c_charlen');
+          slider.value = data.targetLength;
+          document.getElementById('cCharLenVal').textContent = data.targetLength + '자';
+        }
+      })
+      .catch(e => console.warn('콘텐츠 설정 로드 실패:', e));
+  }
+
+  function getSelectedTone() {
+    const sel = document.querySelector('#cToneGrid .tone-card.selected');
+    return sel ? (TONE_KO_MAP[sel.dataset.tone] || '기본') : '기본';
+  }
+
+  function getSelectedEmoji() {
+    const sel = document.querySelector('#cEmojiGrid .tone-card.selected');
+    return sel ? (EMOJI_KO_MAP[sel.dataset.emoji] || '적당히') : '적당히';
+  }
+
+  // 공통 POST 함수
+  async function postContentSettings(btn, label, body) {
+    await loadingBtn(btn);
+    try {
+      const res = await fetch('/mypage/content-settings', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': getCsrfToken() },
+        body:    JSON.stringify(body)
+      });
+      showToast(res.ok ? `✅ ${label}이(가) 저장됐습니다.` : '❌ 저장에 실패했습니다.', res.ok ? 'ok' : 'err');
+    } catch(e) {
+      showToast('❌ 저장 중 오류가 발생했습니다.', 'err');
+    }
+  }
+
+  // 인트로·아웃트로만 저장
+  async function saveIntroOutro(btn) {
+    await postContentSettings(btn, '인트로·아웃트로', {
+      introTemplate: document.getElementById('c_intro').value,
+      outroTemplate: document.getElementById('c_outro').value
+    });
+  }
+
+  // 스타일 설정만 저장 (말투 + 이모지 + 글자수)
+  async function saveContentStyle(btn) {
+    await postContentSettings(btn, '스타일 설정', {
+      tone:         getSelectedTone(),
+      emojiLevel:   getSelectedEmoji(),
+      targetLength: parseInt(document.getElementById('c_charlen').value)
+    });
+  }
+
+  loadContentSettings();
 
   /* ═══ Init ═══ */
   updateInqStats();

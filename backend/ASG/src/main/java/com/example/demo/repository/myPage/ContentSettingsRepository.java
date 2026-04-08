@@ -1,8 +1,11 @@
+// 수정 부분만 — findByUser_Id 메서드 추가
 package com.example.demo.repository.myPage;
 
 import com.example.demo.domain.ContentSettings;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
+
 public interface ContentSettingsRepository extends JpaRepository<ContentSettings, Long> {
-    // user 연동 전까지 기본만 유지
+    Optional<ContentSettings> findByUser_Id(Long userId);
 }

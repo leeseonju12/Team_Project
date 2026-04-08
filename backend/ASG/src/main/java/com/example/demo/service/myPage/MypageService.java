@@ -23,13 +23,13 @@ import com.example.demo.domain.user.entity.BusinessHours;
 import com.example.demo.repository.auth.BusinessHoursRepository;
 import java.util.List;
 import java.util.Map;
+import com.example.demo.dto.myPage.ContentSettingsResponse;
+import com.example.demo.dto.myPage.ContentSettingsRequest;
 
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.repository.auth.UserRepository;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -95,22 +95,31 @@ public class MypageService {
 	}
 
 	// ── 콘텐츠 설정 조회 ────────────────────────────────────
-	/*
-	 * @Transactional(readOnly = true) public ContentSettingsResponse
-	 * getContentSettings() { return contentSettingsRepository.findById(BRAND_ID)
-	 * .map(ContentSettingsResponse::new) .orElse(null); }
-	 */
+	@Transactional(readOnly = true)
+	public ContentSettingsResponse getContentSettings() {
+	    return contentSettingsRepository.findByUser_Id(USER_ID)
+	            .map(ContentSettingsResponse::new)
+	            .orElse(null);
+	}
 
 	// ── 콘텐츠 설정 수정 ────────────────────────────────────
-	/*
-	 * @Transactional public void updateContentSettings(ContentSettingsRequest
-	 * request) { ContentSettings settings =
-	 * contentSettingsRepository.findById(BRAND_ID) .orElseThrow(() -> new
-	 * IllegalArgumentException("콘텐츠 설정을 찾을 수 없습니다."));
-	 * 
-	 * settings.update( request.getIntroTemplate(), request.getOutroTemplate(),
-	 * request.getTone(), request.getEmojiLevel(), request.getTargetLength() ); }
-	 */
+	@Transactional
+	public void updateContentSettings(ContentSettingsRequest request) {
+	    User user = userRepository.findById(USER_ID)
+	            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+	    ContentSettings settings = contentSettingsRepository.findByUser_Id(USER_ID)
+	            .orElse(ContentSettings.createDefault(user));
+
+	    settings.update(
+	            request.getIntroTemplate(),
+	            request.getOutroTemplate(),
+	            request.getTone(),
+	            request.getEmojiLevel(),
+	            request.getTargetLength()
+	    );
+	    contentSettingsRepository.save(settings);
+	} 
 
 	// ── SNS 연동 목록 조회 ──────────────────────────────────
 	@Transactional(readOnly = true)
