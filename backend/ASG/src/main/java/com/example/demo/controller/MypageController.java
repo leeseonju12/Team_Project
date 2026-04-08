@@ -33,10 +33,8 @@ public class MypageController {
     @GetMapping
     public String mypage(Model model) {
         model.addAttribute("brandInfo", mypageService.getBrandInfo());
-        //model.addAttribute("contentSettings", mypageService.getContentSettings());
         model.addAttribute("snsAccounts", mypageService.getSnsAccounts());
         model.addAttribute("userInfo", mypageService.getUserInfo());
-        model.addAttribute("brandName", mypageService.getBrandName());
         return "mypage";
     }
 

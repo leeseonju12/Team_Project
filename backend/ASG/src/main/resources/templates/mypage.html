@@ -334,8 +334,8 @@ em {
       <a href="mypage" class="nav-pill active">👤 마이페이지</a>
     </nav>
     <div class="header-user">
-      <div class="user-avatar">김</div>
-      <span class="user-name">김소셜 님</span>
+      <div class="user-avatar" th:text="${userInfo.name != null ? userInfo.name.substring(0,1) : '?'}"></div>
+		<span class="user-name" th:text="${userInfo.name + ' 님'}"></span>
     </div>
   </header>
 
@@ -343,36 +343,38 @@ em {
   <div class="page-wrap">
     <div class="sidebar">
       <div class="sidebar-profile">
-        <div class="profile-avatar-wrap"><div class="profile-avatar">김</div></div>
-        <div class="profile-name">김소셜</div>
-        <div class="profile-email">kim@social.com</div>
-        <div class="profile-badge">⭐ 프로 플랜</div>
+        <div class="profile-avatar-wrap">
+          <div class="profile-avatar" th:text="${userInfo.name != null ? userInfo.name.substring(0,1) : '?'}"></div>
+        </div>
+        <div class="profile-name" th:text="${userInfo.name}"></div>
+        <div class="profile-email" th:text="${userInfo.email}"></div>
+        <div class="profile-badge">카카오 가입자</div>
       </div>
-      <!-- ── ㅡmypage Sidebar ── -->
-<nav class="sidebar-nav">
-  <div class="snav-group-label">계정</div>
-  <div class="snav-item active" data-sec="member" onclick="showSection('member',this)"><span class="sni">👤</span>회원정보</div>
-  <div class="snav-divider"></div>
+      <!-- ── mypage Sidebar ── -->
+      <nav class="sidebar-nav">
+        <div class="snav-group-label">계정</div>
+        <div class="snav-item active" data-sec="member" onclick="showSection('member',this)"><span class="sni">👤</span>회원정보</div>
+        <div class="snav-divider"></div>
 
-  <div class="snav-group-label">사업장</div>
-  <div class="snav-item" data-sec="shop" onclick="showSection('shop',this)"><span class="sni">🏪</span>가게 정보</div>
-  <div class="snav-divider"></div>
+        <div class="snav-group-label">사업장</div>
+        <div class="snav-item" data-sec="shop" onclick="showSection('shop',this)"><span class="sni">🏪</span>가게 정보</div>
+        <div class="snav-divider"></div>
 
-  <div class="snav-group-label">콘텐츠</div>
-<div class="snav-item" data-sec="content" onclick="showSection('content',this)"><span class="sni">✍️</span>콘텐츠 개인 설정</div>
-<div class="snav-item" data-sec="history" onclick="showSection('history',this)"><span class="sni">📂</span>콘텐츠 히스토리</div>
-<div class="snav-divider"></div>
+        <div class="snav-group-label">콘텐츠</div>
+        <div class="snav-item" data-sec="content" onclick="showSection('content',this)"><span class="sni">✍️</span>콘텐츠 개인 설정</div>
+        <div class="snav-item" data-sec="history" onclick="showSection('history',this)"><span class="sni">📂</span>콘텐츠 히스토리</div>
+        <div class="snav-divider"></div>
 
-  <div class="snav-group-label">연동</div>
-  <div class="snav-item" data-sec="sns" onclick="showSection('sns',this)"><span class="sni">🔗</span>SNS 계정 관리</div>
-  <div class="snav-divider"></div>
+        <div class="snav-group-label">연동</div>
+        <div class="snav-item" data-sec="sns" onclick="showSection('sns',this)"><span class="sni">🔗</span>SNS 계정 관리</div>
+        <div class="snav-divider"></div>
 
-  <div class="snav-group-label">고객지원</div>
-  <div class="snav-item" data-sec="inquiry" onclick="showSection('inquiry',this)">
-    <span class="sni">📋</span>문의 내역
-    <span id="inqBadge" style="margin-left:auto;background:var(--yellow-light);color:#92400E;font-size:10px;font-weight:800;padding:2px 7px;border-radius:100px;">2</span>
-  </div>
-</nav>
+        <div class="snav-group-label">고객지원</div>
+        <div class="snav-item" data-sec="inquiry" onclick="showSection('inquiry',this)">
+          <span class="sni">📋</span>문의 내역
+          <span id="inqBadge" style="margin-left:auto;background:var(--yellow-light);color:#92400E;font-size:10px;font-weight:800;padding:2px 7px;border-radius:100px;">2</span>
+        </div>
+      </nav>
     </div>
 
     <div class="content">
@@ -489,22 +491,22 @@ em {
     <div class="grid-2">
       <div class="field">
         <label>가게명 <span class="req">*</span></label>
-        <input type="text" id="s_name" th:value="${brandName}" />
+        <input type="text" id="s_name" th:value="${userInfo.companyName}" />
       </div>
       <div class="field">
         <label>업종 <span class="req">*</span></label>
-        <select id="s_category">
-          <option value="CAFE_BAKERY"           th:selected="${brandInfo.industryType == 'CAFE_BAKERY'}">카페 / 베이커리</option>
-          <option value="FOOD_RESTAURANT"       th:selected="${brandInfo.industryType == 'FOOD_RESTAURANT'}">음식점 / 식당</option>
-          <option value="BEAUTY_SALON"          th:selected="${brandInfo.industryType == 'BEAUTY_SALON'}">미용 / 뷰티</option>
-          <option value="FASHION_CLOTHING"      th:selected="${brandInfo.industryType == 'FASHION_CLOTHING'}">패션 / 의류</option>
-          <option value="ACCOMMODATION_PENSION" th:selected="${brandInfo.industryType == 'ACCOMMODATION_PENSION'}">숙박 / 펜션</option>
-          <option value="FITNESS_SPORTS"        th:selected="${brandInfo.industryType == 'FITNESS_SPORTS'}">피트니스 / 스포츠</option>
-          <option value="EDUCATION_ACADEMY"     th:selected="${brandInfo.industryType == 'EDUCATION_ACADEMY'}">교육 / 학원</option>
-          <option value="MEDICAL_HOSPITAL"      th:selected="${brandInfo.industryType == 'MEDICAL_HOSPITAL'}">의료 / 병원</option>
-          <option value="RETAIL_SHOPPING"       th:selected="${brandInfo.industryType == 'RETAIL_SHOPPING'}">소매 / 쇼핑</option>
-          <option value="ETC"                   th:selected="${brandInfo.industryType == 'ETC'}">기타</option>
-        </select>
+<select id="s_category">
+  <option value="CAFE_BAKERY"           th:selected="${userInfo.businessCategory == 'CAFE_BAKERY'}">카페 / 베이커리</option>
+  <option value="FOOD_RESTAURANT"       th:selected="${userInfo.businessCategory == 'FOOD_RESTAURANT'}">음식점 / 식당</option>
+  <option value="BEAUTY_SALON"          th:selected="${userInfo.businessCategory == 'BEAUTY_SALON'}">미용 / 뷰티</option>
+  <option value="FASHION_CLOTHING"      th:selected="${userInfo.businessCategory == 'FASHION_CLOTHING'}">패션 / 의류</option>
+  <option value="ACCOMMODATION_PENSION" th:selected="${userInfo.businessCategory == 'ACCOMMODATION_PENSION'}">숙박 / 펜션</option>
+  <option value="FITNESS_SPORTS"        th:selected="${userInfo.businessCategory == 'FITNESS_SPORTS'}">피트니스 / 스포츠</option>
+  <option value="EDUCATION_ACADEMY"     th:selected="${userInfo.businessCategory == 'EDUCATION_ACADEMY'}">교육 / 학원</option>
+  <option value="MEDICAL_HOSPITAL"      th:selected="${userInfo.businessCategory == 'MEDICAL_HOSPITAL'}">의료 / 병원</option>
+  <option value="RETAIL_SHOPPING"       th:selected="${userInfo.businessCategory == 'RETAIL_SHOPPING'}">소매 / 쇼핑</option>
+  <option value="ETC"                   th:selected="${userInfo.businessCategory == 'ETC'}">기타</option>
+</select>
       </div>
     </div>
     <div class="field">

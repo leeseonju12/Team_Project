@@ -148,13 +148,6 @@ public class MypageService {
 	            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 	    return user;
 	}
-
-	@Transactional(readOnly = true)
-	public String getBrandName() {
-	    Brand brand = brandRepository.findById(BRAND_ID)
-	            .orElseThrow(() -> new IllegalArgumentException("브랜드를 찾을 수 없습니다."));
-	    return brand.getBrandName();
-	}
 	
 	// ── 회원 탈퇴 ──────────────────────────────────────
 	@Transactional
