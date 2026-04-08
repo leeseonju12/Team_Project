@@ -55,20 +55,30 @@ public class MypageController {
     }*/
 
     // ── SNS 연동 해제 ───────────────────────────────────────
-    @PostMapping("/sns/{brandPlatformId}/disconnect")
+    /*@PostMapping("/sns/{brandPlatformId}/disconnect")
     public String disconnectSns(@PathVariable Long brandPlatformId) {
         mypageService.disconnectSns(brandPlatformId);
         return "redirect:/mypage";
-    }
+    }*/
     
-	// ── 영업 시간대 설정 ───────────────────────────────────────
+    // ── 영업 시간대 설정 ───────────────────────────────────────
     @PostMapping("/business-hours")
     @ResponseBody
-    public ResponseEntity<String> updateBusinessHours (
+    public ResponseEntity<String> updateBusinessHours(
         @RequestBody List<Map<String, Object>> hours) {
-        // 일단 데이터 확인용으로 로그만 출력
-        System.out.println("영업시간 수신: " + hours);
-        return ResponseEntity.ok("ok");
+        try {
+            mypageService.updateBusinessHours(hours);
+            return ResponseEntity.ok("ok");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+    
+    // ── 영업시간 조회 ───────────────────────────────────────
+    @GetMapping("/business-hours")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getBusinessHours() {
+        return ResponseEntity.ok(mypageService.getBusinessHours());
     }
     
     // ── 탈퇴하기 ───────────────────────────────────────

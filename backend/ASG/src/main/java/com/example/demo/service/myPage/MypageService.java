@@ -19,6 +19,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import com.example.demo.domain.user.entity.BusinessHours;
+import com.example.demo.repository.auth.BusinessHoursRepository;
+import java.util.List;
+import java.util.Map;
 
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.repository.auth.UserRepository;
@@ -43,6 +47,7 @@ public class MypageService {
 	private final BrandPlatformRepository brandPlatformRepository;
 	private final ContentSettingsRepository contentSettingsRepository;
 	private final Cloudinary cloudinary;
+	private final BusinessHoursRepository businessHoursRepository;
 	
 	
 	// ── 가게 정보 조회 ──────────────────────────────────────
@@ -74,6 +79,11 @@ public class MypageService {
 	            .orElse(new BrandOperationProfile());
 	    
 	    user.updateAddress(request.getAddress(), request.getLocationName());
+	    user.updateStorePhone(request.getPhone());
+	    // brand.address 동기화 (road_addr_part1 만 사용)
+	    brand.setAddress(request.getAddress());
+	    brand.setLocationName(request.getLocationName());
+	    
 	    user.updateStorePhone(request.getPhone());
 
 	    profile.setBrand(brand);
@@ -167,5 +177,69 @@ public class MypageService {
 	            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 	    user.updateAddress(roadAddrPart1, addrDetail);
 	}
+	
+	/**
+     * 영업시간 저장 (UPSERT 방식: 기존 7행 삭제 후 재삽입)
+     * user_id + day_of_week UNIQUE 제약 조건을 활용하는 replaceBusinessHours 위임
+     *
+     * @param hours  프론트에서 전달된 7개 요일 데이터
+     *               [{dayOfWeek:0, isOpen:true, openTime:"09:00", closeTime:"22:00"}, ...]
+     */
+    @Transactional
+    public void updateBusinessHours(List<Map<String, Object>> hours) {
+        User user = userRepository.findById(USER_ID)
+                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+ 
+        // 기존 데이터 삭제 (orphanRemoval + clear 방식)
+        businessHoursRepository.deleteAllByUserId(USER_ID);
+        businessHoursRepository.flush(); // DELETE 먼저 확정
+ 
+        // 새 데이터 생성
+        List<BusinessHours> newHours = hours.stream()
+                .map(h -> {
+                    int day     = toInt(h.get("dayOfWeek"));
+                    boolean open = toBoolean(h.get("isOpen"));
+                    String openT = open ? toString(h.get("openTime"))  : null;
+                    String closeT = open ? toString(h.get("closeTime")) : null;
+                    return open
+                            ? BusinessHours.openDay(user, day, openT, closeT)
+                            : BusinessHours.closedDay(user, day);
+                })
+                .toList();
+ 
+        businessHoursRepository.saveAll(newHours);
+    }
+ 
+    // ── 타입 변환 헬퍼 ───────────────────────────────────────
+    private int toInt(Object v) {
+        if (v instanceof Integer i) return i;
+        if (v instanceof Number n)  return n.intValue();
+        return Integer.parseInt(v.toString());
+    }
+ 
+    private boolean toBoolean(Object v) {
+        if (v instanceof Boolean b) return b;
+        return "true".equalsIgnoreCase(v.toString());
+    }
+ 
+    private String toString(Object v) {
+        return v == null ? null : v.toString();
+    }
+    
+ // ── 영업시간 조회 ──────────────────────────────────────────
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getBusinessHours() {
+        return businessHoursRepository.findByUser_IdOrderByDayOfWeekAsc(USER_ID)
+                .stream()
+                .map(bh -> {
+                    Map<String, Object> m = new java.util.LinkedHashMap<>();
+                    m.put("dayOfWeek", bh.getDayOfWeek());
+                    m.put("isOpen",    bh.isOpen());
+                    m.put("openTime",  bh.getOpenTime()  != null ? bh.getOpenTime()  : "09:00");
+                    m.put("closeTime", bh.getCloseTime() != null ? bh.getCloseTime() : "22:00");
+                    return m;
+                })
+                .toList();
+    }
 	
 }

@@ -513,6 +513,12 @@ em {
        placeholder="지점 대표 전화번호를 입력하세요"
        maxlength="13" oninput="formatTel(this)" />
     </div>
+    
+    <div class="field">
+  <label>지점명 <span class="req">*</span></label>
+  <input type="text" id="s_location_name" th:value="${brandInfo.locationName}" placeholder="예) 본점, 강남점" />
+</div>
+    
     <div class="field" style="margin-bottom:0;">
       <label>주소 <span class="req">*</span></label>
       <div class="input-row" style="margin-bottom:8px;">
@@ -806,25 +812,48 @@ window.addEventListener('DOMContentLoaded', () => {
     {o:'09:00',c:'22:00',on:true},{o:'10:00',c:'22:00',on:true},
     {o:'10:00',c:'21:00',on:false},
   ];
-  function buildHours(cid) {
-    document.getElementById(cid).innerHTML=DAYS.map((d,i)=>{
-      const h=HOURS_DEFAULTS[i];
-      return `<div class="hours-row ${h.on?'on-row':'closed'}" id="hr${cid}${i}">
-        <span class="day-name">${d}</span>
-        <button class="day-toggle ${h.on?'on':''}" onclick="toggleHourDay('${cid}',${i},this)"></button>
-        <div class="hours-time"><input type="time" value="${h.o}"/><span class="hours-sep">~</span><input type="time" value="${h.c}"/></div>
-        <span class="day-closed">휴무</span>
-      </div>`;
-    }).join('');
-  }
-  function toggleHourDay(cid,i,btn){
-    const row=document.getElementById('hr'+cid+i);
-    const on=btn.classList.toggle('on');
-    row.classList.toggle('closed',!on);row.classList.toggle('on-row',on);
-    row.querySelector('.hours-time').style.display=on?'flex':'none';
-    row.querySelector('.day-closed').style.display=on?'none':'block';
-  }
-  buildHours('shopHours');
+  
+  window.toggleHourDay = function(cid, i, btn) {
+	    const row = document.getElementById('hr' + cid + i);
+	    const on = btn.classList.toggle('on');
+	    row.classList.toggle('closed', !on);
+	    row.classList.toggle('on-row', on);
+	    row.querySelector('.hours-time').style.display = on ? 'flex' : 'none';
+	    row.querySelector('.day-closed').style.display = on ? 'none' : 'block';
+	}
+  
+  function buildHours(cid, data) {
+	  document.getElementById(cid).innerHTML = DAYS.map((d, i) => {
+	    const h = data[i] || { isOpen: false, openTime: '09:00', closeTime: '22:00' };
+	    const on = h.isOpen;
+	    return `<div class="hours-row ${on ? 'on-row' : 'closed'}" id="hr${cid}${i}">
+	      <span class="day-name">${d}</span>
+	      <button class="day-toggle ${on ? 'on' : ''}" onclick="toggleHourDay('${cid}',${i},this)"></button>
+	      <div class="hours-time">
+	        <input type="time" value="${h.openTime || '09:00'}"/>
+	        <span class="hours-sep">~</span>
+	        <input type="time" value="${h.closeTime || '22:00'}"/>
+	      </div>
+	      <span class="day-closed">휴무</span>
+	    </div>`;
+	  }).join('');
+	}
+
+	// 페이지 로드 시 DB에서 영업시간 조회 후 렌더링
+	fetch('/mypage/business-hours')
+	  .then(res => res.json())
+	  .then(data => {
+	    // data가 비어있으면(첫 가입) 기본값 7개로 채움
+	    const filled = DAYS.map((_, i) =>
+	      data.find(d => d.dayOfWeek === i) || { isOpen: i < 5, openTime: '09:00', closeTime: '22:00' }
+	    );
+	    buildHours('shopHours', filled);
+	  })
+	  .catch(() => {
+	    // 통신 실패 시 기본값으로 폴백
+	    const defaults = DAYS.map((_, i) => ({ isOpen: i < 5, openTime: '09:00', closeTime: '22:00' }));
+	    buildHours('shopHours', defaults);
+	  });
   
   async function saveBusinessHours(btn) {
 	  await loadingBtn(btn);
@@ -1152,12 +1181,12 @@ window.addEventListener('DOMContentLoaded', () => {
   async function saveBrandInfo(btn) {
     await loadingBtn(btn);
     const body = new URLSearchParams({
-      brandName:    document.getElementById('s_name').value,
-      industryType: document.getElementById('s_category').value,
-      phone:        document.getElementById('s_tel').value,
-      address:      document.getElementById('s_addr').value,
-      locationName: document.getElementById('s_addr_detail').value,
-    });
+    	  brandName:    document.getElementById('s_name').value,
+    	  industryType: document.getElementById('s_category').value,
+    	  phone:        document.getElementById('s_tel').value,
+    	  address:      document.getElementById('s_addr').value,
+    	  locationName: document.getElementById('s_location_name').value, // 추가
+    	});
     try {
       const res = await fetch('/mypage/brand', {
         method: 'POST',
