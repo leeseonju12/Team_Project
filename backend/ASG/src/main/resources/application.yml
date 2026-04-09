@@ -6,6 +6,14 @@ spring:
     url: jdbc:mysql://localhost:3306/gather?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: root
     password:
+
+  devtools:
+    restart:
+      enabled: false   # 자동 재시작 끄기
+    livereload:
+      enabled: false   # 라이브리로드도 끄기
+  thymeleaf:
+    cache: false       # 이건 켜둬야 HTML 변경 반영됨
   
   data: #네이버 api 호출 제한용
     redis:
@@ -20,7 +28,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        
+
   sql:
     init:
       mode: always # 앱 실행 시 data.sql을 항상 실행하여 더미 데이터 세팅

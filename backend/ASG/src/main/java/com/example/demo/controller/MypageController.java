@@ -130,5 +130,13 @@ public class MypageController {
         return ResponseEntity.ok("ok");
     }
     
+ // ── 문의 내역 조회 ──────────────────────────────────────
+    @GetMapping("/inquiry")
+    @ResponseBody
+    public ResponseEntity<List<com.example.demo.dto.myPage.InquiryResponse>> getInquiries(
+            @RequestParam String email) {
+        return ResponseEntity.ok(mypageService.getInquiries(email));
+    }
+    
     
 }

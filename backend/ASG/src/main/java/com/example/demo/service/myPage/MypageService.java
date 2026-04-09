@@ -48,7 +48,7 @@ public class MypageService {
 	private final ContentSettingsRepository contentSettingsRepository;
 	private final Cloudinary cloudinary;
 	private final BusinessHoursRepository businessHoursRepository;
-	
+	private final com.example.demo.repository.myPage.InquiryRepository inquiryRepository;
 	
 	// ── 가게 정보 조회 ──────────────────────────────────────
 	@Transactional(readOnly = true)
@@ -243,6 +243,15 @@ public class MypageService {
                     return m;
                 })
                 .toList();
+    }
+    
+ // ── 문의 내역 조회 ──────────────────────────────────────
+    @Transactional(readOnly = true)
+    public List<com.example.demo.dto.myPage.InquiryResponse> getInquiries(String email) {
+        return inquiryRepository.findByEmailOrderByCreatedAtDesc(email)
+                .stream()
+                .map(com.example.demo.dto.myPage.InquiryResponse::new)
+                .collect(Collectors.toList());
     }
 	
 }

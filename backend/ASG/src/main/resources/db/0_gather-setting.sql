@@ -399,6 +399,16 @@ CREATE TABLE `strategy_recommendation_item` (
   PRIMARY KEY (`strategy_item_id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE inquiry (
+    id         BIGINT       NOT NULL AUTO_INCREMENT,
+    title      VARCHAR(255) NOT NULL,
+    content    TEXT         NOT NULL,
+    email      VARCHAR(255) NOT NULL,
+    STATUS     VARCHAR(50)  NOT NULL DEFAULT 'WAIT',
+    created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
+
 -- ══════════════════════════════════════════════
 -- INDEX
 -- ══════════════════════════════════════════════
@@ -451,8 +461,9 @@ ALTER TABLE `strategy_recommendation_item`    ADD FOREIGN KEY (`platform_id`)   
 
 
 -- seed data
+-- 브랜드 데이터
 INSERT IGNORE INTO brand (brand_id, brand_name, service_name, industry_type, location_name, address, created_at, updated_at) VALUES
-(1, '어글리베이커리',  'uglybakery',              'CAFE_BAKERY',          '본점', '서울 마포구 망원동',       NOW(), NOW()),
+(1, '어글리베이커리',  'uglybakery',              'CAFE_BAKERY',          '망원본점', '서울특별시 마포구 월드컵로13길 73 1층', NOW(), NOW()),
 (2, '을밀대',          'eulmildae',               'FOOD_RESTAURANT',      '본점', '서울 마포구 염리동',       NOW(), NOW()),
 (3, '와드',            'wad_seongsu',             'BEAUTY_SALON',         '본점', '서울 성동구 서울숲',       NOW(), NOW()),
 (4, '선데이클로즈',    'sundayclothes_official',  'FASHION_CLOTHING',     '본점', '서울 중구 을지로',         NOW(), NOW()),
@@ -475,35 +486,97 @@ INSERT IGNORE INTO brand (brand_id, brand_name, service_name, industry_type, loc
 (19, '책방오늘',      'onulbooks_in_seochon',   'RETAIL_SHOPPING',      '본점', '서울 종로구 서촌',          NOW(), NOW()),
 (20, '삶은감자',      'life_gamja',             'ETC',                  '본점', '강원 강릉시 임영로',        NOW(), NOW());
 
--- users 시드 삽입
+-- users 1번 시드 삽입
 INSERT INTO `users` (
   email, NAME, nickname, provider, provider_id,
   contact_phone, company_name, business_category,
+  preferred_channel, store_phone_number,
+  road_addr_part1, addr_detail,
   terms_agreed, privacy_agreed, location_agreed,
+  marketing_consent, event_consent,
   signup_completed, STATUS, ROLE,
   created_at, updated_at
 ) VALUES (
   'test@social.com', '어글리', '베이커리', 'kakao', 'kakao_test_001',
-  '010-4568-5246', '어글리베이커리', 'CAFE_BAKERY',
+  '010-4568-5213', '어글리베이커리', 'CAFE_BAKERY',
+  'instagram', '02-338-2018',
+  '서울특별시 마포구 월드컵로13길 73', '1층',
   1, 1, 1,
+  1, 0,
   1, 'ACTIVE', 'ROLE_USER',
   NOW(), NOW()
 );
 
 -- brand의 user_id 연결 (brand_id=1 → users id=1)
-UPDATE brand SET user_id = 1 WHERE brand_id = 1;
+UPDATE brand SET user_id = 1, phone = '02-338-2018' WHERE brand_id = 1;
+
+-- business_hours (0=월~6=일, 월·화 정기휴무)
+INSERT INTO business_hours (user_id, day_of_week, is_open, open_time, close_time) VALUES
+(1, 0, 0, NULL,    NULL   ),
+(1, 1, 0, NULL,    NULL   ),
+(1, 2, 1, '12:00', '21:00'),
+(1, 3, 1, '12:00', '21:00'),
+(1, 4, 1, '12:00', '21:00'),
+(1, 5, 1, '12:00', '21:00'),
+(1, 6, 1, '12:00', '21:00');
+
+-- content_settings
+INSERT INTO content_settings (
+  user_id,
+  intro_template, outro_template,
+  tone, emoji_level, target_length,
+  preferred_sns
+) VALUES (
+  1,
+  '안녕하세요, 망원동 빵대장 어글리베이커리입니다 🍞',
+  '오늘도 맛있는 빵과 함께 행복한 하루 되세요 😊',
+  '친근한', '적당히', 300,
+  'instagram,kakao'
+);
+
+-- brand_operation_profile
+INSERT INTO brand_operation_profile (
+  brand_id,
+  open_time, close_time,
+  regular_closed_weekday,
+  weekend_impact_type, holiday_impact_type,
+  peak_business_time, note,
+  created_at, updated_at
+) VALUES (
+  1,
+  '12:00:00', '21:00:00',
+  1,
+  'positive', 'positive',
+  '오후 12시~오후 3시',
+  '월·화 정기휴무. 빵 예약 불가. 주차 시 망원시장 공영주차장 이용.',
+  NOW(), NOW()
+);
 
 INSERT IGNORE INTO platform (platform_id, platform_code, platform_name, brand_color, is_active)
 VALUES
 (1, 'instagram', '인스타그램', '#E1306C', TRUE),
-(2, 'facebook', '페이스북', '#1877F2', TRUE),
-(3, 'naver', '네이버', '#03C75A', TRUE),
-(4, 'kakao', '카카오채널', '#FEE500', TRUE);
+(2, 'facebook',  '페이스북',   '#1877F2', TRUE),
+(3, 'naver',     '네이버',     '#03C75A', TRUE),
+(4, 'kakao',     '카카오채널', '#FEE500', TRUE);
 
-INSERT IGNORE INTO brand_platform (brand_platform_id, brand_id, platform_id, channel_name, channel_url, is_connected, connected_at, created_at, updated_at)
+INSERT IGNORE INTO brand_platform (brand_platform_id, brand_id, platform_id, channel_name, channel_url, is_connected, token_status, connected_at, created_at, updated_at)
 VALUES
-(1, 1, 1, 'sample_instagram', 'https://instagram.com/sample', TRUE, NOW(), NOW(), NOW()),
-(2, 1, 2, 'sample_facebook', 'https://facebook.com/sample', TRUE, NOW(), NOW(), NOW());
+(1, 1, 1, 'uglybakery',       'https://www.instagram.com/uglybakery/', TRUE,  'ACTIVE',  NOW(), NOW(), NOW()),
+(2, 1, 2, 'uglybakery',       'https://www.facebook.com/uglybakery',   FALSE, 'EXPIRED', NULL,  NOW(), NOW()),
+(3, 1, 3, 'uglybakery_naver', 'https://blog.naver.com/uglybakery',     FALSE, 'EXPIRED', NULL,  NOW(), NOW()),
+(4, 1, 4, '@어글리베이커리',   'https://pf.kakao.com/_uglybakery',      FALSE, 'EXPIRED', NULL,  NOW(), NOW());
+
+INSERT INTO inquiry (title, content, email, STATUS, created_at) VALUES
+('인스타그램 연동 후 게시물이 업로드되지 않습니다', '인스타그램 계정 연동은 완료됐는데 게시물 업로드 버튼을 눌러도 아무 반응이 없습니다.', 'test@social.com', 'WAIT', NOW()),
+('AI 콘텐츠 생성 시 오류 메시지가 표시됩니다', 'AI 콘텐츠 생성 버튼 클릭 시 "생성에 실패했습니다" 메시지가 반복적으로 나타납니다.', 'test@social.com', 'WAIT', NOW() - INTERVAL 2 DAY),
+('네이버 블로그 연동 후 계정이 바로 해제됩니다', '네이버 블로그를 연동하면 잠시 후 자동으로 연동이 해제되는 현상이 반복됩니다.', 'test@social.com', 'DONE', NOW() - INTERVAL 5 DAY),
+('예약 게시 시간이 설정한 시간과 다르게 발행됩니다', '오후 6시로 예약했는데 오전 6시에 발행됐습니다. 동일한 현상이 3번 반복됐습니다.', 'test@social.com', 'WAIT', NOW() - INTERVAL 7 DAY);
+
+
+
+-- 사용중인 시드 데이터
+
+
 
 INSERT IGNORE INTO date_dimension (
   date_key, full_date, year_no, half_no, quarter_no, month_no, month_name,
