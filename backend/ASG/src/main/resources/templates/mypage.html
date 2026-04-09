@@ -1022,59 +1022,93 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ═══ SNS accounts ═══ */
-  const SNS_ACCOUNTS=[
-    {id:'instagram',name:'Instagram',icon:'📸',bg:'linear-gradient(135deg,#f09433,#dc2743,#bc1888)',handle:'@sodamoa_cafe',status:'ok'},
-    {id:'naver',name:'네이버 블로그',icon:'📝',bg:'#03C75A',handle:'sodamoa_blog',status:'expired'},
-    {id:'kakao',name:'카카오채널',icon:'💬',bg:'#F9C000',handle:'@소셜다모아카페',status:'ok'},
-    {id:'facebook',name:'Facebook',icon:'👍',bg:'#1877F2',handle:'',status:'none'},
-  ];
-  let disconnectTarget=null;
+  const PLATFORM_META = {
+    instagram: { icon: '📸', bg: 'linear-gradient(135deg,#f09433,#dc2743,#bc1888)' },
+    facebook:  { icon: '👍', bg: '#1877F2' },
+    naver:     { icon: '📝', bg: '#03C75A' },
+    kakao:     { icon: '💬', bg: '#F9C000' },
+  };
 
-  function buildSnsAccounts(){
-    document.getElementById('snsAccountList').innerHTML=SNS_ACCOUNTS.map(a=>{
-      const sm={ok:{label:'정상 연동',cls:'ok',dot:'var(--green)'},expired:{label:'토큰 만료',cls:'expired',dot:'var(--yellow)'},none:{label:'미연동',cls:'none',dot:'var(--border2)'}};
-      const st=sm[a.status];
-      const actions=a.status==='none'
-        ?`<button class="btn-sns connect" onclick="doConnect('${a.id}')">+ 연동하기</button>`
-        :a.status==='expired'
-        ?`<button class="btn-sns reconnect" onclick="doReconnect('${a.id}')">재연동</button><button class="btn-sns disconnect" onclick="openDisconnect('${a.id}','${a.name}')">해제</button>`
-        :`<button class="btn-sns" onclick="doReconnect('${a.id}')">재연동</button><button class="btn-sns disconnect" onclick="openDisconnect('${a.id}','${a.name}')">해제</button>`;
-      return `<div class="sns-account-item" id="sai_${a.id}">
-        <div class="sns-acc-icon" style="background:${a.bg};">${a.icon}</div>
+  let SNS_ACCOUNTS = [];
+  let disconnectTarget = null;
+
+  // 페이지 로드 시 서버에서 데이터 가져오기
+  fetch('/mypage/sns/list')
+    .then(res => res.json())
+    .then(data => { SNS_ACCOUNTS = data; buildSnsAccounts(); })
+    .catch(() => showToast('❌ SNS 연동 정보를 불러오지 못했습니다.', 'err'));
+
+  function buildSnsAccounts() {
+    const sm = {
+      ok:      { label: '정상 연동', cls: 'ok',      dot: 'var(--green)'   },
+      expired: { label: '토큰 만료', cls: 'expired', dot: 'var(--yellow)'  },
+      none:    { label: '미연동',    cls: 'none',    dot: 'var(--border2)' },
+    };
+
+    document.getElementById('snsAccountList').innerHTML = SNS_ACCOUNTS.map(a => {
+      const meta = PLATFORM_META[a.platformCode] || { icon: '🔗', bg: '#888' };
+      const statusKey = !a.isConnected ? 'none'
+                      : a.tokenStatus === 'EXPIRED' ? 'expired'
+                      : 'ok';
+      const st = sm[statusKey];
+
+      const actions = statusKey === 'none'
+        ? `<button class="btn-sns connect"    onclick="doConnect('${a.platformCode}','${a.platformName}')">+ 연동하기</button>`
+        : statusKey === 'expired'
+        ? `<button class="btn-sns reconnect"  onclick="doReconnect('${a.platformCode}','${a.platformName}')">재연동</button>
+           <button class="btn-sns disconnect" onclick="openDisconnect(${a.brandPlatformId},'${a.platformName}')">해제</button>`
+        : `<button class="btn-sns"            onclick="doReconnect('${a.platformCode}','${a.platformName}')">재연동</button>
+           <button class="btn-sns disconnect" onclick="openDisconnect(${a.brandPlatformId},'${a.platformName}')">해제</button>`;
+
+      return `<div class="sns-account-item" id="sai_${a.platformCode}">
+        <div class="sns-acc-icon" style="background:${meta.bg};">${meta.icon}</div>
         <div class="sns-acc-info">
-          <div class="sns-acc-name">${a.name}</div>
-          <div class="sns-acc-id">${a.handle||'미연동'}</div>
-          <div class="sns-acc-status ${st.cls}"><span class="sns-dot" style="background:${st.dot};"></span>${st.label}</div>
+          <div class="sns-acc-name">${a.platformName}</div>
+          <div class="sns-acc-id">${a.channelName || '미연동'}</div>
+          <div class="sns-acc-status ${st.cls}">
+            <span class="sns-dot" style="background:${st.dot};"></span>${st.label}
+          </div>
         </div>
         <div class="sns-acc-actions">${actions}</div>
       </div>`;
     }).join('');
   }
-  buildSnsAccounts();
 
-  async function doConnect(id){
-    const acc=SNS_ACCOUNTS.find(a=>a.id===id);
-    showToast(`🔗 ${acc.name} 연동을 시작합니다...`,'ok');
-    await new Promise(r=>setTimeout(r,1400));
-    acc.status='ok';acc.handle='@new_account';buildSnsAccounts();showToast(`✅ ${acc.name} 연동이 완료됐습니다!`,'ok');
+  function doConnect(platformCode, platformName) {
+    showToast(`🔗 ${platformName} 연동은 준비 중입니다.`, '');
   }
-  async function doReconnect(id){
-    const acc=SNS_ACCOUNTS.find(a=>a.id===id);
-    showToast(`🔄 ${acc.name} 재연동 중...`,'ok');
-    await new Promise(r=>setTimeout(r,1200));
-    acc.status='ok';buildSnsAccounts();showToast(`✅ ${acc.name} 재연동 완료!`,'ok');
+
+  function doReconnect(platformCode, platformName) {
+    showToast(`🔗 ${platformName} 재연동은 준비 중입니다.`, '');
   }
-  function openDisconnect(id,name){
-    disconnectTarget=id;
-    document.getElementById('disconnectTitle').textContent=`${name} 연동 해제`;
-    document.getElementById('disconnectMsg').innerHTML=`<strong>${name}</strong> 계정 연동을 해제하시겠습니까?<br/><br/>해제 후에는 해당 채널의 성과 데이터 수집이 중단되며,<br/>콘텐츠 자동 게시 기능도 사용할 수 없습니다.`;
+
+  function openDisconnect(brandPlatformId, platformName) {
+    disconnectTarget = { brandPlatformId, platformName };
+    document.getElementById('disconnectTitle').textContent = `${platformName} 연동 해제`;
+    document.getElementById('disconnectMsg').innerHTML =
+      `<strong>${platformName}</strong> 계정 연동을 해제하시겠습니까?<br/><br/>` +
+      `해제 후에는 해당 채널의 성과 데이터 수집이 중단되며,<br/>콘텐츠 자동 게시 기능도 사용할 수 없습니다.`;
     openModal('disconnect');
   }
-  function doDisconnect(){
-    if(!disconnectTarget)return;
-    const acc=SNS_ACCOUNTS.find(a=>a.id===disconnectTarget);
-    acc.status='none';acc.handle='';buildSnsAccounts();closeModal('disconnect');
-    showToast(`🔓 ${acc.name} 연동이 해제됐습니다.`,'');disconnectTarget=null;
+
+  async function doDisconnect() {
+    if (!disconnectTarget) return;
+    const { brandPlatformId, platformName } = disconnectTarget;
+    try {
+      const res = await fetch(`/mypage/sns/${brandPlatformId}/disconnect`, { method: 'POST' });
+      if (res.ok) {
+        const acc = SNS_ACCOUNTS.find(a => a.brandPlatformId === brandPlatformId);
+        if (acc) { acc.isConnected = false; acc.tokenStatus = 'EXPIRED'; acc.channelName = ''; }
+        buildSnsAccounts();
+        closeModal('disconnect');
+        showToast(`🔓 ${platformName} 연동이 해제됐습니다.`, '');
+      } else {
+        showToast('❌ 해제 중 오류가 발생했습니다.', 'err');
+      }
+    } catch (e) {
+      showToast('❌ 네트워크 오류가 발생했습니다.', 'err');
+    }
+    disconnectTarget = null;
   }
 
   /* ═══ 문의 내역 ═══ */

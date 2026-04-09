@@ -66,12 +66,24 @@ public class MypageController {
         }
     }
 
+ // ── SNS 연동 목록 조회 API ──────────────────────────────
+    @GetMapping("/sns/list")
+    @ResponseBody
+    public ResponseEntity<List<com.example.demo.dto.myPage.SnsAccountResponse>> getSnsAccounts() {
+        return ResponseEntity.ok(mypageService.getSnsAccounts());
+    }
+
     // ── SNS 연동 해제 ───────────────────────────────────────
-    /*@PostMapping("/sns/{brandPlatformId}/disconnect")
-    public String disconnectSns(@PathVariable Long brandPlatformId) {
-        mypageService.disconnectSns(brandPlatformId);
-        return "redirect:/mypage";
-    }*/
+    @PostMapping("/sns/{brandPlatformId}/disconnect")
+    @ResponseBody
+    public ResponseEntity<String> disconnectSns(@PathVariable Long brandPlatformId) {
+        try {
+            mypageService.disconnectSns(brandPlatformId);
+            return ResponseEntity.ok("ok");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
     
     // ── 영업 시간대 설정 ───────────────────────────────────────
     @PostMapping("/business-hours")
