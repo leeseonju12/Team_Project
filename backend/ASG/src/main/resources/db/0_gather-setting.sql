@@ -460,33 +460,42 @@ ALTER TABLE `strategy_recommendation_item`    ADD FOREIGN KEY (`strategy_id`)   
 ALTER TABLE `strategy_recommendation_item`    ADD FOREIGN KEY (`platform_id`)        REFERENCES `platform`        (`platform_id`);
 
 
--- seed data
--- 브랜드 데이터
-INSERT IGNORE INTO brand (brand_id, brand_name, service_name, industry_type, location_name, address, created_at, updated_at) VALUES
-(1, '어글리베이커리',  'uglybakery',              'CAFE_BAKERY',          '망원본점', '서울특별시 마포구 월드컵로13길 73 1층', NOW(), NOW()),
-(2, '을밀대',          'eulmildae',               'FOOD_RESTAURANT',      '본점', '서울 마포구 염리동',       NOW(), NOW()),
-(3, '와드',            'wad_seongsu',             'BEAUTY_SALON',         '본점', '서울 성동구 서울숲',       NOW(), NOW()),
-(4, '선데이클로즈',    'sundayclothes_official',  'FASHION_CLOTHING',     '본점', '서울 중구 을지로',         NOW(), NOW()),
-(5, '산방댁게스트하우스', 'sanbangdaek',          'ACCOMMODATION_PENSION','본점', '제주 서귀포시 안덕면',     NOW(), NOW()),
-(6, '필라테스서울',    'pilatesseoul',            'FITNESS_SPORTS',       '본점', '서울 송파구 잠실',         NOW(), NOW()),
-(7, '잉글리쉬가든',   'englishgarden_21',         'EDUCATION_ACADEMY',    '본점', '강원 춘천시',              NOW(), NOW()),
-(8, '서울SY피부과',   'sydermatology',            'MEDICAL_HOSPITAL',     '본점', '서울 강남구 압구정',       NOW(), NOW()),
-(9, '인덱스숍',       'indexshop.kr',             'RETAIL_SHOPPING',      '본점', '서울 광진구 건대',         NOW(), NOW()),
-(10,'플로애',         '_floae_',                  'ETC',                  '본점', '서울 강남구 역삼동',       NOW(), NOW());
+-- ══════════════════════════════════════════════
+-- seed data 
+-- ══════════════════════════════════════════════
 
-INSERT IGNORE INTO brand (brand_id, brand_name, service_name, industry_type, location_name, address, created_at, updated_at) VALUES
-(11, '몽심',          '_creative_mongsim',      'CAFE_BAKERY',          '본점', '대전 대덕구 한남대',        NOW(), NOW()),
-(12, '연돈',          'yeondon2014',            'FOOD_RESTAURANT',      '본점', '제주 서귀포시',             NOW(), NOW()),
-(13, '헤어웰',        'hairwell',               'BEAUTY_SALON',         '본점', '전북 전주시 서신동',        NOW(), NOW()),
-(14, '너겟',          'nugget_min',             'FASHION_CLOTHING',     '본점', '강원 강릉시 원대로',        NOW(), NOW()),
-(15, '한옥스테이소화', 'tdesign71',             'ACCOMMODATION_PENSION','본점', '경북 경주시 황남동',        NOW(), NOW()),
-(16, '요가베르데',    'yoga__verde',             'FITNESS_SPORTS',       '본점', '제주 제주시 비자림',        NOW(), NOW()),
-(17, '씨앤씨미술학원', 'suwan_cnc',             'EDUCATION_ACADEMY',    '본점', '광주 광산구 수완지구',      NOW(), NOW()),
-(18, '서산연세치과',  'seosan_yonsei',           'MEDICAL_HOSPITAL',     '본점', '충남 서산시',               NOW(), NOW()),
-(19, '책방오늘',      'onulbooks_in_seochon',   'RETAIL_SHOPPING',      '본점', '서울 종로구 서촌',          NOW(), NOW()),
-(20, '삶은감자',      'life_gamja',             'ETC',                  '본점', '강원 강릉시 임영로',        NOW(), NOW());
+-- 플랫폼 데이터
+INSERT IGNORE INTO platform (platform_id, platform_code, platform_name, brand_color, is_active)
+VALUES
+(1, 'instagram', '인스타그램', '#E1306C', TRUE),
+(2, 'facebook',  '페이스북',   '#1877F2', TRUE),
+(3, 'naver',     '네이버',     '#03C75A', TRUE),
+(4, 'kakao',     '카카오채널', '#FEE500', TRUE);
 
--- users 1번 시드 삽입
+-- 브랜드 데이터 (각 인스타 아이디, 주소, 번호 검증 대부분 완료)
+INSERT IGNORE INTO brand (brand_id, user_id, brand_name, service_name, industry_type, location_name, address, phone, profile_image_url, created_at, updated_at) VALUES
+(1, NULL, '어글리베이커리', 'uglybakery', 'CAFE_BAKERY', '망원본점', '서울 마포구 월드컵로13길 73', '02-338-2018', NULL, NOW(), NOW()),
+(2, NULL, '을밀대', 'eulmildae', 'FOOD_RESTAURANT', '염리동본점', '서울 마포구 숭문길 24', '02-717-1922', NULL, NOW(), NOW()),
+(3, NULL, '와드', 'wad_seongsu', 'BEAUTY_SALON', '성수점', '서울 성동구 서울숲길 51', '0507-1389-8378', NULL, NOW(), NOW()),
+(4, NULL, '선데이클로즈', 'sundayclothes_official', 'FASHION_CLOTHING', '을지로점', '서울 중구 수표로 28', '010-4227-6051', NULL, NOW(), NOW()),
+(5, NULL, '산방댁게스트하우스', 'sanbangdaek', 'ACCOMMODATION_PENSION', '사계점', '제주 서귀포시 안덕면 사계신항로 6', '010-9179-7585', NULL, NOW(), NOW()),
+(6, NULL, '메인필라테스', 'mainpilates', 'FITNESS_SPORTS', '잠실본점', '종로구 자하문로2길 4 4', '070-8861-6833', NULL, NOW(), NOW()),
+(7, NULL, '슈잇베이킹스튜디오', 'choueat_bakingstudio', 'EDUCATION_ACADEMY', '성수동본점', '서울 성동구 상원6길 10', 'none', NULL, NOW(), NOW()),
+(8, NULL, '서울SY피부과', 'sydermatology', 'MEDICAL_HOSPITAL', '본점', '서울 강남구 논현로171길 11', '02-517-2696', NULL, NOW(), NOW()),
+(9, NULL, '인덱스숍', 'indexshop.kr', 'RETAIL_SHOPPING', '건대점', '서울 광진구 아차산로 200', '02-2122-1259', NULL, NOW(), NOW()),
+(10, NULL, '플로애', '_floae_', 'ETC', '역삼본점', '서울 강남구 역삼동 778-6', '010-5915-6228', NULL, NOW(), NOW()),
+(11, NULL, '몽심', '_creative_mongsim', 'CAFE_BAKERY', '한남대본점', '대전 대덕구 한남로38번길 28', '010-4459-1014', NULL, NOW(), NOW()),
+(12, NULL, '연돈', 'yeondon2014', 'FOOD_RESTAURANT', '중문점', '제주 서귀포시 색달로 10', '0507-1386-7060', NULL, NOW(), NOW()),
+(13, NULL, '헤어웰', 'hairwell', 'BEAUTY_SALON', '서신점', '전북 전주시 완산구 서신로 104', '0507-1418-2513', NULL, NOW(), NOW()),
+(14, NULL, '너겟', 'nugget_min', 'FASHION_CLOTHING', '강릉본점', '강릉시 원대로8번길9', '070-8848-3542', NULL, NOW(), NOW()),
+(15, NULL, '한옥스테이소화', 'tdesign71', 'ACCOMMODATION_PENSION', '황리단길점', '한옥스테이 소화 경상북도 경주시 국당2길 5', '010-4800-7205', NULL, NOW(), NOW()),
+(16, NULL, '요가베르데', 'yoga__verde', 'FITNESS_SPORTS', '비자림점', '제주 제주시 구좌읍 비자림로 1999-6', '0507-1393-6090', NULL, NOW(), NOW()),
+(17, NULL, '씨앤씨미술학원', 'suwan_cnc', 'EDUCATION_ACADEMY', '수완본점', '광주 광산구 장신로 164', '062-954-9711', NULL, NOW(), NOW()),
+(18, NULL, '서산연세치과', 'seosan_yonsei', 'MEDICAL_HOSPITAL', '본점', '충남 서산시 율지8로1', '041-664-1616', NULL, NOW(), NOW()),
+(19, NULL, '책방오늘', 'onulbooks_in_seochon', 'RETAIL_SHOPPING', '서촌점', '서울 종로구 자하문로6길 11', '02-733-7077', NULL, NOW(), NOW()),
+(20, NULL, '삶은감자', 'life_gamja', 'ETC', '강릉본점', '강원 강릉시 임영로 197-1', '0507-1371-4429', NULL, NOW(), NOW());
+
+-- ===== users, brand 1번 데이터 =====
 INSERT INTO `users` (
   email, NAME, nickname, provider, provider_id,
   contact_phone, company_name, business_category,
@@ -552,13 +561,6 @@ INSERT INTO brand_operation_profile (
   NOW(), NOW()
 );
 
-INSERT IGNORE INTO platform (platform_id, platform_code, platform_name, brand_color, is_active)
-VALUES
-(1, 'instagram', '인스타그램', '#E1306C', TRUE),
-(2, 'facebook',  '페이스북',   '#1877F2', TRUE),
-(3, 'naver',     '네이버',     '#03C75A', TRUE),
-(4, 'kakao',     '카카오채널', '#FEE500', TRUE);
-
 INSERT IGNORE INTO brand_platform (brand_platform_id, brand_id, platform_id, channel_name, channel_url, is_connected, token_status, connected_at, created_at, updated_at)
 VALUES
 (1, 1, 1, 'uglybakery',       'https://www.instagram.com/uglybakery/', TRUE,  'ACTIVE',  NOW(), NOW(), NOW()),
@@ -571,11 +573,12 @@ INSERT INTO inquiry (title, content, email, STATUS, created_at) VALUES
 ('AI 콘텐츠 생성 시 오류 메시지가 표시됩니다', 'AI 콘텐츠 생성 버튼 클릭 시 "생성에 실패했습니다" 메시지가 반복적으로 나타납니다.', 'test@social.com', 'WAIT', NOW() - INTERVAL 2 DAY),
 ('네이버 블로그 연동 후 계정이 바로 해제됩니다', '네이버 블로그를 연동하면 잠시 후 자동으로 연동이 해제되는 현상이 반복됩니다.', 'test@social.com', 'DONE', NOW() - INTERVAL 5 DAY),
 ('예약 게시 시간이 설정한 시간과 다르게 발행됩니다', '오후 6시로 예약했는데 오전 6시에 발행됐습니다. 동일한 현상이 3번 반복됐습니다.', 'test@social.com', 'WAIT', NOW() - INTERVAL 7 DAY);
+-- ===== users, brand 1번 데이터 =====
 
 
 
--- 사용중인 시드 데이터
 
+-- ══════════════════════════════════════════════ 사용 확정인 시드 데이터는 이 선 위로 올리기
 
 
 INSERT IGNORE INTO date_dimension (
