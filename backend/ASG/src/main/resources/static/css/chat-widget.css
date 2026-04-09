@@ -1,0 +1,59 @@
+/* 소셜다모아 브랜드 컬러 정의 */
+:root {
+    --sd-primary: #1A73E8;
+    --sd-secondary: #0D47A1;
+    --sd-bg: #FFFFFF;
+    --sd-text: #333333;
+    --sd-shadow: rgba(0, 0, 0, 0.2);
+}
+
+/* 플로팅 버튼: 뷰포트 고정 및 드래그 커서 적용 */
+#sd-chatbot-fab {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 65px;
+    height: 65px;
+    background: linear-gradient(135deg, var(--sd-primary), var(--sd-secondary));
+    color: white;
+    border-radius: 50%;
+    box-shadow: 0 8px 16px var(--sd-shadow);
+    cursor: grab;
+    z-index: 10001;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    user-select: none;
+    transition: transform 0.2s ease;
+}
+
+#sd-chatbot-fab:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+}
+
+/* 챗봇 윈도우: 버튼을 따라다니는 고정 창 */
+#sd-chatbot-window {
+    position: fixed;
+    width: 380px;
+    height: 600px;
+    background-color: var(--sd-bg);
+    border-radius: 20px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+    display: none;
+    flex-direction: column;
+    z-index: 10000;
+    overflow: hidden;
+    border: 1px solid #e0e0e0;
+}
+
+#sd-chatbot-header {
+    background: linear-gradient(to right, var(--sd-primary), var(--sd-secondary));
+    color: white;
+    padding: 15px 20px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
