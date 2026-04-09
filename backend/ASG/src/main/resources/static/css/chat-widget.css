@@ -1,14 +1,77 @@
+#chatbot-fab {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 50%;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+}
+
+#chatbot-window {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 350px;
+    height: 500px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    display: none;
+    flex-direction: column;
+    z-index: 10000;
+    overflow: hidden;
+}
+
+#chatbot-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+}
+
+#chatbot-input-area {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+}
+
+#chatbot-input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#chatbot-send {
+    margin-left: 5px;
+    padding: 8px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* chat-widget.css */
+
 /* 소셜다모아 브랜드 컬러 정의 */
 :root {
     --sd-primary: #1A73E8;
     --sd-secondary: #0D47A1;
     --sd-bg: #FFFFFF;
     --sd-text: #333333;
-    --sd-shadow: rgba(0, 0, 0, 0.2);
+    --sd-shadow: rgba(0, 0, 0, 0.15);
 }
 
-/* 플로팅 버튼: 뷰포트 고정 및 드래그 커서 적용 */
-#sd-chatbot-fab {
+#chatbot-fab {
     position: fixed;
     bottom: 30px;
     right: 30px;
@@ -18,24 +81,27 @@
     color: white;
     border-radius: 50%;
     box-shadow: 0 8px 16px var(--sd-shadow);
-    cursor: grab;
-    z-index: 10001;
+    cursor: grab; /* 드래그 가능함을 암시 */
+    z-index: 10000;
     display: flex;
     justify-content: center;
     align-items: center;
     font-weight: bold;
+    font-size: 14px;
     user-select: none;
     transition: transform 0.2s ease;
 }
 
-#sd-chatbot-fab:active {
+#chatbot-fab:active {
     cursor: grabbing;
     transform: scale(0.95);
 }
 
-/* 챗봇 윈도우: 버튼을 따라다니는 고정 창 */
-#sd-chatbot-window {
+/* 챗봇 윈도우 디자인 고도화 */
+#chatbot-window {
     position: fixed;
+    bottom: 110px;
+    right: 30px;
     width: 380px;
     height: 600px;
     background-color: var(--sd-bg);
@@ -48,10 +114,11 @@
     border: 1px solid #e0e0e0;
 }
 
-#sd-chatbot-header {
+#chatbot-header {
     background: linear-gradient(to right, var(--sd-primary), var(--sd-secondary));
     color: white;
-    padding: 15px 20px;
+    padding: 20px;
+    font-size: 16px;
     font-weight: 600;
     display: flex;
     justify-content: space-between;
