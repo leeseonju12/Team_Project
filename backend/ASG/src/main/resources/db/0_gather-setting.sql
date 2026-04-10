@@ -479,7 +479,7 @@ VALUES
 
 -- 2. 브랜드
 INSERT IGNORE INTO brand (brand_id, user_id, brand_name, service_name, industry_type, location_name, address, phone, profile_image_url, created_at, updated_at) VALUES
-(1,  1, '어글리베이커리',     'uglybakery',             'CAFE_BAKERY',           '망원본점',   '서울 마포구 월드컵로13길 73',           '02-338-2018',   NULL, NOW(), NOW()),
+(1,  NULL, '어글리베이커리',     'uglybakery',             'CAFE_BAKERY',           '망원본점',   '서울 마포구 월드컵로13길 73',           '02-338-2018',   NULL, NOW(), NOW()),
 (2,  NULL, '을밀대',             'eulmildae',              'FOOD_RESTAURANT',       '염리동본점', '서울 마포구 숭문길 24',                 '02-717-1922',   NULL, NOW(), NOW()),
 (3,  NULL, '와드',               'wad_seongsu',            'BEAUTY_SALON',          '성수점',     '서울 성동구 서울숲길 51',               '0507-1389-8378',NULL, NOW(), NOW()),
 (4,  NULL, '선데이클로즈',       'sundayclothes_official', 'FASHION_CLOTHING',      '을지로점',   '서울 중구 수표로 28',                   '010-4227-6051', NULL, NOW(), NOW()),
@@ -503,7 +503,7 @@ INSERT IGNORE INTO brand (brand_id, user_id, brand_name, service_name, industry_
 -- 3. 브랜드 플랫폼 (채널 성과 분석 더미가 brand_platform_id 1,2 를 참조하므로 더미보다 선행)
 INSERT IGNORE INTO brand_platform (brand_platform_id, brand_id, platform_id, channel_name, channel_url, is_connected, token_status, connected_at, created_at, updated_at)
 VALUES
-(1, 1, 1, 'uglybakery',       'https://www.instagram.com/uglybakery/', TRUE,  'ACTIVE',  NOW(), NOW(), NOW()),
+(1, 1, 1, 'uglybakery',       'https://www.instagram.com/uglybakery/', FALSE,  'EXPIRED',  NOW(), NOW(), NOW()),
 (2, 1, 2, 'uglybakery',       'https://www.facebook.com/uglybakery',   FALSE, 'EXPIRED', NULL,  NOW(), NOW()),
 (3, 1, 3, 'uglybakery_naver', 'https://blog.naver.com/uglybakery',     FALSE, 'EXPIRED', NULL,  NOW(), NOW()),
 (4, 1, 4, '@어글리베이커리',   'https://pf.kakao.com/_uglybakery',      FALSE, 'EXPIRED', NULL,  NOW(), NOW());

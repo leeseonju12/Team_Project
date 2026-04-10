@@ -4,6 +4,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="_csrf" th:content="${_csrf.token}"/>
+  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
   <title>소셜다모아 — 마이페이지</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet" />
   <style>
@@ -1218,24 +1220,32 @@ function showSection(id, el) {
   }
 
   async function doDisconnect() {
-    if (!disconnectTarget) return;
-    const { brandPlatformId, platformName } = disconnectTarget;
-    try {
-      const res = await fetch(`/mypage/sns/${brandPlatformId}/disconnect`, { method: 'POST' });
-      if (res.ok) {
-        const acc = SNS_ACCOUNTS.find(a => a.brandPlatformId === brandPlatformId);
-        if (acc) { acc.isConnected = false; acc.tokenStatus = 'EXPIRED'; acc.channelName = ''; }
-        buildSnsAccounts();
-        closeModal('disconnect');
-        showToast(`🔓 ${platformName} 연동이 해제됐습니다.`, '');
-      } else {
-        showToast('❌ 해제 중 오류가 발생했습니다.', 'err');
-      }
-    } catch (e) {
-      showToast('❌ 네트워크 오류가 발생했습니다.', 'err');
-    }
-    disconnectTarget = null;
-  }
+	  if (!disconnectTarget) return;
+	  const { brandPlatformId, platformName } = disconnectTarget;
+
+	  // CSRF 토큰 읽기
+	  const csrfToken  = document.querySelector('meta[name="_csrf"]').content;
+	  const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+	  try {
+	    const res = await fetch(`/mypage/sns/${brandPlatformId}/disconnect`, {
+	      method: 'POST',
+	      headers: { [csrfHeader]: csrfToken }
+	    });
+	    if (res.ok) {
+	      const acc = SNS_ACCOUNTS.find(a => a.brandPlatformId === brandPlatformId);
+	      if (acc) { acc.isConnected = false; acc.tokenStatus = 'EXPIRED'; acc.channelName = ''; }
+	      buildSnsAccounts();
+	      closeModal('disconnect');
+	      showToast(`🔓 ${platformName} 연동이 해제됐습니다.`, '');
+	    } else {
+	      showToast('❌ 해제 중 오류가 발생했습니다.', 'err');
+	    }
+	  } catch (e) {
+	    showToast('❌ 네트워크 오류가 발생했습니다.', 'err');
+	  }
+	  disconnectTarget = null;
+	}
 
   /* ═══ 문의 내역 ═══ */
   const INQ_USER_EMAIL = document.getElementById('currentUserEmail').value;
