@@ -1,10 +1,27 @@
+/* 정렬 및 실행 순서
+create > index > alter > insert
+
+[실행 순서 보장 근거]
+  platform       : brand_platform 의 platform_id FK 선행 필요
+  brand          : brand_platform 의 brand_id FK 선행 필요
+  brand_platform : content_post / platform_metric_daily / performance_impact_analysis 의 brand_platform_id FK 선행 필요
+  ※ 채널성과 더미가 brand_platform_id 1,2 를 참조하므로 더미보다 반드시 선행
+  feedback_source: customer_feedback 의 source_id FK 선행 필요
+  date_dimension : content_post(published_date_key) / *_metric_daily 의 date_key FK 선행 필요
+  content_post   : post_metric_daily 의 post_id FK 선행 필요
+  users          : brand UPDATE(user_id) 는 users INSERT 이후 → 마지막 블록
+*/
+
 DROP DATABASE IF EXISTS gather;
 CREATE DATABASE gather;
 USE gather;
 
+
 -- ══════════════════════════════════════════════
+-- CREATE TABLE
+-- ══════════════════════════════════════════════
+
 -- users
--- ══════════════════════════════════════════════
 CREATE TABLE `users` (
   `id`                 BIGINT       NOT NULL AUTO_INCREMENT,
   `email`              VARCHAR(100) NOT NULL,
@@ -33,9 +50,7 @@ CREATE TABLE `users` (
   UNIQUE KEY `uq_users_provider` (`provider`, `provider_id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
 
--- ══════════════════════════════════════════════
 -- business_hours
--- ══════════════════════════════════════════════
 CREATE TABLE `business_hours` (
   `id`          BIGINT     NOT NULL AUTO_INCREMENT,
   `user_id`     BIGINT     NOT NULL,
@@ -49,9 +64,7 @@ CREATE TABLE `business_hours` (
     REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
 
--- ══════════════════════════════════════════════
 -- content_settings
--- ══════════════════════════════════════════════
 CREATE TABLE `content_settings` (
   `id`             BIGINT       NOT NULL AUTO_INCREMENT,
   `user_id`        BIGINT       NOT NULL,
@@ -66,17 +79,12 @@ CREATE TABLE `content_settings` (
     REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
 
-ALTER TABLE `content_settings`
-  ADD COLUMN `preferred_sns` VARCHAR(100) NULL COMMENT 'comma-separated: instagram,naver,kakao,facebook';
-
--- ══════════════════════════════════════════════
 -- brand
--- ══════════════════════════════════════════════
 CREATE TABLE `brand` (
   `brand_id`          BIGINT       NOT NULL AUTO_INCREMENT,
   `user_id`           BIGINT       NULL         COMMENT '유저 ID (로그인 연동 후 사용)',
   `brand_name`        VARCHAR(100) NOT NULL     COMMENT '브랜드명',
-  `service_name`	  TEXT         NULL         COMMENT 'sns 계정 아이디',
+  `service_name`      TEXT         NULL         COMMENT 'sns 계정 아이디',
   `industry_type`     VARCHAR(50)  NULL         COMMENT '업종',
   `location_name`     VARCHAR(150) NULL         COMMENT '매장명/지점명',
   `address`           VARCHAR(255) NULL         COMMENT '도로명 주소',
@@ -87,9 +95,7 @@ CREATE TABLE `brand` (
   PRIMARY KEY (`brand_id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COMMENT='브랜드/매장 기준 정보';
 
--- ══════════════════════════════════════════════
 -- brand_operation_profile
--- ══════════════════════════════════════════════
 CREATE TABLE `brand_operation_profile` (
   `operation_profile_id`   BIGINT      NOT NULL AUTO_INCREMENT,
   `brand_id`               BIGINT      UNIQUE NOT NULL COMMENT '브랜드 ID',
@@ -105,9 +111,7 @@ CREATE TABLE `brand_operation_profile` (
   PRIMARY KEY (`operation_profile_id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COMMENT='사업장 운영 특성 정보';
 
--- ══════════════════════════════════════════════
 -- platform
--- ══════════════════════════════════════════════
 CREATE TABLE `platform` (
   `platform_id`   BIGINT      NOT NULL AUTO_INCREMENT,
   `platform_code` VARCHAR(30) UNIQUE NOT NULL COMMENT 'instagram / facebook / naver / kakao',
@@ -117,9 +121,7 @@ CREATE TABLE `platform` (
   PRIMARY KEY (`platform_id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COMMENT='플랫폼 마스터';
 
--- ══════════════════════════════════════════════
 -- brand_platform
--- ══════════════════════════════════════════════
 CREATE TABLE `brand_platform` (
   `brand_platform_id` BIGINT       NOT NULL AUTO_INCREMENT,
   `brand_id`          BIGINT       NOT NULL,
@@ -137,11 +139,9 @@ CREATE TABLE `brand_platform` (
   PRIMARY KEY (`brand_platform_id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COMMENT='브랜드별 운영 채널 정보';
 
--- ══════════════════════════════════════════════
--- feedback
--- ══════════════════════════════════════════════
+-- feedback_source
 CREATE TABLE `feedback_source` (
-  `source_id`     BIGINT      NOT NULL AUTO_INCREMENT,
+  `source_id`     BIGINT       NOT NULL AUTO_INCREMENT,
   `author_name`   VARCHAR(255) NULL,
   `created_at`    DATETIME(6)  NULL,
   `original_text` TEXT         NULL,
@@ -149,6 +149,7 @@ CREATE TABLE `feedback_source` (
   PRIMARY KEY (`source_id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
 
+-- customer_feedback
 CREATE TABLE `customer_feedback` (
   `feedback_id` BIGINT NOT NULL AUTO_INCREMENT,
   `ai_reply`    TEXT   NULL,
@@ -165,29 +166,27 @@ CREATE TABLE `customer_feedback` (
     FOREIGN KEY (`source_id`) REFERENCES `feedback_source` (`source_id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
 
--- ══════════════════════════════════════════════
--- 성과 분석 테이블
--- ══════════════════════════════════════════════
+-- 채널 성과 분석
 CREATE TABLE `date_dimension` (
-  `date_key`        INT      NOT NULL,
-  `full_date`       DATE     UNIQUE NOT NULL,
-  `year_no`         INT      NOT NULL,
-  `half_no`         TINYINT  NOT NULL,
-  `quarter_no`      TINYINT  NOT NULL,
-  `month_no`        TINYINT  NOT NULL,
-  `month_name`      VARCHAR(20)  NULL,
-  `week_of_year`    TINYINT  NULL,
-  `week_of_month`   TINYINT  NULL,
-  `day_of_month`    TINYINT  NOT NULL,
-  `day_of_week`     TINYINT  NOT NULL,
+  `date_key`        INT         NOT NULL,
+  `full_date`       DATE        UNIQUE NOT NULL,
+  `year_no`         INT         NOT NULL,
+  `half_no`         TINYINT     NOT NULL,
+  `quarter_no`      TINYINT     NOT NULL,
+  `month_no`        TINYINT     NOT NULL,
+  `month_name`      VARCHAR(20) NULL,
+  `week_of_year`    TINYINT     NULL,
+  `week_of_month`   TINYINT     NULL,
+  `day_of_month`    TINYINT     NOT NULL,
+  `day_of_week`     TINYINT     NOT NULL,
   `day_name_kr`     VARCHAR(10) NOT NULL,
-  `is_weekend`      BOOLEAN  NOT NULL DEFAULT FALSE,
-  `is_holiday`      BOOLEAN  NOT NULL DEFAULT FALSE,
-  `is_business_day` BOOLEAN  NOT NULL DEFAULT TRUE,
-  `is_month_start`  BOOLEAN  NOT NULL DEFAULT FALSE,
-  `is_month_end`    BOOLEAN  NOT NULL DEFAULT FALSE,
-  `is_year_start`   BOOLEAN  NOT NULL DEFAULT FALSE,
-  `is_year_end`     BOOLEAN  NOT NULL DEFAULT FALSE,
+  `is_weekend`      BOOLEAN     NOT NULL DEFAULT FALSE,
+  `is_holiday`      BOOLEAN     NOT NULL DEFAULT FALSE,
+  `is_business_day` BOOLEAN     NOT NULL DEFAULT TRUE,
+  `is_month_start`  BOOLEAN     NOT NULL DEFAULT FALSE,
+  `is_month_end`    BOOLEAN     NOT NULL DEFAULT FALSE,
+  `is_year_start`   BOOLEAN     NOT NULL DEFAULT FALSE,
+  `is_year_end`     BOOLEAN     NOT NULL DEFAULT FALSE,
   `season_code`     VARCHAR(20) NULL,
   `holiday_name`    VARCHAR(100) NULL,
   PRIMARY KEY (`date_key`)
@@ -209,18 +208,18 @@ CREATE TABLE `content_post` (
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `post_metric_daily` (
-  `post_metric_daily_id` BIGINT NOT NULL AUTO_INCREMENT,
-  `post_id`       BIGINT   NOT NULL,
-  `date_key`      INT      NOT NULL,
-  `view_count`    INT      NOT NULL DEFAULT 0,
-  `like_count`    INT      NOT NULL DEFAULT 0,
-  `comment_count` INT      NOT NULL DEFAULT 0,
-  `share_count`   INT      NOT NULL DEFAULT 0,
-  `follower_gain` INT      NOT NULL DEFAULT 0,
-  `review_count`  INT      NOT NULL DEFAULT 0,
-  `save_count`    INT      NOT NULL DEFAULT 0,
-  `click_count`   INT      NOT NULL DEFAULT 0,
-  `created_at`    DATETIME NOT NULL,
+  `post_metric_daily_id` BIGINT   NOT NULL AUTO_INCREMENT,
+  `post_id`              BIGINT   NOT NULL,
+  `date_key`             INT      NOT NULL,
+  `view_count`           INT      NOT NULL DEFAULT 0,
+  `like_count`           INT      NOT NULL DEFAULT 0,
+  `comment_count`        INT      NOT NULL DEFAULT 0,
+  `share_count`          INT      NOT NULL DEFAULT 0,
+  `follower_gain`        INT      NOT NULL DEFAULT 0,
+  `review_count`         INT      NOT NULL DEFAULT 0,
+  `save_count`           INT      NOT NULL DEFAULT 0,
+  `click_count`          INT      NOT NULL DEFAULT 0,
+  `created_at`           DATETIME NOT NULL,
   PRIMARY KEY (`post_metric_daily_id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
 
@@ -399,18 +398,19 @@ CREATE TABLE `strategy_recommendation_item` (
   PRIMARY KEY (`strategy_item_id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE inquiry (
-    id         BIGINT       NOT NULL AUTO_INCREMENT,
-    title      VARCHAR(255) NOT NULL,
-    content    TEXT         NOT NULL,
-    email      VARCHAR(255) NOT NULL,
-    STATUS     VARCHAR(50)  NOT NULL DEFAULT 'WAIT',
-    created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
+CREATE TABLE `inquiry` (
+  `id`         BIGINT       NOT NULL AUTO_INCREMENT,
+  `title`      VARCHAR(255) NOT NULL,
+  `content`    TEXT         NOT NULL,
+  `email`      VARCHAR(255) NOT NULL,
+  `status`     VARCHAR(50)  NOT NULL DEFAULT 'WAIT',
+  `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
 
+
 -- ══════════════════════════════════════════════
--- INDEX
+-- CREATE INDEX
 -- ══════════════════════════════════════════════
 CREATE UNIQUE INDEX `brand_platform_index_0`                    ON `brand_platform`                  (`brand_id`, `platform_id`);
 CREATE UNIQUE INDEX `post_metric_daily_index_6`                 ON `post_metric_daily`               (`post_id`, `date_key`);
@@ -426,9 +426,13 @@ CREATE UNIQUE INDEX `platform_metric_yearly_trend_index_24`     ON `platform_met
 CREATE UNIQUE INDEX `performance_impact_analysis_index_25`      ON `performance_impact_analysis`     (`brand_platform_id`, `analysis_period_type`, `base_year`, `base_month`);
 CREATE UNIQUE INDEX `strategy_recommendation_item_index_27`     ON `strategy_recommendation_item`    (`strategy_id`, `sort_order`);
 
+
 -- ══════════════════════════════════════════════
--- FK
+-- ALTER TABLE
 -- ══════════════════════════════════════════════
+ALTER TABLE `content_settings`
+  ADD COLUMN `preferred_sns` VARCHAR(100) NULL COMMENT 'comma-separated: instagram,naver,kakao,facebook';
+
 ALTER TABLE `brand`                           ADD FOREIGN KEY (`user_id`)            REFERENCES `users`           (`id`);
 ALTER TABLE `brand_operation_profile`         ADD FOREIGN KEY (`brand_id`)           REFERENCES `brand`           (`brand_id`);
 ALTER TABLE `brand_platform`                  ADD FOREIGN KEY (`brand_id`)           REFERENCES `brand`           (`brand_id`);
@@ -461,10 +465,11 @@ ALTER TABLE `strategy_recommendation_item`    ADD FOREIGN KEY (`platform_id`)   
 
 
 -- ══════════════════════════════════════════════
--- seed data 
+-- INSERT seed data
+-- 순서: 플랫폼 → 브랜드 → 브랜드플랫폼 → 피드백 → 채널성과분석 더미 → 유저샘플
 -- ══════════════════════════════════════════════
 
--- 플랫폼 데이터
+-- 1. 플랫폼
 INSERT IGNORE INTO platform (platform_id, platform_code, platform_name, brand_color, is_active)
 VALUES
 (1, 'instagram', '인스타그램', '#E1306C', TRUE),
@@ -472,28 +477,119 @@ VALUES
 (3, 'naver',     '네이버',     '#03C75A', TRUE),
 (4, 'kakao',     '카카오채널', '#FEE500', TRUE);
 
--- 브랜드 데이터 (각 인스타 아이디, 주소, 번호 검증 대부분 완료)
+-- 2. 브랜드
 INSERT IGNORE INTO brand (brand_id, user_id, brand_name, service_name, industry_type, location_name, address, phone, profile_image_url, created_at, updated_at) VALUES
-(1, NULL, '어글리베이커리', 'uglybakery', 'CAFE_BAKERY', '망원본점', '서울 마포구 월드컵로13길 73', '02-338-2018', NULL, NOW(), NOW()),
-(2, NULL, '을밀대', 'eulmildae', 'FOOD_RESTAURANT', '염리동본점', '서울 마포구 숭문길 24', '02-717-1922', NULL, NOW(), NOW()),
-(3, NULL, '와드', 'wad_seongsu', 'BEAUTY_SALON', '성수점', '서울 성동구 서울숲길 51', '0507-1389-8378', NULL, NOW(), NOW()),
-(4, NULL, '선데이클로즈', 'sundayclothes_official', 'FASHION_CLOTHING', '을지로점', '서울 중구 수표로 28', '010-4227-6051', NULL, NOW(), NOW()),
-(5, NULL, '산방댁게스트하우스', 'sanbangdaek', 'ACCOMMODATION_PENSION', '사계점', '제주 서귀포시 안덕면 사계신항로 6', '010-9179-7585', NULL, NOW(), NOW()),
-(6, NULL, '메인필라테스', 'mainpilates', 'FITNESS_SPORTS', '잠실본점', '종로구 자하문로2길 4 4', '070-8861-6833', NULL, NOW(), NOW()),
-(7, NULL, '슈잇베이킹스튜디오', 'choueat_bakingstudio', 'EDUCATION_ACADEMY', '성수동본점', '서울 성동구 상원6길 10', 'none', NULL, NOW(), NOW()),
-(8, NULL, '서울SY피부과', 'sydermatology', 'MEDICAL_HOSPITAL', '본점', '서울 강남구 논현로171길 11', '02-517-2696', NULL, NOW(), NOW()),
-(9, NULL, '인덱스숍', 'indexshop.kr', 'RETAIL_SHOPPING', '건대점', '서울 광진구 아차산로 200', '02-2122-1259', NULL, NOW(), NOW()),
-(10, NULL, '플로애', '_floae_', 'ETC', '역삼본점', '서울 강남구 역삼동 778-6', '010-5915-6228', NULL, NOW(), NOW()),
-(11, NULL, '몽심', '_creative_mongsim', 'CAFE_BAKERY', '한남대본점', '대전 대덕구 한남로38번길 28', '010-4459-1014', NULL, NOW(), NOW()),
-(12, NULL, '연돈', 'yeondon2014', 'FOOD_RESTAURANT', '중문점', '제주 서귀포시 색달로 10', '0507-1386-7060', NULL, NOW(), NOW()),
-(13, NULL, '헤어웰', 'hairwell', 'BEAUTY_SALON', '서신점', '전북 전주시 완산구 서신로 104', '0507-1418-2513', NULL, NOW(), NOW()),
-(14, NULL, '너겟', 'nugget_min', 'FASHION_CLOTHING', '강릉본점', '강릉시 원대로8번길9', '070-8848-3542', NULL, NOW(), NOW()),
-(15, NULL, '한옥스테이소화', 'tdesign71', 'ACCOMMODATION_PENSION', '황리단길점', '한옥스테이 소화 경상북도 경주시 국당2길 5', '010-4800-7205', NULL, NOW(), NOW()),
-(16, NULL, '요가베르데', 'yoga__verde', 'FITNESS_SPORTS', '비자림점', '제주 제주시 구좌읍 비자림로 1999-6', '0507-1393-6090', NULL, NOW(), NOW()),
-(17, NULL, '씨앤씨미술학원', 'suwan_cnc', 'EDUCATION_ACADEMY', '수완본점', '광주 광산구 장신로 164', '062-954-9711', NULL, NOW(), NOW()),
-(18, NULL, '서산연세치과', 'seosan_yonsei', 'MEDICAL_HOSPITAL', '본점', '충남 서산시 율지8로1', '041-664-1616', NULL, NOW(), NOW()),
-(19, NULL, '책방오늘', 'onulbooks_in_seochon', 'RETAIL_SHOPPING', '서촌점', '서울 종로구 자하문로6길 11', '02-733-7077', NULL, NOW(), NOW()),
-(20, NULL, '삶은감자', 'life_gamja', 'ETC', '강릉본점', '강원 강릉시 임영로 197-1', '0507-1371-4429', NULL, NOW(), NOW());
+(1,  1, '어글리베이커리',     'uglybakery',             'CAFE_BAKERY',           '망원본점',   '서울 마포구 월드컵로13길 73',           '02-338-2018',   NULL, NOW(), NOW()),
+(2,  NULL, '을밀대',             'eulmildae',              'FOOD_RESTAURANT',       '염리동본점', '서울 마포구 숭문길 24',                 '02-717-1922',   NULL, NOW(), NOW()),
+(3,  NULL, '와드',               'wad_seongsu',            'BEAUTY_SALON',          '성수점',     '서울 성동구 서울숲길 51',               '0507-1389-8378',NULL, NOW(), NOW()),
+(4,  NULL, '선데이클로즈',       'sundayclothes_official', 'FASHION_CLOTHING',      '을지로점',   '서울 중구 수표로 28',                   '010-4227-6051', NULL, NOW(), NOW()),
+(5,  NULL, '산방댁게스트하우스', 'sanbangdaek',            'ACCOMMODATION_PENSION', '사계점',     '제주 서귀포시 안덕면 사계신항로 6',     '010-9179-7585', NULL, NOW(), NOW()),
+(6,  NULL, '메인필라테스',       'mainpilates',            'FITNESS_SPORTS',        '잠실본점',   '종로구 자하문로2길 4 4',                '070-8861-6833', NULL, NOW(), NOW()),
+(7,  NULL, '슈잇베이킹스튜디오', 'choueat_bakingstudio',   'EDUCATION_ACADEMY',     '성수동본점', '서울 성동구 상원6길 10',                'none',          NULL, NOW(), NOW()),
+(8,  NULL, '서울SY피부과',       'sydermatology',          'MEDICAL_HOSPITAL',      '본점',       '서울 강남구 논현로171길 11',            '02-517-2696',   NULL, NOW(), NOW()),
+(9,  NULL, '인덱스숍',           'indexshop.kr',           'RETAIL_SHOPPING',       '건대점',     '서울 광진구 아차산로 200',              '02-2122-1259',  NULL, NOW(), NOW()),
+(10, NULL, '플로애',             '_floae_',                'ETC',                   '역삼본점',   '서울 강남구 역삼동 778-6',              '010-5915-6228', NULL, NOW(), NOW()),
+(11, NULL, '몽심',               '_creative_mongsim',      'CAFE_BAKERY',           '한남대본점', '대전 대덕구 한남로38번길 28',           '010-4459-1014', NULL, NOW(), NOW()),
+(12, NULL, '연돈',               'yeondon2014',            'FOOD_RESTAURANT',       '중문점',     '제주 서귀포시 색달로 10',               '0507-1386-7060',NULL, NOW(), NOW()),
+(13, NULL, '헤어웰',             'hairwell',               'BEAUTY_SALON',          '서신점',     '전북 전주시 완산구 서신로 104',         '0507-1418-2513',NULL, NOW(), NOW()),
+(14, NULL, '너겟',               'nugget_min',             'FASHION_CLOTHING',      '강릉본점',   '강릉시 원대로8번길 9',                  '070-8848-3542', NULL, NOW(), NOW()),
+(15, NULL, '한옥스테이소화',     'tdesign71',              'ACCOMMODATION_PENSION', '황리단길점', '경북 경주시 국당2길 5',                 '010-4800-7205', NULL, NOW(), NOW()),
+(16, NULL, '요가베르데',         'yoga__verde',            'FITNESS_SPORTS',        '비자림점',   '제주 제주시 구좌읍 비자림로 1999-6',   '0507-1393-6090',NULL, NOW(), NOW()),
+(17, NULL, '씨앤씨미술학원',     'suwan_cnc',              'EDUCATION_ACADEMY',     '수완본점',   '광주 광산구 장신로 164',                '062-954-9711',  NULL, NOW(), NOW()),
+(18, NULL, '서산연세치과',       'seosan_yonsei',          'MEDICAL_HOSPITAL',      '본점',       '충남 서산시 율지8로 1',                 '041-664-1616',  NULL, NOW(), NOW()),
+(19, NULL, '책방오늘',           'onulbooks_in_seochon',   'RETAIL_SHOPPING',       '서촌점',     '서울 종로구 자하문로6길 11',            '02-733-7077',   NULL, NOW(), NOW()),
+(20, NULL, '삶은감자',           'life_gamja',             'ETC',                   '강릉본점',   '강원 강릉시 임영로 197-1',              '0507-1371-4429',NULL, NOW(), NOW());
+
+-- 3. 브랜드 플랫폼 (채널 성과 분석 더미가 brand_platform_id 1,2 를 참조하므로 더미보다 선행)
+INSERT IGNORE INTO brand_platform (brand_platform_id, brand_id, platform_id, channel_name, channel_url, is_connected, token_status, connected_at, created_at, updated_at)
+VALUES
+(1, 1, 1, 'uglybakery',       'https://www.instagram.com/uglybakery/', TRUE,  'ACTIVE',  NOW(), NOW(), NOW()),
+(2, 1, 2, 'uglybakery',       'https://www.facebook.com/uglybakery',   FALSE, 'EXPIRED', NULL,  NOW(), NOW()),
+(3, 1, 3, 'uglybakery_naver', 'https://blog.naver.com/uglybakery',     FALSE, 'EXPIRED', NULL,  NOW(), NOW()),
+(4, 1, 4, '@어글리베이커리',   'https://pf.kakao.com/_uglybakery',      FALSE, 'EXPIRED', NULL,  NOW(), NOW());
+
+-- 4. 피드백
+INSERT IGNORE INTO `feedback_source` (`source_id`, `author_name`, `created_at`, `original_text`, `platform`) VALUES
+(1, '김철수', NOW(), '퇴근길에 들러서 포장했는데 식어도 바삭하고 맛있네요.', 'NAVER'),
+(2, '이영희', NOW(), '주차장이 협소해서 조금 불편했지만 친절했어요.', 'KAKAO'),
+(3, '정수민', NOW(), '헐 이거 신상이에요?? 당장 먹으러 갑니다', 'INSTAGRAM');
+
+INSERT IGNORE INTO `customer_feedback` (`feedback_id`, `source_id`, `type`, `status`, `ai_status`, `created_at`, `updated_at`) VALUES
+(1, 1, 'REVIEW',  'UNRESOLVED', 'IDLE', NOW(), NOW()),
+(2, 2, 'REVIEW',  'UNRESOLVED', 'IDLE', NOW(), NOW()),
+(3, 3, 'COMMENT', 'UNCHECKED',  'IDLE', NOW(), NOW());
+
+-- 5. 채널 성과 분석 더미
+-- date_dimension → content_post → platform_metric_daily → post_metric_daily → performance_impact_analysis
+INSERT IGNORE INTO date_dimension (
+  date_key, full_date, year_no, half_no, quarter_no, month_no, month_name,
+  week_of_year, week_of_month, day_of_month, day_of_week, day_name_kr,
+  is_weekend, is_holiday, is_business_day, is_month_start, is_month_end,
+  is_year_start, is_year_end, season_code, holiday_name
+)
+SELECT
+  DATE_FORMAT(CURDATE(), '%Y%m%d') + 0,
+  CURDATE(),
+  YEAR(CURDATE()),
+  IF(MONTH(CURDATE()) <= 6, 1, 2),
+  QUARTER(CURDATE()),
+  MONTH(CURDATE()),
+  DATE_FORMAT(CURDATE(), '%M'),
+  WEEK(CURDATE(), 3),
+  FLOOR((DAY(CURDATE()) - 1) / 7) + 1,
+  DAY(CURDATE()),
+  WEEKDAY(CURDATE()) + 1,
+  ELT(WEEKDAY(CURDATE()) + 1, '월', '화', '수', '목', '금', '토', '일'),
+  IF(WEEKDAY(CURDATE()) >= 5, TRUE, FALSE),
+  FALSE,
+  IF(WEEKDAY(CURDATE()) >= 5, FALSE, TRUE),
+  IF(DAY(CURDATE()) = 1, TRUE, FALSE),
+  IF(CURDATE() = LAST_DAY(CURDATE()), TRUE, FALSE),
+  IF(DAYOFYEAR(CURDATE()) = 1, TRUE, FALSE),
+  IF(DAYOFYEAR(CURDATE()) = DAYOFYEAR(LAST_DAY(CONCAT(YEAR(CURDATE()), '-12-01'))), TRUE, FALSE),
+  CASE
+    WHEN MONTH(CURDATE()) IN (3, 4, 5) THEN 'spring'
+    WHEN MONTH(CURDATE()) IN (6, 7, 8) THEN 'summer'
+    WHEN MONTH(CURDATE()) IN (9, 10, 11) THEN 'fall'
+    ELSE 'winter'
+  END,
+  NULL
+WHERE NOT EXISTS (
+  SELECT 1 FROM date_dimension WHERE date_key = DATE_FORMAT(CURDATE(), '%Y%m%d') + 0
+);
+
+INSERT IGNORE INTO content_post (
+  post_id, brand_platform_id, post_title, post_type, post_body,
+  published_at, published_date_key, published_hour, STATUS, created_at, updated_at
+)
+VALUES
+(1, 1, '오픈 이벤트', '이벤트형', '샘플 게시물입니다', NOW(), DATE_FORMAT(CURDATE(), '%Y%m%d') + 0, HOUR(NOW()), 'published', NOW(), NOW()),
+(2, 2, '신메뉴 안내', '공지형',   '샘플 게시물입니다', NOW(), DATE_FORMAT(CURDATE(), '%Y%m%d') + 0, HOUR(NOW()), 'published', NOW(), NOW());
+
+INSERT IGNORE INTO platform_metric_daily (
+  brand_platform_id, date_key, total_views, total_likes, total_comments,
+  total_shares, total_reviews, follower_growth, engagement_score, created_at
+)
+VALUES
+(1, DATE_FORMAT(CURDATE(), '%Y%m%d') + 0, 1200, 130, 20, 8, 5, 12, 15.20, NOW()),
+(2, DATE_FORMAT(CURDATE(), '%Y%m%d') + 0,  900,  80, 10, 5, 2,  7, 10.50, NOW());
+
+INSERT IGNORE INTO post_metric_daily (
+  post_id, date_key, view_count, like_count, comment_count, share_count,
+  follower_gain, review_count, save_count, click_count, created_at
+)
+VALUES
+(1, DATE_FORMAT(CURDATE(), '%Y%m%d') + 0, 900, 110, 16, 7, 10, 3, 4, 22, NOW()),
+(2, DATE_FORMAT(CURDATE(), '%Y%m%d') + 0, 700,  60,  7, 4,  6, 2, 3, 14, NOW());
+
+INSERT IGNORE INTO performance_impact_analysis (
+  brand_platform_id, analysis_period_type, base_year, base_month,
+  weekend_effect_score, holiday_effect_score, best_day_of_week,
+  worst_day_of_week, best_hour_range, created_at
+)
+VALUES
+(1, 'month', YEAR(CURDATE()), MONTH(CURDATE()), 12.3, 8.5, 6, 2, '18:00-21:00', NOW()),
+(2, 'month', YEAR(CURDATE()), MONTH(CURDATE()),  8.1, 6.2, 5, 2, '12:00-14:00', NOW());
 
 -- ===== users, brand 1번 데이터 =====
 INSERT INTO `users` (
@@ -561,129 +657,9 @@ INSERT INTO brand_operation_profile (
   NOW(), NOW()
 );
 
-INSERT IGNORE INTO brand_platform (brand_platform_id, brand_id, platform_id, channel_name, channel_url, is_connected, token_status, connected_at, created_at, updated_at)
-VALUES
-(1, 1, 1, 'uglybakery',       'https://www.instagram.com/uglybakery/', TRUE,  'ACTIVE',  NOW(), NOW(), NOW()),
-(2, 1, 2, 'uglybakery',       'https://www.facebook.com/uglybakery',   FALSE, 'EXPIRED', NULL,  NOW(), NOW()),
-(3, 1, 3, 'uglybakery_naver', 'https://blog.naver.com/uglybakery',     FALSE, 'EXPIRED', NULL,  NOW(), NOW()),
-(4, 1, 4, '@어글리베이커리',   'https://pf.kakao.com/_uglybakery',      FALSE, 'EXPIRED', NULL,  NOW(), NOW());
-
 INSERT INTO inquiry (title, content, email, STATUS, created_at) VALUES
 ('인스타그램 연동 후 게시물이 업로드되지 않습니다', '인스타그램 계정 연동은 완료됐는데 게시물 업로드 버튼을 눌러도 아무 반응이 없습니다.', 'test@social.com', 'WAIT', NOW()),
 ('AI 콘텐츠 생성 시 오류 메시지가 표시됩니다', 'AI 콘텐츠 생성 버튼 클릭 시 "생성에 실패했습니다" 메시지가 반복적으로 나타납니다.', 'test@social.com', 'WAIT', NOW() - INTERVAL 2 DAY),
 ('네이버 블로그 연동 후 계정이 바로 해제됩니다', '네이버 블로그를 연동하면 잠시 후 자동으로 연동이 해제되는 현상이 반복됩니다.', 'test@social.com', 'DONE', NOW() - INTERVAL 5 DAY),
 ('예약 게시 시간이 설정한 시간과 다르게 발행됩니다', '오후 6시로 예약했는데 오전 6시에 발행됐습니다. 동일한 현상이 3번 반복됐습니다.', 'test@social.com', 'WAIT', NOW() - INTERVAL 7 DAY);
 -- ===== users, brand 1번 데이터 =====
-
-
-
-
--- ══════════════════════════════════════════════ 사용 확정인 시드 데이터는 이 선 위로 올리기
-
-
-INSERT IGNORE INTO date_dimension (
-  date_key, full_date, year_no, half_no, quarter_no, month_no, month_name,
-  week_of_year, week_of_month, day_of_month, day_of_week, day_name_kr,
-  is_weekend, is_holiday, is_business_day, is_month_start, is_month_end,
-  is_year_start, is_year_end, season_code, holiday_name
-)
-SELECT
-  DATE_FORMAT(CURDATE(), '%Y%m%d') + 0,
-  CURDATE(),
-  YEAR(CURDATE()),
-  IF(MONTH(CURDATE()) <= 6, 1, 2),
-  QUARTER(CURDATE()),
-  MONTH(CURDATE()),
-  DATE_FORMAT(CURDATE(), '%M'),
-  WEEK(CURDATE(), 3),
-  FLOOR((DAY(CURDATE()) - 1) / 7) + 1,
-  DAY(CURDATE()),
-  WEEKDAY(CURDATE()) + 1,
-  ELT(WEEKDAY(CURDATE()) + 1, '월', '화', '수', '목', '금', '토', '일'),
-  IF(WEEKDAY(CURDATE()) >= 5, TRUE, FALSE),
-  FALSE,
-  IF(WEEKDAY(CURDATE()) >= 5, FALSE, TRUE),
-  IF(DAY(CURDATE()) = 1, TRUE, FALSE),
-  IF(CURDATE() = LAST_DAY(CURDATE()), TRUE, FALSE),
-  IF(DAYOFYEAR(CURDATE()) = 1, TRUE, FALSE),
-  IF(DAYOFYEAR(CURDATE()) = DAYOFYEAR(LAST_DAY(CONCAT(YEAR(CURDATE()), '-12-01'))), TRUE, FALSE),
-  CASE
-    WHEN MONTH(CURDATE()) IN (3, 4, 5) THEN 'spring'
-    WHEN MONTH(CURDATE()) IN (6, 7, 8) THEN 'summer'
-    WHEN MONTH(CURDATE()) IN (9, 10, 11) THEN 'fall'
-    ELSE 'winter'
-  END,
-  NULL
-WHERE NOT EXISTS (
-  SELECT 1 FROM date_dimension WHERE date_key = DATE_FORMAT(CURDATE(), '%Y%m%d') + 0
-);
-
-INSERT IGNORE INTO content_post (
-  post_id, brand_platform_id, post_title, post_type, post_body,
-  published_at, published_date_key, published_hour, STATUS, created_at, updated_at
-)
-VALUES
-(1, 1, '오픈 이벤트', '이벤트형', '샘플 게시물입니다', NOW(), DATE_FORMAT(CURDATE(), '%Y%m%d') + 0, HOUR(NOW()), 'published', NOW(), NOW()),
-(2, 2, '신메뉴 안내', '공지형', '샘플 게시물입니다', NOW(), DATE_FORMAT(CURDATE(), '%Y%m%d') + 0, HOUR(NOW()), 'published', NOW(), NOW());
-
-INSERT IGNORE INTO platform_metric_daily (
-  brand_platform_id, date_key, total_views, total_likes, total_comments,
-  total_shares, total_reviews, follower_growth, engagement_score, created_at
-)
-VALUES
-(1, DATE_FORMAT(CURDATE(), '%Y%m%d') + 0, 1200, 130, 20, 8, 5, 12, 15.20, NOW()),
-(2, DATE_FORMAT(CURDATE(), '%Y%m%d') + 0, 900, 80, 10, 5, 2, 7, 10.50, NOW());
-
-INSERT IGNORE INTO post_metric_daily (
-  post_id, date_key, view_count, like_count, comment_count, share_count,
-  follower_gain, review_count, save_count, click_count, created_at
-)
-VALUES
-(1, DATE_FORMAT(CURDATE(), '%Y%m%d') + 0, 900, 110, 16, 7, 10, 3, 4, 22, NOW()),
-(2, DATE_FORMAT(CURDATE(), '%Y%m%d') + 0, 700, 60, 7, 4, 6, 2, 3, 14, NOW());
-
-INSERT IGNORE INTO performance_impact_analysis (
-  brand_platform_id, analysis_period_type, base_year, base_month,
-  weekend_effect_score, holiday_effect_score, best_day_of_week,
-  worst_day_of_week, best_hour_range, created_at
-)
-VALUES
-(1, 'month', YEAR(CURDATE()), MONTH(CURDATE()), 12.3, 8.5, 6, 2, '18:00-21:00', NOW()),
-(2, 'month', YEAR(CURDATE()), MONTH(CURDATE()), 8.1, 6.2, 5, 2, '12:00-14:00', NOW());
-
--- feedback module tables (managed by SQL init, not Hibernate DDL)
-CREATE TABLE IF NOT EXISTS `feedback_source` (
-    `source_id` BIGINT NOT NULL AUTO_INCREMENT,
-    `author_name` VARCHAR(255),
-    `created_at` DATETIME(6),
-    `original_text` TEXT,
-    `platform` ENUM ('FACEBOOK','GOOGLE','INSTAGRAM','KAKAO','NAVER'),
-    PRIMARY KEY (`source_id`)
-) ENGINE=INNODB;
-
-CREATE TABLE IF NOT EXISTS `customer_feedback` (
-    `feedback_id` BIGINT NOT NULL AUTO_INCREMENT,
-    `ai_reply` TEXT,
-    `ai_status` ENUM ('DONE','IDLE'),
-    `created_at` DATETIME(6),
-    `sent_reply` TEXT,
-    `status` ENUM ('CHECKED','COMPLETED','SENDING','UNCHECKED','UNRESOLVED'),
-    `type` ENUM ('COMMENT','REVIEW'),
-    `updated_at` DATETIME(6),
-    `source_id` BIGINT,
-    PRIMARY KEY (`feedback_id`),
-    UNIQUE KEY `uk_customer_feedback_source` (`source_id`),
-    CONSTRAINT `fk_customer_feedback_source`
-      FOREIGN KEY (`source_id`) REFERENCES `feedback_source` (`source_id`)
-) ENGINE=INNODB;
-
--- feedback module seed data
-INSERT IGNORE INTO `feedback_source` (`source_id`, `author_name`, `created_at`, `original_text`, `platform`) VALUES
-(1, '김철수', NOW(), '퇴근길에 들러서 포장했는데 식어도 바삭하고 맛있네요.', 'NAVER'),
-(2, '이영희', NOW(), '주차장이 협소해서 조금 불편했지만 친절했어요.', 'KAKAO'),
-(3, '정수민', NOW(), '헐 이거 신상이에요?? 당장 먹으러 갑니다', 'INSTAGRAM');
-
-INSERT IGNORE INTO `customer_feedback` (`feedback_id`, `source_id`, `type`, `status`, `ai_status`, `created_at`, `updated_at`) VALUES
-(1, 1, 'REVIEW', 'UNRESOLVED', 'IDLE', NOW(), NOW()),
-(2, 2, 'REVIEW', 'UNRESOLVED', 'IDLE', NOW(), NOW()),
-(3, 3, 'COMMENT', 'UNCHECKED', 'IDLE', NOW(), NOW());

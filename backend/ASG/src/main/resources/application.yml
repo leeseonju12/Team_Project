@@ -6,7 +6,7 @@ spring:
     url: jdbc:mysql://localhost:3306/gather?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: root
     password:
-
+# html 수정 할 때마다 ide가 멈추는 현상 해결
   devtools:
     restart:
       enabled: false   # 자동 재시작 끄기
