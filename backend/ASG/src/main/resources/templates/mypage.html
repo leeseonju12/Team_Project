@@ -315,13 +315,129 @@ em {
 }
     
     
-    
+    /* ══ 반응형 공통 ══ */
+    /* 헤더 패딩 축소 */
+    @media(max-width:900px){
+      header{padding:0 16px;}
+      .logo-sub{display:none;}
+      .nav-pills{gap:2px;}
+      .nav-pill{padding:5px 8px;font-size:11px;}
+      .user-name{display:none;}
+      .page-wrap{padding:20px 16px 60px;}
+    }
+    @media(max-width:640px){
+      .nav-pills{display:none;}
+    }
+
+    /* ══ 햄버거 버튼 ══ */
+    .hamburger{
+      display:none;
+      flex-direction:column;justify-content:center;align-items:center;
+      gap:5px;width:38px;height:38px;border-radius:9px;
+      background:transparent;border:1.5px solid var(--border);
+      cursor:pointer;padding:0;flex-shrink:0;
+      transition:background .15s;
+    }
+    .hamburger:hover{background:var(--slate);}
+    .hamburger span{
+      display:block;width:18px;height:2px;
+      background:var(--text2);border-radius:2px;
+      transition:all .25s;
+    }
+    @media(max-width:900px){
+      .hamburger{display:flex;}
+      .sidebar{display:none;}          /* 기본 사이드바 숨김 */
+    }
+
+    /* ══ 드로어 오버레이 ══ */
+    .drawer-overlay{
+      display:none;position:fixed;inset:0;
+      background:rgba(15,23,42,.35);
+      z-index:300;backdrop-filter:blur(2px);
+    }
+    .drawer-overlay.open{display:block;}
+
+    /* ══ 드로어 패널 ══ */
+    .drawer{
+      position:fixed;top:0;left:0;bottom:0;
+      width:272px;background:var(--white);
+      z-index:400;
+      transform:translateX(-100%);
+      transition:transform .28s cubic-bezier(.4,0,.2,1);
+      overflow-y:auto;padding:20px 0 40px;
+      box-shadow:4px 0 24px rgba(15,23,42,.12);
+    }
+    .drawer.open{transform:translateX(0);}
+
+    /* 드로어 헤더 (닫기 버튼 + 프로필) */
+    .drawer-close{
+      display:flex;align-items:center;justify-content:flex-end;
+      padding:0 16px 12px;
+    }
+    .drawer-close-btn{
+      width:32px;height:32px;border-radius:8px;border:1.5px solid var(--border);
+      background:transparent;cursor:pointer;font-size:16px;color:var(--text3);
+      display:flex;align-items:center;justify-content:center;
+      transition:background .15s;
+    }
+    .drawer-close-btn:hover{background:var(--slate);color:var(--text);}
+
+    /* 드로어 내부 — 기존 sidebar 스타일 재활용 */
+    .drawer .sidebar-profile{
+      margin:0 16px 14px;border-radius:var(--radius);
+      border:1.5px solid var(--border);box-shadow:var(--shadow);
+      padding:18px 16px;text-align:center;
+    }
+    .drawer .sidebar-nav{
+      margin:0 16px;border-radius:var(--radius);
+      border:1.5px solid var(--border);box-shadow:var(--shadow);overflow:hidden;
+    }
   </style>
 </head>
 
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 
 <body>
+  <!-- ══ 드로어 (모바일 사이드바) ══ -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-close">
+      <button class="drawer-close-btn" onclick="closeDrawer()">✕</button>
+    </div>
+    <!-- 프로필 -->
+    <div class="sidebar-profile">
+      <div class="profile-avatar-wrap">
+        <div class="profile-avatar" th:text="${userInfo.name != null ? userInfo.name.substring(0,1) : '?'}"></div>
+      </div>
+      <div class="profile-name" th:text="${userInfo.name}"></div>
+      <div class="profile-email" th:text="${userInfo.email}"></div>
+      <div class="profile-badge">카카오 가입자</div>
+    </div>
+    <!-- 네비 — showSection() 호출 후 드로어 닫기 -->
+    <nav class="sidebar-nav">
+      <div class="snav-group-label">계정</div>
+      <div class="snav-item" data-sec="member" onclick="showSection('member',this);closeDrawer()"><span class="sni">👤</span>회원정보</div>
+      <div class="snav-divider"></div>
+
+      <div class="snav-group-label">사업장</div>
+      <div class="snav-item" data-sec="shop" onclick="showSection('shop',this);closeDrawer()"><span class="sni">🏪</span>가게 정보</div>
+      <div class="snav-divider"></div>
+
+      <div class="snav-group-label">콘텐츠</div>
+      <div class="snav-item" data-sec="content" onclick="showSection('content',this);closeDrawer()"><span class="sni">✍️</span>콘텐츠 개인 설정</div>
+      <div class="snav-item" data-sec="history" onclick="showSection('history',this);closeDrawer()"><span class="sni">📂</span>콘텐츠 히스토리</div>
+      <div class="snav-divider"></div>
+
+      <div class="snav-group-label">연동</div>
+      <div class="snav-item" data-sec="sns" onclick="showSection('sns',this);closeDrawer()"><span class="sni">🔗</span>SNS 계정 연동</div>
+      <div class="snav-divider"></div>
+
+      <div class="snav-group-label">기타</div>
+      <div class="snav-item" data-sec="inquiry" onclick="showSection('inquiry',this);closeDrawer()"><span class="sni">💬</span>1:1 문의</div>
+      <div class="snav-item snav-danger" onclick="confirmWithdraw();closeDrawer()"><span class="sni">🚪</span>회원 탈퇴</div>
+    </nav>
+  </div>
+
   <div class="top-stripe"></div>
   <header>
     <a href="#" class="logo">
@@ -336,8 +452,11 @@ em {
       <a href="mypage" class="nav-pill active">👤 마이페이지</a>
     </nav>
     <div class="header-user">
+      <button class="hamburger" onclick="openDrawer()" aria-label="메뉴 열기">
+        <span></span><span></span><span></span>
+      </button>
       <div class="user-avatar" th:text="${userInfo.name != null ? userInfo.name.substring(0,1) : '?'}"></div>
-		<span class="user-name" th:text="${userInfo.name + ' 님'}"></span>
+      <span class="user-name" th:text="${userInfo.name + ' 님'}"></span>
     </div>
   </header>
 
@@ -1446,6 +1565,20 @@ loadContentHistory();
   document.getElementById('historyMonthFilter').addEventListener('change', renderHistory);
 
   loadContentHistory();
+  
+  /* ── 드로어 제어 ── */
+  function openDrawer(){
+    document.getElementById('drawer').classList.add('open');
+    document.getElementById('drawerOverlay').classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+  function closeDrawer(){
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('drawerOverlay').classList.remove('open');
+    document.body.style.overflow='';
+  }
+  /* ESC 키로 닫기 */
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
 
   </script>
 
