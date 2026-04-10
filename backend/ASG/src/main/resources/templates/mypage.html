@@ -314,6 +314,8 @@ em {
   -webkit-box-decoration-break: clone;
 }
     
+    
+    
   </style>
 </head>
 
@@ -676,8 +678,7 @@ em {
       <option value="community">💬 커뮤니티</option>
     </select>
     <input type="month" id="historyMonthFilter"
-      style="height:36px;padding:0 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:'Noto Sans KR',sans-serif;color:var(--text2);background:var(--white);outline:none;"
-      value="2025-07"/>
+  style="height:36px;padding:0 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:'Noto Sans KR',sans-serif;color:var(--text2);background:var(--white);outline:none;"/>
   </div>
 
   <!-- 리스트 -->
@@ -1357,68 +1358,108 @@ function showSection(id, el) {
   updateInqStats();
   renderInqList();
 
-/* ═══ 콘텐츠 히스토리 필터 ═══ */
-const HISTORY_DATA = [
-  { date:'2025-07-20', platform:'instagram', label:'Instagram',   icon:'📷', text:'여름 신메뉴 출시 🍹 시원한 피치 에이드와 함께하는 여름',  url:'#' },
-  { date:'2025-07-18', platform:'naver',     label:'네이버 블로그', icon:'🟢', text:'소셜다모아 카페의 여름 인테리어 변경 소식을 전합니다',      url:'#' },
-  { date:'2025-07-15', platform:'kakao',     label:'카카오 채널',   icon:'💛', text:'7월 멤버십 이벤트 안내 — 적립 2배 혜택 놓치지 마세요!',   url:'#' },
-  { date:'2025-07-10', platform:'facebook',  label:'Facebook',     icon:'📘', text:'카페 오픈 3주년 기념 감사 이벤트를 진행합니다 🎉',         url:'#' },
-  { date:'2025-07-05', platform:'community', label:'커뮤니티',      icon:'💬', text:'강남 카페 추천 — 소셜다모아 카페를 소개합니다',             url:'#' },
-  { date:'2025-02-14', platform:'instagram', label:'Instagram',   icon:'📷', text:'발렌타인데이 특별 음료 이벤트 안내',                        url:'#' },
-  { date:'2025-02-08', platform:'naver',     label:'네이버 블로그', icon:'🟢', text:'2월 신메뉴 소개 — 딸기 라떼 시즌 시작',                    url:'#' },
-];
+  /* ═══ 콘텐츠 히스토리 필터 ═══ */
+  const PLATFORM_STYLES = {
+    instagram: { bg:'#FDF2F8', border:'#FBCFE8', color:'#E1306C', icon:'📷', label:'Instagram'   },
+    facebook:  { bg:'#EFF6FF', border:'#BFDBFE', color:'#1877F2', icon:'📘', label:'Facebook'     },
+    naver:     { bg:'#F0FFF4', border:'#86EFAC', color:'#03C75A', icon:'🟢', label:'네이버 블로그' },
+    kakao:     { bg:'#FFFBEB', border:'#FDE68A', color:'#92400E', icon:'💛', label:'카카오 채널'   },
+    community: { bg:'#EEF2FF', border:'#C7D2FE', color:'#4F46E5', icon:'💬', label:'커뮤니티'     },
+  };
 
-const PLATFORM_STYLES = {
-  instagram: { bg:'#FDF2F8', border:'#FBCFE8', color:'#E1306C' },
-  facebook:  { bg:'#EFF6FF', border:'#BFDBFE', color:'#1877F2' },
-  naver:     { bg:'#F0FFF4', border:'#86EFAC', color:'#03C75A' },
-  kakao:     { bg:'#FFFBEB', border:'#FDE68A', color:'#92400E' },
-  community: { bg:'#EEF2FF', border:'#C7D2FE', color:'#4F46E5' },
-};
+  let _historyData = [];
 
-function renderHistory() {
-  const platform = document.getElementById('historyPlatformFilter').value;
-  const month    = document.getElementById('historyMonthFilter').value; // e.g. "2025-07"
+  // 오늘 날짜로 월 필터 초기화
+const _today = new Date();
+document.getElementById('historyMonthFilter').value =
+  _today.getFullYear() + '-' + String(_today.getMonth() + 1).padStart(2, '0');
 
-  const filtered = HISTORY_DATA.filter(h => {
-    const matchPlatform = platform === 'all' || h.platform === platform;
-    const matchMonth    = !month || h.date.startsWith(month);
-    return matchPlatform && matchMonth;
-  });
+loadContentHistory();
 
-  document.getElementById('historyCount').textContent = filtered.length;
-
-  const list = document.getElementById('historyList');
-  if (!filtered.length) {
-    list.innerHTML = `<div style="text-align:center;padding:40px;font-size:13px;color:var(--text3);">해당 조건의 콘텐츠가 없습니다.</div>`;
-    return;
+  async function loadContentHistory() {
+    try {
+      const res  = await fetch('/mypage/content-history');
+      _historyData = await res.json();
+    } catch(e) {
+      console.error('히스토리 로드 실패:', e);
+      _historyData = [];
+    }
+    renderHistory();
   }
 
-  list.innerHTML = filtered.map((h, i) => {
-    const s = PLATFORM_STYLES[h.platform];
-    const isLast = i === filtered.length - 1;
-    return `
-      <div style="display:flex;align-items:center;gap:14px;padding:14px 22px;${isLast ? '' : 'border-bottom:1px solid var(--border);'}transition:background .15s;"
-           onmouseover="this.style.background='var(--slate)'" onmouseout="this.style.background=''">
-        <div style="font-size:11px;color:var(--text3);white-space:nowrap;min-width:86px;">${h.date.replace(/-/g,'.')}</div>
-        <div style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;background:${s.bg};border:1px solid ${s.border};font-size:11px;font-weight:700;color:${s.color};white-space:nowrap;">
-          ${h.icon} ${h.label}
-        </div>
-        <div style="flex:1;font-size:13px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.text}</div>
-        <a href="${h.url}" target="_blank"
-           style="flex-shrink:0;height:30px;padding:0 12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--white);font-size:11px;font-weight:700;color:var(--text2);text-decoration:none;display:inline-flex;align-items:center;gap:4px;"
-           onmouseover="this.style.borderColor='var(--teal)';this.style.color='var(--teal-dark)'"
-           onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">원문 보기 ↗</a>
-      </div>`;
-  }).join('');
-}
+  function renderHistory() {
+    const platform = document.getElementById('historyPlatformFilter').value;
+    const month    = document.getElementById('historyMonthFilter').value;
 
-// 필터 변경 시 자동 적용
-document.getElementById('historyPlatformFilter').addEventListener('change', renderHistory);
-document.getElementById('historyMonthFilter').addEventListener('change', renderHistory);
+    const filtered = _historyData.filter(h => {
+      const matchPlatform = platform === 'all' || h.platformCode === platform;
+      const matchMonth    = !month || (h.publishedAt && h.publishedAt.startsWith(month));
+      return matchPlatform && matchMonth;
+    });
 
-// 초기 렌더
-renderHistory();
+    document.getElementById('historyCount').textContent = filtered.length;
+
+    const list = document.getElementById('historyList');
+    if (!filtered.length) {
+      list.innerHTML = `<div style="text-align:center;padding:40px;font-size:13px;color:var(--text3);">해당 조건의 콘텐츠가 없습니다.</div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map((h, i) => {
+      const s       = PLATFORM_STYLES[h.platformCode] || { bg:'#F5F5F5', border:'#DDD', color:'#999', icon:'📄', label: h.platformName };
+      const isLast  = i === filtered.length - 1;
+      const dateStr = h.publishedAt ? h.publishedAt.substring(0,10).replace(/-/g,'.') : '-';
+      const preview = h.postBody ? h.postBody.replace(/\n/g,' ').substring(0,40) + '…' : '';
+
+      return `
+        <div style="display:flex;align-items:center;gap:14px;padding:14px 22px;${isLast ? '' : 'border-bottom:1px solid var(--border);'}transition:background .15s;cursor:pointer;"
+             onmouseover="this.style.background='var(--slate)'" onmouseout="this.style.background=''"
+             onclick="openHistoryModal(${h.postId})">
+          <div style="font-size:11px;color:var(--text3);white-space:nowrap;min-width:86px;">${dateStr}</div>
+          <div style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;background:${s.bg};border:1px solid ${s.border};font-size:11px;font-weight:700;color:${s.color};white-space:nowrap;">
+            ${s.icon} ${s.label}
+          </div>
+          <div style="flex:1;font-size:13px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            ${h.postTitle || ''} — ${preview}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function openHistoryModal(postId) {
+    const h = _historyData.find(d => d.postId === postId);
+    if (!h) return;
+    const s = PLATFORM_STYLES[h.platformCode] || { bg:'#F5F5F5', border:'#DDD', color:'#999', icon:'📄', label: h.platformName };
+    document.getElementById('historyModalBody').innerHTML = `
+      <div style="margin-bottom:12px;">
+        <span style="padding:3px 10px;border-radius:100px;background:${s.bg};border:1px solid ${s.border};font-size:11px;font-weight:700;color:${s.color};">
+          ${s.icon} ${s.label}
+        </span>
+        <span style="margin-left:8px;font-size:12px;color:var(--text3);">${h.publishedAt ? h.publishedAt.substring(0,10) : ''}</span>
+      </div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:12px;">${h.postTitle || ''}</div>
+      <div style="font-size:13px;color:var(--text2);white-space:pre-wrap;line-height:1.8;">${h.postBody || ''}</div>`;
+    document.getElementById('historyModal').style.display = 'flex';
+  }
+
+  document.getElementById('historyPlatformFilter').addEventListener('change', renderHistory);
+  document.getElementById('historyMonthFilter').addEventListener('change', renderHistory);
+
+  loadContentHistory();
+
   </script>
+
+  <!-- 콘텐츠 히스토리 상세 모달 -->
+<div id="historyModal"
+  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;"
+  onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:var(--white);border-radius:var(--radius);padding:28px;width:520px;max-width:90vw;max-height:80vh;overflow-y:auto;position:relative;">
+    <button onclick="document.getElementById('historyModal').style.display='none'"
+      style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--text3);">✕</button>
+    <h3 style="margin:0 0 16px;font-size:16px;">콘텐츠 상세</h3>
+    <div id="historyModalBody"></div>
+  </div>
+</div>
+  
 </body>
 </html>

@@ -3,6 +3,7 @@ package com.example.demo.service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +22,11 @@ public class ContentService {
 	private final GeminiApiClient geminiClient; // 공통 모듈 주입!
     private final ObjectMapper objectMapper = new ObjectMapper();
 	
+    // 마이페이지 구현용 필드
+    private final com.example.demo.repository.myPage.ContentPostRepository contentPostRepository;
+    private final com.example.demo.repository.myPage.BrandPlatformRepository brandPlatformRepository;
+    private static final Long BRAND_ID = 1L;
+    
     public List<SnsResult> generateAllSnsContent(ContentRequest request) {
     	
     	// 커스텀 속성 하드코딩 (추후 request DTO에서 받아오도록 변경 가능)
@@ -52,7 +58,12 @@ public class ContentService {
         String rawJsonContent = geminiClient.requestToGemini(prompt);
         
         // 3. 답변 파싱해서 돌려주기
-        return parseAndEnrichResults(rawJsonContent);
+        List<SnsResult> results = parseAndEnrichResults(rawJsonContent);
+
+        // 4. DB 저장
+        saveGeneratedContents(request.getMenuName(), results);
+
+        return results;
     }
     
     private List<SnsResult> parseAndEnrichResults(String rawJsonContent) {
@@ -197,5 +208,40 @@ public class ContentService {
         return results;
     }
     */
+    }
+
+    // 마이페이지-컨텐츠 생성 내역
+    private void saveGeneratedContents(String menuName, List<SnsResult> results) {
+        List<com.example.demo.entity.myPage.BrandPlatform> brandPlatforms =
+            brandPlatformRepository.findByBrand_BrandId(BRAND_ID);
+
+        // platform_code → BrandPlatform 맵 구성
+        Map<String, com.example.demo.entity.myPage.BrandPlatform> platformMap = brandPlatforms.stream()
+            .filter(bp -> bp.getPlatform() != null)
+            .collect(java.util.stream.Collectors.toMap(
+                bp -> bp.getPlatform().getPlatformCode(),
+                bp -> bp,
+                (a, b) -> a // 중복 시 첫 번째 사용
+            ));
+
+        for (SnsResult result : results) {
+            com.example.demo.entity.myPage.BrandPlatform bp = platformMap.get(result.getPlatform());
+            if (bp == null) continue; // brand_platform 미존재 플랫폼은 스킵
+
+            com.example.demo.entity.myPage.ContentPost post =
+                new com.example.demo.entity.myPage.ContentPost();
+            post.setBrandPlatform(bp);
+            post.setPostTitle(menuName); // 메뉴명을 제목으로
+            post.setPostType("AI생성");
+            post.setPostBody(result.getContent());
+            post.setStatus("published");
+
+            try {
+                contentPostRepository.save(post);
+            } catch (Exception e) {
+                // 저장 실패해도 화면 렌더링은 정상 진행
+                System.err.println("content_post 저장 실패 [" + result.getPlatform() + "]: " + e.getMessage());
+            }
+        }
     }
 }

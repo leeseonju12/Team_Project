@@ -14,6 +14,7 @@ import com.example.demo.domain.ContentSettings;
 import com.example.demo.repository.myPage.BrandOperationProfileRepository;
 import com.example.demo.repository.myPage.BrandPlatformRepository;
 import com.example.demo.repository.myPage.BrandRepository;
+import com.example.demo.repository.myPage.ContentPostRepository;
 import com.example.demo.repository.myPage.ContentSettingsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,9 @@ public class MypageService {
 	private final Cloudinary cloudinary;
 	private final BusinessHoursRepository businessHoursRepository;
 	private final com.example.demo.repository.myPage.InquiryRepository inquiryRepository;
+	private final ContentPostRepository contentPostRepository;
+	
+	
 	
 	// ── 가게 정보 조회 ──────────────────────────────────────
 	@Transactional(readOnly = true)
@@ -252,6 +256,36 @@ public class MypageService {
                 .stream()
                 .map(com.example.demo.dto.myPage.InquiryResponse::new)
                 .collect(Collectors.toList());
+    }
+    
+ // ── 콘텐츠 히스토리 조회 ────────────────────────────────
+    @Transactional(readOnly = true)
+    public List<ContentHistoryResponse> getContentHistory() {
+        return contentPostRepository.findByBrandIdOrderByPublishedAtDesc(BRAND_ID)
+            .stream()
+            .map(ContentHistoryResponse::new)
+            .collect(Collectors.toList());
+    }
+
+    // ── 히스토리 응답 DTO (inner record) ───────────────────
+    public record ContentHistoryResponse(
+        Long postId,
+        String platformCode,
+        String platformName,
+        String postTitle,
+        String postBody,
+        java.time.LocalDateTime publishedAt
+    ) {
+        public ContentHistoryResponse(com.example.demo.entity.myPage.ContentPost cp) {
+            this(
+                cp.getPostId(),
+                cp.getBrandPlatform().getPlatform().getPlatformCode(),
+                cp.getBrandPlatform().getPlatform().getPlatformName(),
+                cp.getPostTitle(),
+                cp.getPostBody(),
+                cp.getPublishedAt()
+            );
+        }
     }
 	
 }
