@@ -1,6 +1,7 @@
 package com.example.demo.dto;
 
-import com.example.demo.calendar.entity.PostStatus;
+import com.example.demo.domain.calendar.entity.ContentStatus;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -9,7 +10,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class ScheduleRequestDto {
-	private Long postId;
+	private Long contentId;;
 	private String scheduledDate;
-	private PostStatus status;
+	private ContentStatus status;
 }

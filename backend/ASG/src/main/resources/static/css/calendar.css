@@ -1,0 +1,439 @@
+/* ═══════════════════════════════════════════
+   CALENDAR COLUMN (redesigned)
+═══════════════════════════════════════════ */
+.calendar-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.calendar-panel {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 251, 252, 0.98));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+/* 헤더: 제목과 겹치지 않도록 여백 + 확장 버튼 우측 상단 고정 */
+.calendar-panel .panel-header.calendar-panel-header {
+  position: relative;
+  padding-right: 100px;
+  flex-wrap: nowrap;
+}
+
+/* Expand/collapse toggle button */
+.btn-calendar-expand {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid rgba(99, 102, 241, 0.22);
+  background: rgba(99, 102, 241, 0.07);
+  color: #4338CA;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: background .2s, border-color .2s, box-shadow .2s;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.btn-calendar-expand:hover {
+  background: rgba(99, 102, 241, 0.14);
+  transform: translateY(calc(-50% - 1px));
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.12);
+}
+
+.btn-calendar-expand .expand-icon {
+  display: inline-block;
+  font-size: 9px;
+  line-height: 1;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard-grid.calendar-expanded .btn-calendar-expand .expand-icon {
+  transform: rotate(180deg);
+}
+
+.fc {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 11px;
+}
+
+.fc .fc-toolbar {
+  padding: 12px 14px 8px;
+  margin: 0 !important;
+}
+
+.fc .fc-toolbar-title {
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: var(--text) !important;
+}
+
+.fc .fc-button {
+  background: var(--surface2) !important;
+  border: 1px solid var(--border2) !important;
+  color: var(--text2) !important;
+  border-radius: 8px !important;
+  font-size: 10px !important;
+  padding: 4px 9px !important;
+  box-shadow: none !important;
+  font-family: 'Noto Sans KR', sans-serif !important;
+}
+
+.fc .fc-button:hover {
+  background: var(--surface3) !important;
+  color: var(--text) !important;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #fff !important;
+}
+
+.fc .fc-col-header-cell-cushion {
+  font-size: 10px;
+  color: var(--text3);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.fc .fc-daygrid-day-number {
+  font-size: 10px;
+  color: var(--text3);
+  text-decoration: none;
+  padding: 3px 5px;
+}
+
+.fc .fc-day-today {
+  background: rgba(20, 184, 166, 0.07) !important;
+}
+
+.fc .fc-day-today .fc-daygrid-day-number {
+  color: var(--primary);
+  font-weight: 900;
+}
+
+.fc .fc-event {
+  border-radius: 5px !important;
+  border: none !important;
+  padding: 1px 4px !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  cursor: grab;
+}
+
+.fc .fc-event:active {
+  cursor: grabbing;
+}
+
+.fc .fc-daygrid-event {
+  margin: 1px 2px !important;
+}
+
+/* ══════════════════════════════════════════════════════════
+   플랫폼별 파스텔 이벤트 색상
+   ─────────────────────────────────────────────────────────
+   FullCalendar v6는 backgroundColor를 .fc-event에
+   인라인 스타일(style="background-color:...")로 주입하므로
+   CSS background 선언은 인라인에 의해 덮어씌워집니다.
+   → 색상은 JS addEvent()의 backgroundColor / textColor /
+     borderColor 옵션으로만 지정합니다. (app.js의
+     PASTEL_PALETTE 참고)
+   → CSS는 인라인 스타일이 건드리지 않는 속성(box-shadow,
+     border-radius, padding 등)만 제어합니다.
+   ══════════════════════════════════════════════════════════ */
+
+/* ── 공통: 이벤트 바 형태 ── */
+.fc .fc-event {
+  border-radius: 5px !important;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.10) !important;
+  border-width: 0 0 0 3px !important;  /* 왼쪽 포인트 보더만 유지 */
+  border-style: solid !important;
+}
+
+/* ── 시간 텍스트 숨김 (제목만 표시) ── */
+.fc .fc-event .fc-event-time,
+.fc .fc-daygrid-event .fc-event-time {
+  display: none !important;
+}
+
+/* ── 이벤트 제목 2줄 제한 + 말줄임표 ── */
+.fc .fc-event .fc-event-title,
+.fc .fc-daygrid-event .fc-event-title {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  white-space: normal !important;
+  line-height: 1.35 !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+}
+
+/* ── 이벤트 바 내부 padding 보정 ── */
+.fc .fc-daygrid-event {
+  padding: 2px 5px !important;
+  margin: 1px 2px !important;
+}
+
+/* ── TIME GRID (when expanded) ── */
+.fc .fc-timegrid-slot {
+  height: 28px !important;
+}
+
+.fc .fc-timegrid-slot-label {
+  font-size: 9px !important;
+  color: var(--text3) !important;
+}
+
+/* ── PENDING POSTS (replaces golden time) ── */
+.pending-panel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 251, 252, 0.98));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.pending-header {
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pending-header h3 {
+  font-size: 12px;
+  font-weight: 800;
+  flex: 1;
+}
+
+.pending-count-badge {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pending-list {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.pending-empty {
+  padding: 24px 12px;
+  text-align: center;
+  color: var(--text3);
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.pending-empty .pe-icon {
+  font-size: 24px;
+  opacity: .45;
+  margin-bottom: 6px;
+}
+
+/* Draggable pending item */
+.pending-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--border2);
+  background: rgba(255, 255, 255, 0.97);
+  cursor: grab;
+  user-select: none;
+  transition: all .2s;
+  position: relative;
+}
+
+.pending-item:active {
+  cursor: grabbing;
+}
+
+.pending-item:hover {
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.10);
+  transform: translateY(-1px);
+  border-color: rgba(99, 102, 241, 0.22);
+}
+
+.pending-item.dragging {
+  opacity: 0.4;
+  border: 2px dashed #6366F1;
+}
+
+.pi-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pi-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pi-name {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pi-platform {
+  font-size: 9px;
+  color: var(--text3);
+  margin-top: 1px;
+}
+
+.pi-drag-hint {
+  font-size: 10px;
+  color: var(--text3);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.pi-remove-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text3);
+  padding: 2px;
+  font-size: 12px;
+  transition: color .15s;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.pi-remove-btn:hover {
+  color: #E1306C;
+}
+
+/* Drag over highlight for calendar days */
+.fc-day.drag-over {
+  background: rgba(20, 184, 166, 0.12) !important;
+  outline: 2px dashed var(--primary) !important;
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
+.guide-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 251, 252, 0.98));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.guide-card-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.guide-card-title .gc-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  background: rgba(20, 184, 166, 0.14);
+}
+
+.publish-tips {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.publish-tip {
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: rgba(241, 245, 249, 0.88);
+  border: 1px solid var(--border);
+}
+
+.tip-num {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: #fff;
+  font-size: 9px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tip-text {
+  font-size: 10px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+.tip-text strong {
+  color: var(--text);
+}
+
+/* ==========================================================================
+   플랫폼별 좌측 포인트 보더 - 최종 매칭
+   ========================================================================== */
+
+/* 1. 기본 테두리 완전 제거 (인라인 스타일 간섭 방지) */
+.fc .fc-event {
+    border: none !important;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* 2. 각 플랫폼별 정확한 키값으로 보더 지정 */
+.fc .fc-event.fc-event-instagram { border-left: 4px solid #E1306C !important; }
+.fc .fc-event.fc-event-facebook  { border-left: 4px solid #1877F2 !important; }
+.fc .fc-event.fc-event-naver     { border-left: 4px solid #03C75A !important; }
+.fc .fc-event.fc-event-kakao     { border-left: 4px solid #FEE500 !important; }
+.fc .fc-event.fc-event-community { border-left: 4px solid #6366F1 !important; }
+
+/* 3. 텍스트가 선과 겹치지 않도록 간격 조정 */
+.fc-daygrid-event {
+    padding-left: 8px !important;
+}

@@ -1,0 +1,213 @@
+/* ── LAYOUT ── */
+.blob {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(130px);
+  pointer-events: none;
+  z-index: 0;
+  animation: drift 18s ease-in-out infinite alternate;
+}
+
+.blob-1 {
+  width: 480px;
+  height: 480px;
+  background: rgba(20, 184, 166, 0.08);
+  top: -110px;
+  right: -90px;
+}
+
+.blob-2 {
+  width: 420px;
+  height: 420px;
+  background: rgba(99, 102, 241, 0.08);
+  bottom: -20px;
+  left: -80px;
+  animation-delay: -6s;
+}
+
+.blob-3 {
+  width: 280px;
+  height: 280px;
+  background: rgba(99, 102, 241, 0.05);
+  top: 45%;
+  right: 15%;
+  animation-delay: -11s;
+}
+
+@keyframes drift {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+
+  to {
+    transform: translate(24px, 38px) scale(1.08);
+  }
+}
+
+.wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 1520px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 26px 0 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 900;
+  box-shadow: 0 0 22px rgba(20, 184, 166, 0.35);
+}
+
+.logo-text {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.logo-text span {
+  color: var(--text2);
+  font-weight: 400;
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-badge {
+  background: rgba(20, 184, 166, 0.08);
+  border: 1px solid rgba(20, 184, 166, 0.18);
+  border-radius: 999px;
+  padding: 6px 13px;
+  font-size: 11px;
+  color: #0F766E;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.header-badge::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: pulse 2s infinite;
+}
+
+.header-stat {
+  background: rgba(99, 102, 241, 0.07);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: 999px;
+  padding: 6px 13px;
+  font-size: 11px;
+  color: #4338CA;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ── PAGE TITLE ── */
+.page-title {
+  padding: 36px 0 28px;
+}
+
+.page-title h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(28px, 3.5vw, 40px);
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #0F172A 28%, #475569 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.page-title h1 em {
+  font-style: italic;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.page-title p {
+  margin-top: 10px;
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 300;
+}
+
+/* ── MAIN DASHBOARD LAYOUT ── */
+/* --- 기본 대시보드 그리드 설정 --- */
+.dashboard-grid {
+  display: grid;
+  /* 기본: 좌측 360px, 중앙 가변, 우측 380px */
+  grid-template-columns: 360px 1fr 380px;
+  gap: 18px;
+  align-items: start;
+  transition: grid-template-columns 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+}
+
+/* --- [중요] 캘린더 확장 모드: 2번 이미지처럼 1:1 매칭 --- */
+.dashboard-grid.calendar-expanded {
+  /* 좌측을 0으로 죽이고, 중앙과 우측만 정확히 1:1(1fr 1fr)로 배분 */
+  grid-template-columns: 0px 1fr 1fr !important;
+  /* 확장 시 좌측의 불필요한 간격을 없애기 위해 gap 조정 (선택 사항) */
+  gap: 24px; 
+}
+
+/* 좌측 컬럼 숨김 처리 최적화 */
+.left-col {
+  min-width: 0;
+  transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard-grid.calendar-expanded .left-col {
+  max-width: 0;
+  width: 0;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* 센터와 캘린더 컬럼이 찌그러지지 않도록 강제 */
+.center-col, .calendar-col {
+  min-width: 0; /* 이 설정이 있어야 내부 컨텐츠에 상관없이 1:1이 유지됩니다 */
+  width: 100%;
+}
+
+/* --- 반응형 보정 --- */
+@media(max-width: 1300px) {
+  .dashboard-grid {
+    grid-template-columns: 320px 1fr 340px;
+  }
+  
+}

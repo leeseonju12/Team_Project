@@ -11,25 +11,7 @@
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 
-  <link rel="stylesheet" href="/css/base.css">
-  <link rel="stylesheet" href="/css/layout.css">
-  <link rel="stylesheet" href="/css/components.css">
-  <link rel="stylesheet" href="/css/calendar.css">
-  <link rel="stylesheet" href="/css/preview-modal.css">
-  <style>
-    /* FullCalendar 이벤트 드래그 스타일 보정 */
-    .fc-event { 
-      cursor: grab !important; 
-      transition: all 0.2s; 
-      border-left-width: 5px !important; 
-      margin-bottom: 5px; 
-    }
-    .fc-event:active { cursor: grabbing !important; }
-    
-    /* 기존 스타일과 충돌 방지를 위한 모달 디스플레이 설정 */
-    .hidden { display: none !important; }
-  </style>
-  
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 
 <body>
@@ -391,7 +373,7 @@
 
       <div class="left-col">
         <div class="panel">
-          <div class="panel-header calendar-panel-header">
+          <div class="panel-header">
             <div class="panel-icon">✏️</div>
             <h2>콘텐츠 입력</h2>
           </div>
@@ -643,11 +625,11 @@
 
       <div class="calendar-col">
         <div class="calendar-panel">
-          <div class="panel-header calendar-panel-header">
+          <div class="panel-header">
             <div class="panel-icon" style="background:rgba(99,102,241,0.14);">📅</div>
             <h2>스마트 마케팅 캘린더</h2>
-            <button class="btn-calendar-expand" id="calendarExpandBtn" onclick="toggleCalendarExpand()" aria-expanded="false">
-  <span class="btn-calendar-expand-label">확장</span>
+            <button class="btn-calendar-expand" id="calendarExpandBtn" onclick="toggleCalendarExpand()">
+              <span>확장</span>
               <svg class="expand-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <polyline points="15 3 21 3 21 9" />
                 <polyline points="9 21 3 21 3 15" />
@@ -687,51 +669,8 @@
       </div>
     </div>
   </div>
-  
-  <div id="timeSelectionModal"
-     class="hidden"
-     style="position:fixed;inset:0;z-index:10000;display:flex;
-            align-items:center;justify-content:center;padding:16px;
-            background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);">
-  <div style="background:#fff;border-radius:24px;width:100%;max-width:360px;
-              overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.25);padding:28px;">
-    <h3 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 6px;">
-      게시 시간 설정
-    </h3>
-    <p id="selectedDateDisplay"
-       style="font-size:13px;color:#94a3b8;margin:0 0 22px;"></p>
- 
-    <label style="display:block;font-size:11px;font-weight:700;
-                  color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;
-                  margin-bottom:8px;">시간 선택</label>
-    <input type="time" id="scheduledTime"
-           style="width:100%;padding:14px 16px;background:#f8fafc;
-                  border:1.5px solid #e2e8f0;border-radius:14px;
-                  font-size:20px;font-weight:700;color:#0f172a;
-                  outline:none;box-sizing:border-box;"
-           onfocus="this.style.borderColor='#6366f1'"
-           onblur="this.style.borderColor='#e2e8f0'">
- 
-    <div style="display:flex;gap:10px;margin-top:22px;">
-      <button onclick="cancelTimeSelection()"
-              style="flex:1;padding:13px;background:transparent;
-                     border:1.5px solid #e2e8f0;border-radius:12px;
-                     font-size:14px;font-weight:600;color:#64748b;cursor:pointer;">
-        취소
-      </button>
-      <button onclick="confirmTimeSelection()"
-              style="flex:1;padding:13px;background:#6366f1;
-                     border:1.5px solid #6366f1;border-radius:12px;
-                     font-size:14px;font-weight:600;color:#fff;cursor:pointer;
-                     box-shadow:0 4px 14px rgba(99,102,241,0.4);">
-        저장하기
-      </button>
-    </div>
-  </div>
-</div>
 
   <script src="/js/app4.js" defer></script>
-  <script src="/js/calendar-manager.js" defer></script>
 </body>
 
 </html>
