@@ -1,0 +1,108 @@
+/* 1. 외부 폰트 임포트 (Noto Sans KR) */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+:root {
+  /* Colors */
+  --bg: #F8FBFC;
+  --surface: #FFFFFF;
+  --surface2: #F1F5F9;
+  --surface3: #E8EEF5;
+  --border: rgba(71, 85, 105, 0.12);
+  --border2: rgba(71, 85, 105, 0.18);
+  --primary: #14B8A6;
+  --primary-soft: rgba(20, 184, 166, 0.18);
+  --primary-glow: rgba(20, 184, 166, 0.28);
+  --secondary: #6366F1;
+  --secondary-soft: rgba(99, 102, 241, 0.16);
+  --text: #0F172A;
+  --text2: #475569;
+  --text3: #64748B;
+  
+  /* Brand Colors (SNS 등) */
+  --accent-ig: #E1306C;
+  --accent-fb: #1877F2;
+  --accent-nv: #03C75A;
+  --accent-kk: #FEE500;
+  --accent-kk-text: #3A1D1D;
+  
+  /* Glow Effects */
+  --glow-ig: rgba(225, 48, 108, 0.30);
+  --glow-fb: rgba(24, 119, 242, 0.28);
+  --glow-nv: rgba(3, 199, 90, 0.28);
+  --glow-kk: rgba(254, 229, 0, 0.22);
+  
+  /* Dimensions */
+  --radius: 18px;
+  --radius-sm: 12px;
+}
+
+/* 2. Reset & Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased; /* 폰트 가독성 향상 */
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: 
+    radial-gradient(circle at 12% 18%, rgba(20, 184, 166, 0.09), transparent 28%),
+    radial-gradient(circle at 88% 12%, rgba(99, 102, 241, 0.10), transparent 30%),
+    linear-gradient(180deg, #fff 0%, #F8FBFC 100%);
+  color: var(--text);
+  font-family: 'Noto Sans KR', sans-serif;
+  min-height: 100vh;
+  line-height: 1.6; /* 가독성을 위한 줄간격 */
+  overflow-x: hidden;
+  position: relative; /* 노이즈 레이어 기준점 */
+}
+
+/* 3. Noise Overlay (질감 효과) */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 4. Utilities (자주 쓰는 클래스 미리 정의) */
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid var(--border); }
+
+/* 5. Keyframes (제공해주신 애니메이션) */
+@keyframes pulse {
+  0%, 100% { opacity: 1 }
+  50% { opacity: .4 }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1 }
+  50% { opacity: 0 }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0 }
+  to { opacity: 1 }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(28px); opacity: 0 }
+  to { transform: translateY(0); opacity: 1 }
+}
+
+@keyframes tagPop {
+  from { transform: scale(0.8); opacity: 0 }
+  to { transform: scale(1); opacity: 1 }
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-6px) }
+  to { opacity: 1; transform: translateY(0) }
+}

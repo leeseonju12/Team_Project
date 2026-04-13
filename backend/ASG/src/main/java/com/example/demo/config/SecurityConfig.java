@@ -39,10 +39,9 @@ public class SecurityConfig {
 	                "/api/feedbacks/**", 
 	                "/api/sns/**", 
 	                "/search-test"
-	                ,"/api/v1/content/generate", "/api/v1/content/**"
+	                ,"/api/v1/content/generate", "/api/v1/content/**", "/api/posts/**", "/calendar/**"
 	            )
 	        )
-
 
 				.authorizeHttpRequests(auth -> auth
 						// 1. 모든 요청을 허용하도록 변경 (기존 리스트는 유지하되 마지막을 permitAll로)

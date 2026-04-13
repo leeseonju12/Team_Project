@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.example.demo.dto.ContentRequest;
 import com.example.demo.dto.SnsResult;
@@ -25,7 +26,7 @@ public class ContentController {
     @GetMapping("/generate")
     public String showGeneratePage() {
     	
-        return "content-generate";
+        return "index";
     }
 
     @PostMapping("/generate")
@@ -37,6 +38,6 @@ public class ContentController {
         model.addAttribute("results", results);
         model.addAttribute("req", request); // 입력했던 내용 유지용
         
-        return "content-generate";
+        return "index";
     }
 }
