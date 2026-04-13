@@ -17,6 +17,9 @@ public interface GeneratedContentRepository extends JpaRepository<GeneratedConte
      * 엔티티의 필드명이 scheduledAt -> scheduledDate로 변경됨에 따라 메서드명 수정
      */
     List<GeneratedContent> findByScheduledDateIsNullOrderByCreatedAtDesc();
+    
+ // Fix: createdAt 필드를 기준으로 최신순(DESC) 정렬 및 미배정(Pending) 상태 필터링
+    List<GeneratedContent> findAllByStatusOrderByCreatedAtDesc(ContentStatus status);
 
     /**
      * 2. 캘린더 배정된 컨텐츠 조회

@@ -28,54 +28,45 @@ public class ContentService {
 	
     @Transactional
     public List<SnsResult> generateAllSnsContent(ContentRequest request) {
-    	
-    	// 커스텀 속성 하드코딩 (추후 request DTO에서 받아오도록 변경 가능)
-    	String industry = "카페 혹은 음식점"; // 업종
-    	//String userRequirement = "이번 주말 비가 온다고 하니, 비 오는 날 어울리는 감성적인 분위기를 강조해 주세요. 그리고 주말 방문 고객에게는 아메리카노 1잔 무료 쿠폰을 증정한다는 내용을 꼭 포함해 주세요."; // 사용자 추가 요구사항
-
-    	String prompt = String.format(
-
-    	    "Role: %s Marketer. Task: Promo post. Lang: Korean.\n" +
-    	    "Menu/Item: %s\nPlatforms: %s\nExtra: %s\nKeywords: %s\nTone: %s\nEmoji: %s\nMaxLen: %d chars.\n" +
-    	    //"User Requirement: %s\n" +
-    	    "Rule: STRICT JSON Array ONLY. NO markdown. " +
-    	    "Create one JSON object for EACH platform listed in 'Platforms'. " +
-    	    "Format: [{ \"platform\": \"<PLATFORM_NAME>\", \"content\": \"...\", \"hashtags\": [\"#tag1\", \"#tag2\"] }]",
-    	    
-    	    // 포맷팅 변수 매핑
-    	    industry,               // (Role에 삽입되어 업종별 마케터 역할을 부여
-    	    request.getMenuName(),
-    	    request.getPlatforms(),
-    	    request.getExtraInfo(),
-    	    request.getKeywords(),
-    	    request.getTones(),
-    	    request.getEmojiLevel(),
-    	    request.getMaxLength()
-    	    //,userRequirement         //(사용자 커스텀 요구사항 삽입)
-    	);
-    	
-        // 2. 공통 모듈에게 질문 던지고 답변 받기 (통신 로직을 직접 안 짜도 됨!)
-        String rawJsonContent = geminiClient.requestToGemini(prompt);
         
-        List<SnsResult> results = parseAndEnrichResults(rawJsonContent);
+        String industry = "카페 혹은 음식점"; 
 
-        // 3. 💡 DB 저장 로직 추가
+        String prompt = String.format(
+            "Role: %s Marketer. Task: Promo post. Lang: Korean.\n" +
+            "Menu/Item: %s\nPlatforms: %s\nExtra: %s\nKeywords: %s\nTone: %s\nEmoji: %s\nMaxLen: %d chars.\n" +
+            "Rule: STRICT JSON Array ONLY. NO markdown. " +
+            "Create one JSON object for EACH platform listed in 'Platforms'. " +
+            "Format: [{ \"platform\": \"<PLATFORM_NAME>\", \"content\": \"...\", \"hashtags\": [\"#tag1\", \"#tag2\"] }]",
+            industry,               
+            request.getMenuName(),
+            request.getPlatforms(),
+            request.getExtraInfo(),
+            request.getKeywords(),
+            request.getTones(),
+            request.getEmojiLevel(),
+            request.getMaxLength()
+        );
+        
+        String rawJsonContent = geminiClient.requestToGemini(prompt);
+        //List<SnsResult> results = parseAndEnrichResults(rawJsonContent);
+        List<SnsResult> results = parseAndEnrichResults(rawJsonContent, request.getImageUrl());
+        
         for (SnsResult res : results) {
             GeneratedContent entity = GeneratedContent.builder()
                 .menuName(request.getMenuName())
                 .platform(res.getPlatform())
                 .content(res.getContent())
                 .hashtags(res.getHashtags() != null ? String.join(",", res.getHashtags()) : "")
-                .imageUrl("") // 생성 시점엔 이미지가 없을 수 있으므로 빈값
+                /* Rationale: LLM 응답이 아닌 클라이언트 요청 객체에서 이미지 URL 추출 */
+                .imageUrl(request.getImageUrl()) 
                 .build();
             contentRepository.save(entity);
         } 
         
-        // 3. 답변 파싱해서 돌려주기
         return results;
     }
     
-    private List<SnsResult> parseAndEnrichResults(String rawJsonContent) {
+    private List<SnsResult> parseAndEnrichResults(String rawJsonContent, String requestImageUrl) {
         List<SnsResult> results = new ArrayList<>();
         
         try {
@@ -87,6 +78,7 @@ public class ContentService {
 
             // 화면을 그리는 데 필요한 UI 데이터 덧붙이기
             for (SnsResult item : parsedList) {
+            	item.setImageUrl(requestImageUrl);
                 switch (item.getPlatform()) {
                     case "instagram":
                         item.setPlatformAbbr("ig");

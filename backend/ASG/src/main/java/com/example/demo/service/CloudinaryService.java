@@ -41,6 +41,5 @@ public class CloudinaryService {
         } catch (IOException e) {
             throw new RuntimeException("Cloudinary 이미지 업로드 실패: " + e.getMessage());
         }
-    }
-    
+    }   
 }

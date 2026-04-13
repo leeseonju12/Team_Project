@@ -25,17 +25,18 @@ const PASTEL_PALETTE = {
 /* --------------------------------------------------------------------------
    2. State
    -------------------------------------------------------------------------- */
-const state = {
-  uploadedImages: [],
-  uploadedFiles: [],
-  communityTags: [],
-  currentFilter: 'none',
-  appliedFilter: 'none',
-  generatedContent: {},
-  scheduledEvents: [],
-  pendingPosts: [],
-  calendarInstance: null
-};
+   const state = {
+     uploadedImages: [],
+     uploadedFiles: [],
+     uploadedImageUrl: null,
+     communityTags: [],
+     currentFilter: 'none',
+     appliedFilter: 'none',
+     generatedContent: {},
+     scheduledEvents: [],
+     pendingPosts: [],
+     calendarInstance: null
+   };
 
 /* --------------------------------------------------------------------------
    3. API Service
@@ -195,7 +196,8 @@ function buildGenerateRequestParams() {
       platforms: activeSNS.join(','),
       tones: getActiveTones().join(','),
       emojiLevel: getActiveEmojiLevel(),
-      maxLength: document.getElementById('lengthRange') ? parseInt(document.getElementById('lengthRange').value, 10) : 300
+      maxLength: document.getElementById('lengthRange') ? parseInt(document.getElementById('lengthRange').value, 10) : 300,
+      imageUrl: state.uploadedImageUrl /* 이미지 URL 필드 추가 */
     }
   };
 }
@@ -210,7 +212,7 @@ function validateGenerateRequest({ menu, keywords, activeSNS }) {
     return false;
   }
   if (!activeSNS.length) {
-    uiManager.showToast('게시할 SNS를 1개 이상 선택해 주세요.');
+    uiManager.showToast('updatePlatformVisibility시할 SNS를 1개 이상 선택해 주세요.');
     return false;
   }
   return true;
@@ -242,33 +244,63 @@ function updatePlatformVisibility() {
 
   platforms.forEach(sns => {
     const pane = document.getElementById(`pane-${sns}`);
-    const tab = document.querySelector(`.tab-btn[data-target="pane-${sns}"]`);
+    // Fix: data-target 속성이 아닌 data-tab 속성을 참조하도록 수정
+    const tab = document.querySelector(`.tab-btn[data-tab="${sns}"]`);
     
     const hasContent = state.generatedContent && state.generatedContent[sns];
 
     if (hasContent) {
-      if (pane) pane.style.display = 'block';
-      if (tab) tab.style.display = 'flex';
+      if (tab) {
+        tab.style.display = 'flex';
+        tab.classList.remove('active'); // 초기화
+      }
+      if (pane) {
+        pane.style.display = ''; // 인라인 블록 강제 속성 제거
+        pane.classList.remove('active'); // 초기화
+      }
       if (!firstVisible) firstVisible = sns;
     } else {
-      if (pane) pane.style.display = 'none';
       if (tab) tab.style.display = 'none';
+      if (pane) {
+        pane.style.display = 'none';
+        pane.classList.remove('active');
+      }
     }
   });
 
-  if (!firstVisible) {
+  // Fix: 컨텐츠가 하단에 쌓이지 않고 첫 번째 활성 탭만 보이도록 클래스 부여
+  if (firstVisible) {
+    const activeTab = document.querySelector(`.tab-btn[data-tab="${firstVisible}"]`);
+    const activePane = document.getElementById(`pane-${firstVisible}`);
+    if (activeTab) activeTab.classList.add('active');
+    if (activePane) activePane.classList.add('active');
+  } else {
+    // 생성된 컨텐츠가 없을 경우 기본 탭 유지
+    const igTab = document.querySelector('.tab-btn[data-tab="instagram"]');
     const igPane = document.getElementById('pane-instagram');
-    if (igPane) igPane.style.display = 'block';
+    if (igTab) igTab.classList.add('active');
+    if (igPane) igPane.classList.add('active');
   }
 }
 
-function animateGeneratedText(sns, text, menu) {
+/* app4.js - 5. Helpers 내 animateGeneratedText 수정 */
+function animateGeneratedText(sns, text, imageUrl) {
   const textEl = document.getElementById(`text-${sns}`);
   if (!textEl) return;
 
+  /* 이미지 컨테이너 추가 로직 */
+  textEl.innerHTML = '';
+  if (imageUrl) {
+    const imgHtml = `<img src="${imageUrl}" style="width:100%; border-radius:12px; margin-bottom:15px; display:block;">`;
+    textEl.innerHTML = imgHtml;
+  }
+
+  const contentWrap = document.createElement('div');
+  textEl.appendChild(contentWrap);
+
   const cursor = document.createElement('span');
   cursor.className = 'stream-cursor';
-  const streamRenderer = uiManager.createStreamRenderer(textEl, cursor);
+  const streamRenderer = uiManager.createStreamRenderer(contentWrap, cursor);
 
   let index = 0;
   const interval = setInterval(() => {
@@ -278,7 +310,7 @@ function animateGeneratedText(sns, text, menu) {
     if (index >= text.length) {
       clearInterval(interval);
       uiManager.updatePreview(sns);
-      addToPending(sns, menu, text);
+      addToPending(sns, document.getElementById('menuName')?.value, text);
       updatePlatformVisibility();
     }
   }, 15);
@@ -287,31 +319,44 @@ function animateGeneratedText(sns, text, menu) {
 /* --------------------------------------------------------------------------
    6. Core Actions
    -------------------------------------------------------------------------- */
-window.generateContent = async function () {
-  const requestMeta = buildGenerateRequestParams();
+   window.generateContent = async function () {
+     const requestMeta = buildGenerateRequestParams();
+     if (!validateGenerateRequest(requestMeta)) return;
 
-  if (!validateGenerateRequest(requestMeta)) return;
+     uiManager.toggleLoading(true);
+     state.generatedContent = {};
 
-  uiManager.toggleLoading(true);
-  state.generatedContent = {};
+     try {
+       const responseData = await apiService.requestGeneratedContents(requestMeta.payload);
 
-  try {
-    const responseData = await apiService.requestGeneratedContents(requestMeta.payload);
+       /* responseData 타입에 따른 분기 처리 (forEach 에러 방지) */
+       if (Array.isArray(responseData)) {
+         /* 백엔드가 List<SnsResult>를 반환하는 경우 */
+         responseData.forEach((res) => {
+           const sns = normalizePlatformKey(res.platform);
+           state.generatedContent[sns] = { 
+             text: res.content,
+             imageUrl: res.imageUrl || state.uploadedImageUrl 
+           };
+           animateGeneratedText(sns, res.content, state.generatedContent[sns].imageUrl);
+         });
+       } else {
+         /* 백엔드가 Map<String, String> 등을 반환하는 경우 */
+         requestMeta.activeSNS.forEach((sns) => {
+           const text = responseData[sns] || '해당 플랫폼의 생성 결과가 없습니다.';
+           state.generatedContent[sns] = { text, imageUrl: state.uploadedImageUrl };
+           animateGeneratedText(sns, text, state.uploadedImageUrl);
+         });
+       }
 
-    requestMeta.activeSNS.forEach((sns) => {
-      const generatedText = responseData[sns] || '해당 플랫폼의 생성 결과가 없습니다.';
-      state.generatedContent[sns] = { text: generatedText };
-      animateGeneratedText(sns, generatedText, requestMeta.menu);
-    });
-
-    uiManager.showToast('AI 콘텐츠 생성이 완료되었습니다.');
-  } catch (err) {
-    console.error('[App] 콘텐츠 생성 오류:', err);
-    uiManager.showToast('콘텐츠 생성 중 오류가 발생했습니다.');
-  } finally {
-    uiManager.toggleLoading(false);
-  }
-};
+       uiManager.showToast('AI 콘텐츠 생성이 완료되었습니다.');
+     } catch (err) {
+       console.error('[App] 콘텐츠 생성 오류:', err);
+       uiManager.showToast('콘텐츠 생성 중 오류가 발생했습니다.');
+     } finally {
+       uiManager.toggleLoading(false);
+     }
+   };
 
 window.publishPost = async function (sns) {
   const content = state.generatedContent[sns];
@@ -450,30 +495,38 @@ window.loadCenterHistory = async function() {
   
   try {
     const response = await fetch('/api/posts/pending');
-    const data = await response.json();
+    if (!response.ok) throw new Error("Network response was not ok");
+    let data = await response.json();
     
     if (data.length === 0) return uiManager.showToast("저장된 기록이 없습니다.");
+
+    // Fix: 최신 데이터 우선 처리를 위해 id 역순 정렬 (백엔드 처리가 안 되어 있을 경우를 대비한 방어 로직)
+    data = data.sort((a, b) => b.id - a.id);
 
     state.generatedContent = {}; 
 
     data.forEach(item => {
-      state.generatedContent[item.platform] = {
-        text: item.content,
-        hashtags: item.hashtags ? item.hashtags.split(',') : []
-      };
-      
-      const textEl = document.getElementById(`text-${item.platform}`);
-      const resultDiv = document.getElementById(`result-${item.platform}`);
-      const emptyDiv = document.getElementById(`empty-${item.platform}`);
-      
-      if (textEl) textEl.textContent = item.content;
-      if (resultDiv) resultDiv.style.display = 'block';
-      if (emptyDiv) emptyDiv.style.display = 'none';
+      // 이미 해당 플랫폼의 최신 데이터가 적재되었다면 과거 데이터로 덮어쓰지 않음
+      if (!state.generatedContent[item.platform]) {
+        state.generatedContent[item.platform] = {
+          text: item.content,
+          hashtags: item.hashtags ? item.hashtags.split(',') : []
+        };
+        
+        const textEl = document.getElementById(`text-${item.platform}`);
+        const resultDiv = document.getElementById(`result-${item.platform}`);
+        const emptyDiv = document.getElementById(`empty-${item.platform}`);
+        
+        if (textEl) textEl.innerHTML = item.content.replace(/\n/g, '<br>');
+        if (resultDiv) resultDiv.style.display = 'block';
+        if (emptyDiv) emptyDiv.style.display = 'none';
+      }
     });
 
     updatePlatformVisibility();
     uiManager.showToast("과거 기록이 로드되었습니다.");
   } catch (err) {
+    console.error(err);
     uiManager.showToast("기록 로드 실패");
   }
 };
@@ -481,25 +534,56 @@ window.loadCenterHistory = async function() {
 /* --------------------------------------------------------------------------
    8. Upload / Retouch
    -------------------------------------------------------------------------- */
-function handleFiles(files) {
-  if (!files) return;
+   async function handleFiles(files) {
+     if (!files || files.length === 0) return;
+     const file = files[0];
 
-  Array.from(files)
-    .slice(0, 5 - state.uploadedImages.length)
-    .forEach((file) => {
-      if (!file.type.startsWith('image/')) return;
+     /* 용량 제한 체크 (10MB) */
+     if (file.size > 10 * 1024 * 1024) {
+       uiManager.showToast('파일 크기가 너무 큽니다. 5MB 이하의 이미지를 선택해주세요.');
+       return;
+     }
 
-      state.uploadedFiles.push(file);
+     try {
+       uiManager.toggleLoading(true);
+       
+       /* 백엔드 CloudinaryService 호출 */
+       const imageUrl = await uploadToCloudinary(file);
+       state.uploadedImageUrl = imageUrl;
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        state.uploadedImages.push(e.target.result);
-        renderImagePreviews();
-        updateRetouchState();
-      };
-      reader.readAsDataURL(file);
-    });
-}
+       /* 기존 미리보기 로직 유지 */
+       const reader = new FileReader();
+       reader.onload = (e) => {
+         state.uploadedImages = [e.target.result]; /* 단일 이미지 관리로 변경 시 */
+         state.uploadedFiles = [file];
+         renderImagePreviews();
+         updateRetouchState();
+       };
+       reader.readAsDataURL(file);
+       
+       uiManager.showToast('이미지가 성공적으로 업로드되었습니다.');
+     } catch (error) {
+       console.error('업로드 실패:', error);
+       uiManager.showToast('이미지 업로드 중 오류가 발생했습니다.');
+     } finally {
+       uiManager.toggleLoading(false);
+     }
+   }
+
+   /* API 호출 함수: FormData를 사용하여 백엔드 컨트롤러로 전송 */
+   async function uploadToCloudinary(file) {
+     const formData = new FormData();
+     formData.append('file', file);
+
+     const response = await fetch('/api/images/upload', {
+       method: 'POST',
+       body: formData
+     });
+
+     if (!response.ok) throw new Error('서버 업로드 실패');
+     const data = await response.json();
+     return data.imageUrl;
+   }
 
 function renderImagePreviews() {
   const previewContainer = document.getElementById('imgPreviews');
@@ -702,3 +786,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   bindAllUIEvents();
   await initializeDashboard();
 });
+
+
+async function uploadToCloudinary(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const response = await fetch('/api/posts/upload', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error('서버 이미지 업로드 API 호출 실패');
+    }
+
+    const data = await response.json();
+    return data.imageUrl;
+  } catch (error) {
+    console.error('업로드 중 오류 발생:', error);
+    throw error;
+  }
+}

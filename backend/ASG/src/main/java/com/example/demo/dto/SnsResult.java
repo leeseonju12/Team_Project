@@ -20,4 +20,5 @@ public class SnsResult {
     private String guideText;     // 가이드 문구
     private String bestTime;      // 최적 게시 시간
     private String color;         // 포인트 컬러 코드 (#E1306C 등)
+    private String imageUrl;
 }

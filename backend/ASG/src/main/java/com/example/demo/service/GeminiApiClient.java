@@ -29,6 +29,7 @@ public class GeminiApiClient {
     public String requestToGemini(String prompt) {
         String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + geminiApiKey;
 
+    	
         // 1. 헤더 설정
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
