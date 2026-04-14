@@ -57,12 +57,17 @@ public class MypageService {
 	// ── 가게 정보 조회 ──────────────────────────────────────
 	@Transactional(readOnly = true)
 	public BrandInfoResponse getBrandInfo() {
-		Brand brand = brandRepository.findById(BRAND_ID)
-				.orElseThrow(() -> new IllegalArgumentException("브랜드를 찾을 수 없습니다."));
+	    Brand brand = brandRepository.findById(BRAND_ID)
+	            .orElseThrow(() -> new IllegalArgumentException("브랜드를 찾을 수 없습니다."));
 
-		BrandOperationProfile profile = operationProfileRepository.findByBrand_BrandId(BRAND_ID).orElse(null);
+	    BrandOperationProfile profile = operationProfileRepository.findByBrand_BrandId(BRAND_ID).orElse(null);
 
-		return new BrandInfoResponse(brand, profile);
+	    // [04554] 서울 중구 수표로 28 → 서울 중구 수표로 28
+	    if (brand.getAddress() != null) {
+	        brand.setAddress(brand.getAddress().replaceAll("^\\[\\d+\\]\\s*", ""));
+	    }
+
+	    return new BrandInfoResponse(brand, profile);
 	}
 
 	// ── 가게 정보 수정 ──────────────────────────────────────
