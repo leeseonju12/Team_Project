@@ -122,17 +122,47 @@ window.CalendarManager = (function () {
             editable: true,
             droppable: true,
             events: '/api/posts/events',
-            eventDrop: onCalendarEventDrop,
-            eventClick: (info) => {
-                info.jsEvent.preventDefault();
-                openPreviewModal(info.event);
-            }
-        });
+			
+			// [추가] 이벤트가 렌더링될 때 HTML 구조를 직접 정의 (파란 점 생성)
+			        eventContent: function(arg) {
+			            // resolveEventSns는 기존 코드의 6번 섹션에 있는 함수를 활용
+			            const sns = resolveEventSns(arg.event);
+			            const palette = deps.PASTEL_PALETTE[sns] || { borderColor: '#6366f1' };
+			            
+			            // 점(pi-dot)에 borderColor를 주입하여 색상 동기화
+			            return {
+			                html: `
+			                    <div class="fc-event-main-frame">
+			                        <span class="pi-dot" style="background-color: ${palette.borderColor}"></span>
+			                        <span class="fc-event-title">${arg.event.title}</span>
+			                    </div>
+			                `
+			            };
+			        },
 
-        deps.state.calendarInstance.render();
-        setupCalendarDropZones();
-    }
+			        // [추가] 요소가 생성된 후 배경색과 왼쪽 선 색상을 강제 주입
+			        eventDidMount: function(arg) {
+			            const sns = resolveEventSns(arg.event);
+			            const palette = deps.PASTEL_PALETTE[sns];
+			            
+			            if (palette) {
+			                arg.el.style.backgroundColor = palette.backgroundColor;
+			                arg.el.style.borderLeftColor = palette.borderColor; // 세로선 색상
+			                arg.el.style.color = palette.textColor;             // 글자색
+			            }
+			        },
 
+			        eventDrop: onCalendarEventDrop,
+			        eventClick: (info) => {
+			            info.jsEvent.preventDefault();
+			            openPreviewModal(info.event);
+			        }
+			    });
+
+			    deps.state.calendarInstance.render();
+			    setupCalendarDropZones();
+			}
+			
     function onCalendarEventDrop(info) {
         try {
             const newStart = info.event.start;
