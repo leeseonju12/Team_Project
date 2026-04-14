@@ -1,0 +1,7 @@
+com\sosial\damoa\controller\InquiryController.class
+com\sosial\damoa\entity\Reply.class
+com\sosial\damoa\config\SecurityConfig.class
+com\sosial\damoa\entity\Inquiry.class
+com\sosial\damoa\repository\InquiryRepository.class
+com\sosial\damoa\DamoaApplication.class
+com\sosial\damoa\service\InquiryService.class
