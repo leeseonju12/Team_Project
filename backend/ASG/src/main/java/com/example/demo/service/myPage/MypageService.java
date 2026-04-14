@@ -124,8 +124,36 @@ public class MypageService {
 	public List<SnsAccountResponse> getSnsAccounts(Long userId) {
 	    Brand brand = brandRepository.findByUser_Id(userId)
 	            .orElseThrow(() -> new IllegalArgumentException("브랜드를 찾을 수 없습니다."));
-	    List<BrandPlatform> list = brandPlatformRepository.findByBrand_BrandId(brand.getBrandId());
-	    return list.stream().map(SnsAccountResponse::new).collect(Collectors.toList());
+
+	    // DB에 연동된 플랫폼 목록
+	    List<BrandPlatform> connected = brandPlatformRepository
+	            .findByBrand_BrandId(brand.getBrandId());
+
+	    // platformCode 기준으로 Map 변환
+	    Map<String, BrandPlatform> connectedMap = connected.stream()
+	            .collect(Collectors.toMap(
+	                bp -> bp.getPlatform().getPlatformCode(),
+	                bp -> bp
+	            ));
+
+	    // 4개 플랫폼 고정 목록
+	    List<String[]> fixedPlatforms = List.of(
+	        new String[]{"instagram", "Instagram"},
+	        new String[]{"facebook",  "Facebook"},
+	        new String[]{"naver",     "네이버 블로그"},
+	        new String[]{"kakao",     "카카오채널"}
+	    );
+
+	    return fixedPlatforms.stream()
+	            .map(p -> {
+	                String code = p[0];
+	                String name = p[1];
+	                BrandPlatform bp = connectedMap.get(code);
+	                return bp != null
+	                        ? new SnsAccountResponse(bp)           // 연동 정보 있음
+	                        : SnsAccountResponse.notConnected(code, name); // 미연동
+	            })
+	            .collect(Collectors.toList());
 	}
 
 	// ── SNS 연동 해제 ───────────────────────────────────────
