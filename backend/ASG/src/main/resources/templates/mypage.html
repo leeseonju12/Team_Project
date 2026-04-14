@@ -404,7 +404,11 @@ em {
       </div>
       <div class="profile-name" th:text="${userInfo.name}"></div>
       <div class="profile-email" th:text="${userInfo.email}"></div>
-      <div class="profile-badge">카카오 가입자</div>
+      <div class="profile-badge"
+     th:text="${userInfo.provider == 'kakao' ? '카카오 가입자' :
+               userInfo.provider == 'naver' ? '네이버 가입자' :
+               userInfo.provider == 'google' ? '구글 가입자' : '소셜 가입자'}">
+</div>
     </div>
     <!-- 네비 — showSection() 호출 후 드로어 닫기 -->
     <nav class="sidebar-nav">
@@ -475,7 +479,11 @@ em {
         </div>
         <div class="profile-name" th:text="${userInfo.name}"></div>
         <div class="profile-email" th:text="${userInfo.email}"></div>
-        <div class="profile-badge">카카오 가입자</div>
+        <div class="profile-badge"
+     th:text="${userInfo.provider == 'kakao' ? '카카오 가입자' :
+               userInfo.provider == 'naver' ? '네이버 가입자' :
+               userInfo.provider == 'google' ? '구글 가입자' : '소셜 가입자'}">
+</div>
       </div>
       <!-- ── mypage Sidebar ── -->
       <nav class="sidebar-nav">

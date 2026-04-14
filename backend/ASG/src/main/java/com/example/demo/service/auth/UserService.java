@@ -71,7 +71,7 @@ public class UserService {
 		brand.setBrandName(dto.getCompanyName());
 		brand.setIndustryType(dto.getBusinessCategory());
 		brand.setAddress(dto.getRoadAddrPart1());
-		brand.setLocationName(dto.getAddrDetail());
+		brand.setLocationName("");                     // ← 빈값으로 변경
 		brandRepository.save(brand);
 
 		log.info("회원가입 온보딩 완료 - userId={}, nickname={}", userId, user.getNickname());
