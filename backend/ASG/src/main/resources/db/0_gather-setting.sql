@@ -1,4 +1,7 @@
-/* 정렬 및 실행 순서
+/* 
+260414 마지막 수정
+
+정렬 및 실행 순서
 create > index > alter > insert
 
 [실행 순서 보장 근거]
@@ -10,6 +13,13 @@ create > index > alter > insert
   date_dimension : content_post(published_date_key) / *_metric_daily 의 date_key FK 선행 필요
   content_post   : post_metric_daily 의 post_id FK 선행 필요
   users          : brand UPDATE(user_id) 는 users INSERT 이후 → 마지막 블록
+
+[customerCenter 관련 테이블]
+  inquiry        : type / body / attachment_names / attachment_saved_names 컬럼 포함, status 기본값 '미처리'
+  notice         : 공지사항 (독립 테이블, FK 없음)
+  faq            : 자주묻는질문 (독립 테이블, FK 없음)
+  reply          : inquiry_id 논리적 참조 (물리 FK 없음 — cascade 충돌 방지)
+  admin_user     : 고객센터 관리자 계정 (독립 테이블, FK 없음)
 */
 
 DROP DATABASE IF EXISTS gather;
@@ -399,14 +409,59 @@ CREATE TABLE `strategy_recommendation_item` (
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `inquiry` (
-  `id`         BIGINT       NOT NULL AUTO_INCREMENT,
-  `title`      VARCHAR(255) NOT NULL,
-  `content`    TEXT         NOT NULL,
-  `email`      VARCHAR(255) NOT NULL,
-  `status`     VARCHAR(50)  NOT NULL DEFAULT 'WAIT',
-  `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `id`                    BIGINT       NOT NULL AUTO_INCREMENT,
+  `type`                  VARCHAR(50)  NULL     COMMENT '문의 유형 (가입·연동/콘텐츠 생성/시스템오류/계정/기타)',
+  `email`                 VARCHAR(255) NOT NULL,
+  `title`                 VARCHAR(255) NOT NULL,
+  `body`                  TEXT         NULL     COMMENT '문의 본문 (content 컬럼과 동일 역할, customerCenter 호환용)',
+  `content`               TEXT         NULL     COMMENT '문의 본문 (myPage 기존 호환용)',
+  `status`                VARCHAR(50)  NOT NULL DEFAULT '미처리' COMMENT '미처리 / 처리중 / 처리완료',
+  `attachment_names`      TEXT         NULL     COMMENT '첨부파일 원본 파일명 (콤마 구분)',
+  `attachment_saved_names` TEXT        NULL     COMMENT '첨부파일 서버 저장명 (콤마 구분)',
+  `created_at`            DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
+
+-- notice (공지사항)
+CREATE TABLE `notice` (
+  `id`         BIGINT       NOT NULL AUTO_INCREMENT,
+  `title`      VARCHAR(200) NOT NULL,
+  `content`    LONGTEXT     NOT NULL,
+  `category`   VARCHAR(30)  NOT NULL DEFAULT '공지' COMMENT '공지 / 업데이트 / 점검',
+  `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COMMENT='공지사항';
+
+-- faq (자주 묻는 질문)
+CREATE TABLE `faq` (
+  `id`         BIGINT       NOT NULL AUTO_INCREMENT,
+  `category`   VARCHAR(100) NOT NULL COMMENT '가입·연동 / 콘텐츠 생성 / 시스템오류 / 계정',
+  `question`   VARCHAR(255) NOT NULL,
+  `answer`     LONGTEXT     NOT NULL,
+  `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COMMENT='자주 묻는 질문';
+
+-- reply (문의 답변 — inquiry_id 논리적 참조, 물리 FK 없음)
+CREATE TABLE `reply` (
+  `id`         BIGINT   NOT NULL AUTO_INCREMENT,
+  `inquiry_id` BIGINT   NOT NULL COMMENT 'inquiry.id 논리적 참조',
+  `content`    TEXT     NOT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_reply_inquiry_id` (`inquiry_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COMMENT='문의 답변';
+
+-- admin_user (고객센터 관리자 계정)
+CREATE TABLE `admin_user` (
+  `id`       BIGINT       NOT NULL AUTO_INCREMENT,
+  `login_id` VARCHAR(100) NOT NULL UNIQUE COMMENT '관리자 로그인 ID',
+  `password` VARCHAR(255) NOT NULL,
+  `name`     VARCHAR(50)  NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COMMENT='고객센터 관리자 계정';
 
 
 -- ══════════════════════════════════════════════
@@ -665,11 +720,11 @@ INSERT INTO brand_operation_profile (
   NOW(), NOW()
 );
 
-INSERT INTO inquiry (title, content, email, STATUS, created_at) VALUES
-('인스타그램 연동 후 게시물이 업로드되지 않습니다', '인스타그램 계정 연동은 완료됐는데 게시물 업로드 버튼을 눌러도 아무 반응이 없습니다.', 'test@social.com', 'WAIT', NOW()),
-('AI 콘텐츠 생성 시 오류 메시지가 표시됩니다', 'AI 콘텐츠 생성 버튼 클릭 시 "생성에 실패했습니다" 메시지가 반복적으로 나타납니다.', 'test@social.com', 'WAIT', NOW() - INTERVAL 2 DAY),
-('네이버 블로그 연동 후 계정이 바로 해제됩니다', '네이버 블로그를 연동하면 잠시 후 자동으로 연동이 해제되는 현상이 반복됩니다.', 'test@social.com', 'DONE', NOW() - INTERVAL 5 DAY),
-('예약 게시 시간이 설정한 시간과 다르게 발행됩니다', '오후 6시로 예약했는데 오전 6시에 발행됐습니다. 동일한 현상이 3번 반복됐습니다.', 'test@social.com', 'WAIT', NOW() - INTERVAL 7 DAY);
+INSERT INTO inquiry (type, email, title, body, content, status, created_at) VALUES
+('시스템오류', 'test@social.com', '인스타그램 연동 후 게시물이 업로드되지 않습니다',  '인스타그램 계정 연동은 완료됐는데 게시물 업로드 버튼을 눌러도 아무 반응이 없습니다.',        '인스타그램 계정 연동은 완료됐는데 게시물 업로드 버튼을 눌러도 아무 반응이 없습니다.',        '미처리',   NOW()),
+('시스템오류', 'test@social.com', 'AI 콘텐츠 생성 시 오류 메시지가 표시됩니다',        'AI 콘텐츠 생성 버튼 클릭 시 "생성에 실패했습니다" 메시지가 반복적으로 나타납니다.',          'AI 콘텐츠 생성 버튼 클릭 시 "생성에 실패했습니다" 메시지가 반복적으로 나타납니다.',          '미처리',   NOW() - INTERVAL 2 DAY),
+('가입·연동', 'test@social.com', '네이버 블로그 연동 후 계정이 바로 해제됩니다',        '네이버 블로그를 연동하면 잠시 후 자동으로 연동이 해제되는 현상이 반복됩니다.',               '네이버 블로그를 연동하면 잠시 후 자동으로 연동이 해제되는 현상이 반복됩니다.',               '처리완료', NOW() - INTERVAL 5 DAY),
+('시스템오류', 'test@social.com', '예약 게시 시간이 설정한 시간과 다르게 발행됩니다',   '오후 6시로 예약했는데 오전 6시에 발행됐습니다. 동일한 현상이 3번 반복됐습니다.',            '오후 6시로 예약했는데 오전 6시에 발행됐습니다. 동일한 현상이 3번 반복됐습니다.',            '미처리',   NOW() - INTERVAL 7 DAY);
 
 -- [2] 네이버 유저 - 을밀대 (음식점/식당)
 INSERT INTO `users` (
@@ -837,15 +892,46 @@ INSERT INTO content_settings (
 );
 
 -- inquiry (2번 유저 - 을밀대)
-INSERT INTO inquiry (title, content, email, STATUS, created_at) VALUES
-('네이버 예약 연동 후 알림이 오지 않습니다', '네이버 예약 연동 완료 후 신규 예약이 들어와도 알림이 전혀 오지 않습니다.', 'eulmildae@naver.com', 'WAIT', NOW()),
-('메뉴 사진 업로드 시 오류가 발생합니다', '메뉴 사진 등록 시 "업로드 실패" 메시지가 표시됩니다.', 'eulmildae@naver.com', 'DONE', NOW() - INTERVAL 3 DAY);
+INSERT INTO inquiry (type, email, title, body, content, status, created_at) VALUES
+('가입·연동', 'eulmildae@naver.com', '네이버 예약 연동 후 알림이 오지 않습니다', '네이버 예약 연동 완료 후 신규 예약이 들어와도 알림이 전혀 오지 않습니다.', '네이버 예약 연동 완료 후 신규 예약이 들어와도 알림이 전혀 오지 않습니다.', '미처리',   NOW()),
+('시스템오류', 'eulmildae@naver.com', '메뉴 사진 업로드 시 오류가 발생합니다',    '메뉴 사진 등록 시 "업로드 실패" 메시지가 표시됩니다.',                     '메뉴 사진 등록 시 "업로드 실패" 메시지가 표시됩니다.',                     '처리완료', NOW() - INTERVAL 3 DAY);
 
 -- inquiry (3번 유저 - 와드)
-INSERT INTO inquiry (title, content, email, STATUS, created_at) VALUES
-('인스타그램 게시물 예약이 되지 않습니다', '예약 게시 설정 후 지정 시간에 발행되지 않는 문제가 반복됩니다.', 'wad@google.com', 'WAIT', NOW() - INTERVAL 1 DAY);
+INSERT INTO inquiry (type, email, title, body, content, status, created_at) VALUES
+('시스템오류', 'wad@google.com', '인스타그램 게시물 예약이 되지 않습니다', '예약 게시 설정 후 지정 시간에 발행되지 않는 문제가 반복됩니다.', '예약 게시 설정 후 지정 시간에 발행되지 않는 문제가 반복됩니다.', '미처리', NOW() - INTERVAL 1 DAY);
 
 -- inquiry (4번 유저 - 선데이클로즈)
-INSERT INTO inquiry (title, content, email, STATUS, created_at) VALUES
-('콘텐츠 자동 생성 시 이미지가 누락됩니다', 'AI 콘텐츠 생성 후 이미지가 첨부되지 않은 상태로 생성됩니다.', 'sundayclothes@kakao.com', 'DONE', NOW() - INTERVAL 4 DAY),
-('해시태그 추천 기능이 동작하지 않습니다', '해시태그 자동 추천 버튼 클릭 시 아무 반응이 없습니다.', 'sundayclothes@kakao.com', 'WAIT', NOW() - INTERVAL 2 DAY);
+INSERT INTO inquiry (type, email, title, body, content, status, created_at) VALUES
+('콘텐츠 생성', 'sundayclothes@kakao.com', '콘텐츠 자동 생성 시 이미지가 누락됩니다', 'AI 콘텐츠 생성 후 이미지가 첨부되지 않은 상태로 생성됩니다.',    'AI 콘텐츠 생성 후 이미지가 첨부되지 않은 상태로 생성됩니다.',    '처리완료', NOW() - INTERVAL 4 DAY),
+('시스템오류', 'sundayclothes@kakao.com', '해시태그 추천 기능이 동작하지 않습니다',   '해시태그 자동 추천 버튼 클릭 시 아무 반응이 없습니다.',           '해시태그 자동 추천 버튼 클릭 시 아무 반응이 없습니다.',           '미처리',   NOW() - INTERVAL 2 DAY);
+
+-- ══════════════════════════════════════════════
+-- customerCenter 시드 데이터
+-- 순서: admin_user → faq → notice → reply
+-- ══════════════════════════════════════════════
+
+-- admin_user (관리자 계정, 비밀번호: admin1234)
+INSERT INTO admin_user (login_id, password, name) VALUES
+('admin', 'admin1234', '관리자');
+
+-- faq
+INSERT INTO faq (category, question, answer) VALUES
+('가입·연동', '소셜 계정 연동은 어떻게 하나요?',                      '마이페이지 > SNS 연동 메뉴에서 연동할 소셜 계정을 선택하고 로그인 절차를 진행하시면 됩니다.'),
+('가입·연동', '연동한 계정을 해제하려면 어떻게 하나요?',               '마이페이지 > SNS 연동 메뉴에서 연동된 계정 옆의 해제 버튼을 클릭하시면 됩니다.'),
+('콘텐츠 생성', 'AI 콘텐츠 자동 생성은 어떻게 사용하나요?',           '콘텐츠 생성 메뉴에서 업종·톤·길이 등을 설정한 후 생성 버튼을 클릭하시면 AI가 자동으로 콘텐츠를 작성해 드립니다.'),
+('콘텐츠 생성', '생성된 콘텐츠를 수정할 수 있나요?',                   '네, 생성 후 편집 화면에서 내용을 자유롭게 수정하실 수 있습니다.'),
+('시스템오류', '게시물 업로드 중 오류가 발생할 경우 어떻게 하나요?',   '잠시 후 재시도하시거나, 문제가 지속될 경우 고객센터 문의하기를 통해 오류 화면 캡처와 함께 접수해 주세요.'),
+('계정', '회원 탈퇴는 어떻게 하나요?',                                 '마이페이지 > 회원 탈퇴 메뉴에서 진행하실 수 있습니다. 탈퇴 후 데이터는 복구되지 않으니 신중히 결정해 주세요.'),
+('계정', '이메일 주소를 변경하고 싶어요.',                             '현재 소셜 로그인 기반으로 운영되어 이메일 직접 변경은 지원되지 않습니다. 소셜 계정의 이메일을 변경하시면 자동으로 반영됩니다.');
+
+-- notice
+INSERT INTO notice (category, title, content) VALUES
+('공지',    '[공지] 소셜다모아 서비스 오픈 안내',                     '안녕하세요, 소셜다모아입니다.\n소셜다모아 정식 서비스가 오픈되었습니다. 많은 이용 부탁드립니다.\n문의사항은 고객센터를 통해 접수해 주세요.'),
+('점검',    '[점검] 4월 정기 시스템 점검 안내 (04/20 02:00~04:00)', '정기 시스템 점검이 진행될 예정입니다.\n- 일시: 2025년 4월 20일(일) 02:00 ~ 04:00\n- 영향: 전 서비스 일시 중단\n점검 중에는 서비스 이용이 불가합니다.'),
+('업데이트', '[업데이트] AI 콘텐츠 생성 기능 개선',                   'AI 콘텐츠 생성 품질이 향상되었습니다.\n- 업종별 맞춤 톤 적용 개선\n- 해시태그 추천 정확도 향상\n- 이미지 첨부 안정성 개선\n더 나은 서비스로 찾아뵙겠습니다.');
+
+-- reply (위에서 INSERT된 inquiry id 기준 — 처리완료 건에만 답변 등록)
+INSERT INTO reply (inquiry_id, content) VALUES
+(3, '안녕하세요, 소셜다모아 고객센터입니다.\n네이버 블로그 연동 해제 문제는 토큰 만료 이슈로 확인되었습니다.\n현재 패치가 완료되었으니 재연동 후 이용 부탁드립니다. 감사합니다.'),
+(6, '안녕하세요, 소셜다모아 고객센터입니다.\n메뉴 사진 업로드 오류는 파일 크기 제한(10MB) 초과 시 발생할 수 있습니다.\n파일 크기를 줄여 재시도 부탁드립니다. 감사합니다.'),
+(9, '안녕하세요, 소셜다모아 고객센터입니다.\nAI 이미지 첨부 누락 건은 콘텐츠 생성 엔진 업데이트로 수정 완료되었습니다.\n불편을 드려 죄송합니다.');
