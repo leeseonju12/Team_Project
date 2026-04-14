@@ -77,6 +77,10 @@ public class ContentSettings {
     @Column(name = "target_length")
     @Builder.Default
     private Integer targetLength = 300;
+    
+    // SNS 기본 선택값
+    @Column(name = "preferred_sns", length = 100)
+    private String preferredSns;  // "instagram,naver" 형태로 저장
  
     // ── 정적 팩토리 ──────────────────────────────────────────
  
@@ -121,12 +125,14 @@ public class ContentSettings {
             String outroTemplate,
             String tone,
             String emojiLevel,
-            Integer targetLength
+            Integer targetLength,
+            String preferredSns
     ) {
-        this.introTemplate = introTemplate;
-        this.outroTemplate = outroTemplate;
+        if (introTemplate != null) this.introTemplate = introTemplate;
+        if (outroTemplate != null) this.outroTemplate = outroTemplate;
         if (tone != null) this.tone = tone;
         if (emojiLevel != null) this.emojiLevel = emojiLevel;
         if (targetLength != null) this.targetLength = targetLength;
+        if (preferredSns != null) this.preferredSns = preferredSns;
     }
 }

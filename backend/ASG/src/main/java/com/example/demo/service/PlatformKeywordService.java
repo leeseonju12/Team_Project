@@ -34,12 +34,12 @@ public class PlatformKeywordService {
 
         // 1. brandId로 브랜드명 + 위치명 + 서비스명 조회
         Map<String, Object> brand = jdbcTemplate.queryForMap(
-                "SELECT brand_name, location_name, service_name FROM brand WHERE brand_id = ?", brandId);
+                "SELECT brand_name, address, service_name FROM brand WHERE brand_id = ?", brandId);
         String brandName    = brand.get("brand_name").toString();
-        String locationName = brand.get("location_name") != null ? brand.get("location_name").toString() : "";
+        String locationName = brand.get("address") != null ? brand.get("address").toString() : "";
         String serviceName  = brand.get("service_name")  != null ? brand.get("service_name").toString()  : "";
 
-        // 공통 검색어: brand_name + location_name + service_name
+        // 공통 검색어: brand_name + address + service_name
         // 예: "잉글리쉬가든 강원 춘천시 englishgarden_21"
         String searchQuery = brandName
                 + (locationName.isBlank() ? "" : " " + locationName)

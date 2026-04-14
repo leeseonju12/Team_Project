@@ -4,6 +4,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="_csrf" th:content="${_csrf.token}"/>
+  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
   <title>소셜다모아 — 마이페이지</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet" />
   <style>
@@ -27,8 +29,15 @@
     body{background:var(--slate);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;}
 
     .top-stripe{height:4px;background:linear-gradient(90deg,var(--teal) 0%,var(--indigo) 60%,var(--teal-mid) 100%);}
-    header{background:var(--white);border-bottom:1px solid var(--border);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow-sm);flex-shrink:0;position:sticky;top:0;z-index:200;}
-    .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;}
+    header{background:var(--white);border-bottom:1px solid var(--border);box-shadow:var(--shadow-sm);flex-shrink:0;position:sticky;top:0;z-index:200;display:flex;flex-direction:column;}
+    .header-row1{display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:64px;flex-shrink:0;}
+    .header-row2{display:flex;border-top:1px solid var(--border);padding:4px 8px;background:var(--white);}
+
+	@media(min-width:901px){
+      .header-row2{display:none;}
+    }
+    
+    .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;flex-shrink:0;}
     .logo-mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--indigo));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;box-shadow:0 2px 8px rgba(20,184,166,.35);flex-shrink:0;}
     .logo-name{font-size:15px;font-weight:700;letter-spacing:-.3px;}
     .logo-sub{font-size:11px;color:var(--text3);margin-left:6px;}
@@ -36,9 +45,28 @@
     .nav-pill{padding:6px 14px;border-radius:100px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid transparent;color:var(--text2);background:transparent;transition:all .2s;font-family:'Noto Sans KR',sans-serif;text-decoration:none;display:flex;align-items:center;gap:5px;}
     .nav-pill:hover{background:var(--slate);color:var(--text);}
     .nav-pill.active{background:var(--indigo-light);border-color:#C7D2FE;color:var(--indigo-dark);font-weight:600;}
-    .header-user{display:flex;align-items:center;gap:10px;}
-    .user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--indigo));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;cursor:pointer;}
+    .header-user{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+    .user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--indigo));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;cursor:pointer;flex-shrink:0;}
     .user-name{font-size:13px;font-weight:600;color:var(--text2);}
+    /* 햄버거 */
+    .hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:38px;height:38px;border-radius:9px;background:transparent;border:1.5px solid var(--border);cursor:pointer;padding:0;flex-shrink:0;transition:background .15s;}
+    .hamburger:hover{background:var(--slate);}
+    .hamburger span{display:block;width:18px;height:2px;background:var(--text2);border-radius:2px;}
+    
+    /* 반응형 */
+    @media(max-width:900px){
+      .hamburger{display:flex;}
+      .sidebar{display:none;}
+      /* 탑바 2줄 전환 */
+      .header-row1{padding:0 16px;height:56px;}
+      .header-row2{display:flex;}
+      .nav-pills-top{display:none;}
+      .nav-pills-bottom{width:100%;gap:2px;}
+      .nav-pills-bottom .nav-pill{flex:1;justify-content:center;padding:6px 4px;font-size:11px;}
+      .logo-sub{display:none;}
+      .user-name{display:none;}
+      .page-wrap{padding:16px 12px 60px;}
+    }
 
     .page-wrap{flex:1;display:flex;max-width:1280px;margin:0 auto;width:100%;padding:28px 40px 80px;gap:24px;}
 
@@ -313,26 +341,128 @@ em {
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
-    
+
+    /* ══ 드로어 오버레이 ══ */
+    .drawer-overlay{
+      display:none;position:fixed;inset:0;
+      background:rgba(15,23,42,.35);
+      z-index:300;backdrop-filter:blur(2px);
+    }
+    .drawer-overlay.open{display:block;}
+
+    /* ══ 드로어 패널 ══ */
+    .drawer{
+      position:fixed;top:0;left:0;bottom:0;
+      width:272px;background:var(--white);
+      z-index:400;
+      transform:translateX(-100%);
+      transition:transform .28s cubic-bezier(.4,0,.2,1);
+      overflow-y:auto;padding:20px 0 40px;
+      box-shadow:4px 0 24px rgba(15,23,42,.12);
+    }
+    .drawer.open{transform:translateX(0);}
+
+    /* 드로어 헤더 (닫기 버튼 + 프로필) */
+    .drawer-close{
+      display:flex;align-items:center;justify-content:flex-end;
+      padding:0 16px 12px;
+    }
+    .drawer-close-btn{
+      width:32px;height:32px;border-radius:8px;border:1.5px solid var(--border);
+      background:transparent;cursor:pointer;font-size:16px;color:var(--text3);
+      display:flex;align-items:center;justify-content:center;
+      transition:background .15s;
+    }
+    .drawer-close-btn:hover{background:var(--slate);color:var(--text);}
+
+    /* 드로어 내부 — 기존 sidebar 스타일 재활용 */
+    .drawer .sidebar-profile{
+      margin:0 16px 14px;border-radius:var(--radius);
+      border:1.5px solid var(--border);box-shadow:var(--shadow);
+      padding:18px 16px;text-align:center;
+    }
+    .drawer .sidebar-nav{
+      margin:0 16px;border-radius:var(--radius);
+      border:1.5px solid var(--border);box-shadow:var(--shadow);overflow:hidden;
+    }
   </style>
 </head>
+
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+
 <body>
+  <!-- ══ 드로어 (모바일 사이드바) ══ -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-close">
+      <button class="drawer-close-btn" onclick="closeDrawer()">✕</button>
+    </div>
+    <!-- 프로필 -->
+    <div class="sidebar-profile">
+      <div class="profile-avatar-wrap">
+        <div class="profile-avatar" th:text="${userInfo.name != null ? userInfo.name.substring(0,1) : '?'}"></div>
+      </div>
+      <div class="profile-name" th:text="${userInfo.name}"></div>
+      <div class="profile-email" th:text="${userInfo.email}"></div>
+      <div class="profile-badge">카카오 가입자</div>
+    </div>
+    <!-- 네비 — showSection() 호출 후 드로어 닫기 -->
+    <nav class="sidebar-nav">
+      <div class="snav-group-label">계정</div>
+      <div class="snav-item" data-sec="member" onclick="showSection('member',this);closeDrawer()"><span class="sni">👤</span>회원정보</div>
+      <div class="snav-divider"></div>
+
+      <div class="snav-group-label">사업장</div>
+      <div class="snav-item" data-sec="shop" onclick="showSection('shop',this);closeDrawer()"><span class="sni">🏪</span>가게 정보</div>
+      <div class="snav-divider"></div>
+
+      <div class="snav-group-label">콘텐츠</div>
+      <div class="snav-item" data-sec="content" onclick="showSection('content',this);closeDrawer()"><span class="sni">✍️</span>콘텐츠 개인 설정</div>
+      <div class="snav-item" data-sec="history" onclick="showSection('history',this);closeDrawer()"><span class="sni">📂</span>콘텐츠 히스토리</div>
+      <div class="snav-divider"></div>
+
+      <div class="snav-group-label">연동</div>
+      <div class="snav-item" data-sec="sns" onclick="showSection('sns',this);closeDrawer()"><span class="sni">🔗</span>SNS 계정 연동</div>
+      <div class="snav-divider"></div>
+
+      <div class="snav-group-label">기타</div>
+      <div class="snav-item" data-sec="inquiry" onclick="showSection('inquiry',this);closeDrawer()"><span class="sni">💬</span>1:1 문의</div>
+      <div class="snav-item snav-danger" onclick="confirmWithdraw();closeDrawer()"><span class="sni">🚪</span>회원 탈퇴</div>
+    </nav>
+  </div>
+
   <div class="top-stripe"></div>
   <header>
-    <a href="#" class="logo">
-      <div class="logo-mark">S</div>
-      <span class="logo-name">소셜다모아</span>
-      <span class="logo-sub">All Social Gather</span>
-    </a>
-    <nav class="nav-pills">
-      <a href="content-generate" class="nav-pill">✏️ 콘텐츠 생성</a>
-      <a href="feedback.html" class="nav-pill">💬 리뷰 관리</a>
-      <a href="channel-performance" class="nav-pill">📊 성과 분석</a>
-      <a href="mypage" class="nav-pill active">👤 마이페이지</a>
-    </nav>
-    <div class="header-user">
-      <div class="user-avatar">김</div>
-      <span class="user-name">김소셜 님</span>
+    <!-- 1행: 항상 표시 -->
+    <div class="header-row1">
+      <a href="#" class="logo">
+        <div class="logo-mark">S</div>
+        <span class="logo-name">소셜다모아</span>
+        <span class="logo-sub">All Social Gather</span>
+      </a>
+      <!-- 600px 초과: nav-pills 1행에 표시 -->
+      <nav class="nav-pills nav-pills-top">
+        <a href="content-generate" class="nav-pill">✏️ 콘텐츠 생성</a>
+        <a href="feedback.html" class="nav-pill">💬 리뷰 관리</a>
+        <a href="channel-performance" class="nav-pill">📊 성과 분석</a>
+        <a href="mypage" class="nav-pill active">👤 마이페이지</a>
+      </nav>
+      <div class="header-user">
+        <button class="hamburger" onclick="openDrawer()" aria-label="메뉴 열기">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="user-avatar" th:text="${userInfo.name != null ? userInfo.name.substring(0,1) : '?'}"></div>
+        <span class="user-name" th:text="${userInfo.name + ' 님'}"></span>
+      </div>
+    </div>
+    <!-- 2행: 600px 이하에서만 표시 -->
+    <div class="header-row2">
+      <nav class="nav-pills nav-pills-bottom">
+        <a href="content-generate" class="nav-pill">✏️ 콘텐츠 생성</a>
+        <a href="feedback.html" class="nav-pill">💬 리뷰 관리</a>
+        <a href="channel-performance" class="nav-pill">📊 성과 분석</a>
+        <a href="mypage" class="nav-pill active">👤 마이페이지</a>
+      </nav>
     </div>
   </header>
 
@@ -340,36 +470,38 @@ em {
   <div class="page-wrap">
     <div class="sidebar">
       <div class="sidebar-profile">
-        <div class="profile-avatar-wrap"><div class="profile-avatar">김</div></div>
-        <div class="profile-name">김소셜</div>
-        <div class="profile-email">kim@social.com</div>
-        <div class="profile-badge">⭐ 프로 플랜</div>
+        <div class="profile-avatar-wrap">
+          <div class="profile-avatar" th:text="${userInfo.name != null ? userInfo.name.substring(0,1) : '?'}"></div>
+        </div>
+        <div class="profile-name" th:text="${userInfo.name}"></div>
+        <div class="profile-email" th:text="${userInfo.email}"></div>
+        <div class="profile-badge">카카오 가입자</div>
       </div>
-      <!-- ── ㅡmypage Sidebar ── -->
-<nav class="sidebar-nav">
-  <div class="snav-group-label">계정</div>
-  <div class="snav-item active" data-sec="member" onclick="showSection('member',this)"><span class="sni">👤</span>회원정보</div>
-  <div class="snav-divider"></div>
+      <!-- ── mypage Sidebar ── -->
+      <nav class="sidebar-nav">
+        <div class="snav-group-label">계정</div>
+        <div class="snav-item active" data-sec="member" onclick="showSection('member',this)"><span class="sni">👤</span>회원정보</div>
+        <div class="snav-divider"></div>
 
-  <div class="snav-group-label">사업장</div>
-  <div class="snav-item" data-sec="shop" onclick="showSection('shop',this)"><span class="sni">🏪</span>가게 정보</div>
-  <div class="snav-divider"></div>
+        <div class="snav-group-label">사업장</div>
+        <div class="snav-item" data-sec="shop" onclick="showSection('shop',this)"><span class="sni">🏪</span>가게 정보</div>
+        <div class="snav-divider"></div>
 
-  <div class="snav-group-label">콘텐츠</div>
-<div class="snav-item" data-sec="content" onclick="showSection('content',this)"><span class="sni">✍️</span>콘텐츠 개인 설정</div>
-<div class="snav-item" data-sec="history" onclick="showSection('history',this)"><span class="sni">📂</span>콘텐츠 히스토리</div>
-<div class="snav-divider"></div>
+        <div class="snav-group-label">콘텐츠</div>
+        <div class="snav-item" data-sec="content" onclick="showSection('content',this)"><span class="sni">✍️</span>콘텐츠 개인 설정</div>
+        <div class="snav-item" data-sec="history" onclick="showSection('history',this)"><span class="sni">📂</span>콘텐츠 히스토리</div>
+        <div class="snav-divider"></div>
 
-  <div class="snav-group-label">연동</div>
-  <div class="snav-item" data-sec="sns" onclick="showSection('sns',this)"><span class="sni">🔗</span>SNS 계정 관리</div>
-  <div class="snav-divider"></div>
+        <div class="snav-group-label">연동</div>
+        <div class="snav-item" data-sec="sns" onclick="showSection('sns',this)"><span class="sni">🔗</span>SNS 계정 관리</div>
+        <div class="snav-divider"></div>
 
-  <div class="snav-group-label">고객지원</div>
-  <div class="snav-item" data-sec="inquiry" onclick="showSection('inquiry',this)">
-    <span class="sni">📋</span>문의 내역
-    <span id="inqBadge" style="margin-left:auto;background:var(--yellow-light);color:#92400E;font-size:10px;font-weight:800;padding:2px 7px;border-radius:100px;">2</span>
-  </div>
-</nav>
+        <div class="snav-group-label">고객지원</div>
+        <div class="snav-item" data-sec="inquiry" onclick="showSection('inquiry',this)">
+          <span class="sni">📋</span>문의 내역
+          <span id="inqBadge" style="margin-left:auto;background:var(--yellow-light);color:#92400E;font-size:10px;font-weight:800;padding:2px 7px;border-radius:100px;">2</span>
+        </div>
+      </nav>
     </div>
 
     <div class="content">
@@ -386,18 +518,18 @@ em {
             <div class="grid-2">
               <div class="field">
                 <label>이름 (담당자명) <span class="req">*</span></label>
-                <input type="text" id="m_name" value="김소셜" />
+                <input type="text" id="m_name" th:value="${userInfo.name}" />
               </div>
               <div class="field">
                 <label>이메일</label>
-                <input type="email" id="m_email" value="kim@social.com" disabled />
+                <input type="email" id="m_email" th:value="${userInfo.email}" disabled />
                 <div class="field-msg info">소셜 로그인 연동 계정으로 변경이 불가합니다.</div>
               </div>
             </div>
             <div class="field" style="margin-bottom:0;">
               <label>휴대폰 번호 <span class="req">*</span></label>
               <div class="input-row">
-                <input type="tel" id="m_phone" value="010-1234-5678" maxlength="13" oninput="formatTel(this)" />
+                <input type="tel" id="m_phone" th:value="${userInfo.contactPhone}" maxlength="13" oninput="formatTel(this)" />
                 <button class="btn-inline" onclick="sendVerify()">인증번호 발송</button>
               </div>
               <div class="field-msg info" id="phoneVerifyMsg"></div>
@@ -412,36 +544,26 @@ em {
               <div class="field-msg info" id="codeMsg">인증번호를 입력해 주세요. (테스트: 123456)</div>
             </div>
             <div class="save-row">
-              <button class="btn-save" onclick="saveSection(this,'기본 정보')"><span class="spin"></span>저장하기</button>
+              <button class="btn-save" onclick="saveContentIntroOutro(this)"><span class="spin"></span>저장하기</button>
             </div>
           </div>
         </div>
         <div class="card">
-          <div class="card-header"><div class="card-title">🔒 비밀번호 변경</div></div>
-          <div class="card-body">
-            <div class="field">
-              <label>현재 비밀번호 <span class="req">*</span></label>
-              <input type="password" id="pw_cur" placeholder="현재 비밀번호 입력" />
-            </div>
-            <div class="field">
-              <label>새 비밀번호 <span class="req">*</span></label>
-              <input type="password" id="pw_new" placeholder="영문·숫자·특수문자 8자 이상" oninput="onNewPw(this)" />
-              <div class="pw-strength">
-                <div class="pw-bar" id="pwb1"></div><div class="pw-bar" id="pwb2"></div>
-                <div class="pw-bar" id="pwb3"></div><div class="pw-bar" id="pwb4"></div>
-              </div>
-              <div class="pw-strength-label" id="pwLbl"></div>
-            </div>
-            <div class="field" style="margin-bottom:0;">
-              <label>새 비밀번호 확인 <span class="req">*</span></label>
-              <input type="password" id="pw_confirm" placeholder="새 비밀번호 재입력" oninput="onPwConfirm()" />
-              <div class="field-msg info" id="pwConfirmMsg"></div>
-            </div>
-            <div class="save-row">
-              <button class="btn-save" onclick="changePw(this)"><span class="spin"></span>비밀번호 변경</button>
-            </div>
-          </div>
-        </div>
+  <div class="card-header"><div class="card-title">🔗 연동 계정</div></div>
+  <div class="card-body">
+    <div class="field-msg info" style="margin-bottom:12px;">
+      소셜 로그인으로 연동된 계정은 별도 비밀번호를 사용하지 않습니다.
+    </div>
+    <div class="field">
+      <label>연동 서비스</label>
+      <input type="text" th:value="${userInfo.provider == 'kakao' ? '카카오' : userInfo.provider == 'naver' ? '네이버' : '구글'}" disabled />
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label>연동 이메일</label>
+      <input type="text" th:value="${userInfo.email}" disabled />
+    </div>
+  </div>
+</div>
         
         <div class="danger-zone">
           <div class="danger-header"><span>⚠️ 위험 구역</span></div>
@@ -458,81 +580,98 @@ em {
       </div>
 
       <!-- ════ 3-2 가게 정보 ════ -->
-      <div class="section" id="sec-shop">
-        <div class="section-header">
-          <h2>가게 <em>정보</em></h2>
-          <p>가게 기본 정보와 영업시간을 수정합니다.</p>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">🖼️ 대표 이미지</div>
-            <span style="font-size:11px;color:var(--text3);">콘텐츠 생성 시 참고 이미지로 활용됩니다</span>
-          </div>
-          <div class="card-body">
-            <div class="img-upload-wrap">
-              <div>
-                <div class="img-preview" id="imgPreview" onclick="document.getElementById('imgFile').click()">
-                  <img id="previewImg" /><span id="previewPlaceholder">🏪</span>
-                </div>
-              </div>
-              <div class="img-upload-info">
-                <strong style="font-size:13px;font-weight:700;display:block;margin-bottom:6px;">가게 대표 이미지 등록</strong>
-                권장 크기: 800 × 800px 이상<br/>지원 형식: JPG, PNG, WEBP<br/>
-                <span>최대 파일 크기: 5MB</span>
-                <div class="img-upload-btns">
-                  <button class="btn-inline" style="height:36px;font-size:12px;" onclick="document.getElementById('imgFile').click()">📁 이미지 선택</button>
-                  <button class="btn-outline" style="height:36px;font-size:12px;" onclick="removeImg()">삭제</button>
-                </div>
-              </div>
-            </div>
-            <input type="file" id="imgFile" accept="image/*" onchange="previewImage(event)" />
+<div class="section" id="sec-shop">
+  <div class="section-header">
+    <h2>가게 <em>정보</em></h2>
+    <p>가게 기본 정보와 영업시간을 수정합니다.</p>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">🖼️ 대표 이미지</div>
+      <span style="font-size:11px;color:var(--text3);">콘텐츠 생성 시 참고 이미지로 활용됩니다</span>
+    </div>
+    <div class="card-body">
+      <div class="img-upload-wrap">
+        <div>
+          <div class="img-preview" id="imgPreview" onclick="document.getElementById('imgFile').click()">
+            <img id="previewImg" th:src="${brandInfo.profileImageUrl}" th:style="${brandInfo.profileImageUrl != null} ? 'display:block' : 'display:none'" />
+            <span id="previewPlaceholder" th:style="${brandInfo.profileImageUrl != null} ? 'display:none' : ''">🏪</span>
           </div>
         </div>
-        <div class="card">
-          <div class="card-header"><div class="card-title">🏷️ 기본 정보</div></div>
-          <div class="card-body">
-            <div class="grid-2">
-              <div class="field">
-                <label>가게명 <span class="req">*</span></label>
-                <input type="text" id="s_name" value="소셜다모아 카페" />
-              </div>
-              <div class="field">
-                <label>업종 <span class="req">*</span></label>
-                <select id="s_category">
-                  <option selected>카페 / 베이커리</option>
-                  <option>음식점 / 식당</option><option>미용 / 뷰티</option><option>패션 / 의류</option>
-                  <option>숙박 / 펜션</option><option>피트니스 / 스포츠</option><option>교육 / 학원</option>
-                  <option>의료 / 병원</option><option>소매 / 쇼핑</option><option>기타</option>
-                </select>
-              </div>
-            </div>
-            <div class="field">
-              <label>전화번호 <span class="req">*</span></label>
-              <input type="tel" id="s_tel" value="02-1234-5678" maxlength="13" oninput="formatTel(this)" />
-            </div>
-            <div class="field" style="margin-bottom:0;">
-              <label>주소 <span class="req">*</span></label>
-              <div class="input-row" style="margin-bottom:8px;">
-                <input type="text" id="s_addr" value="서울특별시 강남구 테헤란로 123" readonly style="background:var(--slate);" />
-                <button class="btn-inline" onclick="mockAddr()">주소 변경</button>
-              </div>
-              <input type="text" id="s_addr_detail" value="4층 401호" placeholder="상세 주소" />
-            </div>
-            <div class="save-row">
-              <button class="btn-save" onclick="saveSection(this,'가게 기본 정보')"><span class="spin"></span>저장하기</button>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><div class="card-title">⏰ 영업시간</div></div>
-          <div class="card-body">
-            <div class="hours-grid" id="shopHours"></div>
-            <div class="save-row">
-              <button class="btn-save" onclick="saveSection(this,'영업시간')"><span class="spin"></span>저장하기</button>
-            </div>
+        <div class="img-upload-info">
+          <strong style="font-size:13px;font-weight:700;display:block;margin-bottom:6px;">가게 대표 이미지 등록</strong>
+          권장 크기: 800 × 800px 이상<br/>지원 형식: JPG, PNG, WEBP<br/>
+          <span>최대 파일 크기: 5MB</span>
+          <div class="img-upload-btns">
+            <button class="btn-inline" style="height:36px;font-size:12px;" onclick="document.getElementById('imgFile').click()">📁 이미지 선택</button>
+            <button class="btn-outline" style="height:36px;font-size:12px;" onclick="removeImg()">삭제</button>
           </div>
         </div>
       </div>
+      <input type="file" id="imgFile" accept="image/*" onchange="previewImage(event)" />
+    </div>
+  </div>
+
+<div class="card">
+  <div class="card-header"><div class="card-title">🏷️ 기본 정보</div></div>
+  <div class="card-body">
+    <div class="grid-2">
+      <div class="field">
+        <label>가게명 <span class="req">*</span></label>
+        <input type="text" id="s_name" th:value="${userInfo.companyName}" />
+      </div>
+      <div class="field">
+        <label>업종 <span class="req">*</span></label>
+<select id="s_category">
+  <option value="CAFE_BAKERY"           th:selected="${userInfo.businessCategory == 'CAFE_BAKERY'}">카페 / 베이커리</option>
+  <option value="FOOD_RESTAURANT"       th:selected="${userInfo.businessCategory == 'FOOD_RESTAURANT'}">음식점 / 식당</option>
+  <option value="BEAUTY_SALON"          th:selected="${userInfo.businessCategory == 'BEAUTY_SALON'}">미용 / 뷰티</option>
+  <option value="FASHION_CLOTHING"      th:selected="${userInfo.businessCategory == 'FASHION_CLOTHING'}">패션 / 의류</option>
+  <option value="ACCOMMODATION_PENSION" th:selected="${userInfo.businessCategory == 'ACCOMMODATION_PENSION'}">숙박 / 펜션</option>
+  <option value="FITNESS_SPORTS"        th:selected="${userInfo.businessCategory == 'FITNESS_SPORTS'}">피트니스 / 스포츠</option>
+  <option value="EDUCATION_ACADEMY"     th:selected="${userInfo.businessCategory == 'EDUCATION_ACADEMY'}">교육 / 학원</option>
+  <option value="MEDICAL_HOSPITAL"      th:selected="${userInfo.businessCategory == 'MEDICAL_HOSPITAL'}">의료 / 병원</option>
+  <option value="RETAIL_SHOPPING"       th:selected="${userInfo.businessCategory == 'RETAIL_SHOPPING'}">소매 / 쇼핑</option>
+  <option value="ETC"                   th:selected="${userInfo.businessCategory == 'ETC'}">기타</option>
+</select>
+      </div>
+    </div>
+    <div class="field">
+      <label>전화번호 <span class="req">*</span></label>
+      <input type="tel" id="s_tel" th:value="${userInfo.storePhoneNumber}"
+       placeholder="지점 대표 전화번호를 입력하세요"
+       maxlength="13" oninput="formatTel(this)" />
+    </div>
+    
+    <div class="field">
+  <label>지점명 <span class="req">*</span></label>
+  <input type="text" id="s_location_name" th:value="${brandInfo.locationName}" placeholder="예) 본점, 강남점" />
+</div>
+    
+    <div class="field" style="margin-bottom:0;">
+      <label>주소 <span class="req">*</span></label>
+      <div class="input-row" style="margin-bottom:8px;">
+        <input type="text" id="s_addr" th:value="${userInfo.roadAddrPart1}" readonly style="background:var(--slate);" />
+        <button type="button" class="btn-inline" onclick="mockAddr()">주소 변경</button>
+      </div>
+      <input type="text" id="s_addr_detail" th:value="${userInfo.addrDetail}" placeholder="상세 주소" />
+    </div>
+    <div class="save-row">
+      <button class="btn-save" onclick="saveBrandInfo(this)"><span class="spin"></span>저장하기</button>
+    </div>
+  </div>
+</div>
+
+  <div class="card">
+  <div class="card-header"><div class="card-title">⏰ 영업시간</div></div>
+  <div class="card-body">
+    <div class="hours-grid" id="shopHours"></div>
+    <div class="save-row">
+      <button class="btn-save" onclick="saveBusinessHours(this)"><span class="spin"></span>저장하기</button>
+    </div>
+  </div>
+</div>
+</div>
 
       <!-- ════ 3-3 콘텐츠 개인 설정 ════ -->
       <div class="section" id="sec-content">
@@ -554,20 +693,18 @@ em {
               <div>
                 <div class="template-box">
                   <div class="template-box-header">✨ 인트로</div>
-                  <textarea id="c_intro">안녕하세요 😊 소셜다모아 카페입니다!
-오늘도 맛있는 소식 전해드려요 ☕</textarea>
+                  <textarea id="c_intro" placeholder="인트로 문구를 입력하세요"></textarea>
                 </div>
               </div>
               <div>
                 <div class="template-box">
                   <div class="template-box-header">🎯 아웃트로</div>
-                  <textarea id="c_outro">방문해 주셔서 감사합니다 🙏
-다음에도 좋은 소식으로 찾아올게요!</textarea>
+                  <textarea id="c_outro" placeholder="아웃트로 문구를 입력하세요"></textarea>
                 </div>
               </div>
             </div>
             <div class="save-row" style="margin-top:14px;">
-              <button class="btn-save" onclick="saveSection(this,'인트로·아웃트로')"><span class="spin"></span>저장하기</button>
+              <button class="btn-save" onclick="saveIntroOutro(this)"><span class="spin"></span>저장하기</button>
             </div>
           </div>
         </div>
@@ -611,37 +748,38 @@ em {
             </div>
 
             <div class="save-row">
-              <button class="btn-save" onclick="saveSection(this,'스타일 설정')"><span class="spin"></span>저장하기</button>
+              <button class="btn-save" onclick="saveContentStyle(this)"><span class="spin"></span>저장하기</button>
             </div>
-          </div>
+          </div> 
         </div>
         <div class="card">
+        
           <div class="card-header"><div class="card-title">📢 게시할 SNS 기본 선택값</div></div>
           <div class="card-body">
             <div class="info-notice">
               <span>💡</span>
               <span>콘텐츠 생성 후 게시 화면에서 기본으로 선택될 채널을 설정합니다. 게시 시 직접 변경도 가능합니다.</span>
             </div>
-            <div class="sns-check-grid">
-              <div class="sns-check-item checked" onclick="toggleSnsDefault(this)">
-                <div class="sns-icon" style="background:linear-gradient(135deg,#f09433,#dc2743,#bc1888);">📸</div>
-                <span class="sns-label">Instagram</span><div class="check-circle on"></div>
-              </div>
-              <div class="sns-check-item checked" onclick="toggleSnsDefault(this)">
-                <div class="sns-icon" style="background:#03C75A;">📝</div>
-                <span class="sns-label">네이버 블로그</span><div class="check-circle on"></div>
-              </div>
-              <div class="sns-check-item" onclick="toggleSnsDefault(this)">
-                <div class="sns-icon" style="background:#F9C000;">💬</div>
-                <span class="sns-label">카카오채널</span><div class="check-circle"></div>
-              </div>
-              <div class="sns-check-item" onclick="toggleSnsDefault(this)">
-                <div class="sns-icon" style="background:#1877F2;">👍</div>
-                <span class="sns-label">Facebook</span><div class="check-circle"></div>
-              </div>
-            </div>
+<div class="sns-check-grid" id="snsDefaultGrid">
+  <div class="sns-check-item checked" data-sns="instagram" onclick="toggleSnsDefault(this)">
+    <div class="sns-icon" style="background:linear-gradient(135deg,#f09433,#dc2743,#bc1888);">📸</div>
+    <span class="sns-label">Instagram</span><div class="check-circle on"></div>
+  </div>
+  <div class="sns-check-item checked" data-sns="naver" onclick="toggleSnsDefault(this)">
+    <div class="sns-icon" style="background:#03C75A;">📝</div>
+    <span class="sns-label">네이버 블로그</span><div class="check-circle on"></div>
+  </div>
+  <div class="sns-check-item" data-sns="kakao" onclick="toggleSnsDefault(this)">
+    <div class="sns-icon" style="background:#F9C000;">💬</div>
+    <span class="sns-label">카카오채널</span><div class="check-circle"></div>
+  </div>
+  <div class="sns-check-item" data-sns="facebook" onclick="toggleSnsDefault(this)">
+    <div class="sns-icon" style="background:#1877F2;">👍</div>
+    <span class="sns-label">Facebook</span><div class="check-circle"></div>
+  </div>
+</div>
             <div class="save-row">
-              <button class="btn-save" onclick="saveSection(this,'SNS 기본 선택값')"><span class="spin"></span>저장하기</button>
+              <button class="btn-save" onclick="saveContentSettings(this,'스타일 설정')"><span class="spin"></span>저장하기</button>
             </div>
           </div>
         </div>
@@ -665,8 +803,7 @@ em {
       <option value="community">💬 커뮤니티</option>
     </select>
     <input type="month" id="historyMonthFilter"
-      style="height:36px;padding:0 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:'Noto Sans KR',sans-serif;color:var(--text2);background:var(--white);outline:none;"
-      value="2025-07"/>
+  style="height:36px;padding:0 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:'Noto Sans KR',sans-serif;color:var(--text2);background:var(--white);outline:none;"/>
   </div>
 
   <!-- 리스트 -->
@@ -701,6 +838,7 @@ em {
 
       <!-- ════ 3-5 문의 내역 ════ -->
       <div class="section" id="sec-inquiry">
+      <input type="hidden" id="currentUserEmail" th:value="${userInfo.email}" />
         <div class="section-header">
           <h2>문의 <em>내역</em></h2>
           <p>접수한 문의 목록과 답변 상태를 확인합니다.</p>
@@ -729,34 +867,36 @@ em {
     </div>
   </div>
 
-  <!-- 회원 탈퇴 Modal -->
-  <div class="modal-overlay" id="modalWithdraw">
-    <div class="modal">
-      <div class="modal-header"><span>⚠️ 회원 탈퇴 확인</span><button class="modal-close" onclick="closeModal('withdraw')">✕</button></div>
-      <div class="modal-body">
-        <div style="background:var(--red-light);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:18px;">
-          <strong style="font-size:13px;color:var(--red);display:block;margin-bottom:4px;">탈퇴 전 반드시 확인하세요</strong>
-          <span style="font-size:12px;color:#B91C1C;line-height:1.7;">• 모든 가게 정보 및 성과 데이터가 즉시 삭제됩니다<br/>• 연동된 SNS 계정 정보가 모두 해제됩니다<br/>• 이 작업은 되돌릴 수 없습니다</span>
-        </div>
-        <div class="field" style="margin-bottom:12px;">
-          <label>확인을 위해 비밀번호를 입력해 주세요</label>
-          <input type="password" id="withdrawPw" placeholder="현재 비밀번호" />
-        </div>
-        <div>
-          <label style="margin-bottom:6px;">탈퇴 사유 (선택)</label>
-          <select id="withdrawReason">
-            <option value="">선택하지 않음</option>
-            <option>서비스를 잘 사용하지 않아서</option><option>원하는 기능이 없어서</option>
-            <option>다른 서비스로 이동</option><option>개인정보 보호를 위해</option><option>기타</option>
-          </select>
-        </div>
+<!-- 회원 탈퇴 Modal -->
+<div class="modal-overlay" id="modalWithdraw">
+  <div class="modal">
+    <div class="modal-header"><span>⚠️ 회원 탈퇴 확인</span><button class="modal-close" onclick="closeModal('withdraw')">✕</button></div>
+    <div class="modal-body">
+      <div style="background:var(--red-light);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:18px;">
+        <strong style="font-size:13px;color:var(--red);display:block;margin-bottom:4px;">탈퇴 전 반드시 확인하세요</strong>
+        <span style="font-size:12px;color:#B91C1C;line-height:1.7;">• 모든 가게 정보 및 성과 데이터가 즉시 삭제됩니다<br/>• 연동된 SNS 계정 정보가 모두 해제됩니다<br/>• 이 작업은 되돌릴 수 없습니다</span>
       </div>
-      <div class="modal-footer">
-        <button class="btn-outline" onclick="closeModal('withdraw')">취소</button>
-        <button class="btn-danger" onclick="doWithdraw()">탈퇴 확정</button>
+      <div>
+        <label style="margin-bottom:6px;">탈퇴 사유 (선택)</label>
+        <select id="withdrawReason">
+          <option value="">선택하지 않음</option>
+          <option>서비스를 잘 사용하지 않아서</option>
+          <option>원하는 기능이 없어서</option>
+          <option>다른 서비스로 이동</option>
+          <option>개인정보 보호를 위해</option>
+          <option>기타</option>
+        </select>
       </div>
     </div>
+<div class="modal-footer">
+  <button class="btn-outline" onclick="closeModal('withdraw')">취소</button>
+  <form id="withdrawForm" th:action="@{/mypage/withdraw}" method="post" style="display:inline;">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+    <button type="submit" class="btn-danger" onclick="closeModal('withdraw')">탈퇴 확정</button>
+  </form>
+</div>
   </div>
+</div>
 
   <!-- 계정 해제 Modal -->
   <div class="modal-overlay" id="modalDisconnect">
@@ -784,12 +924,13 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
   
-  function showSection(id, el) {
+function showSection(id, el) {
     document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
     document.querySelectorAll('.snav-item').forEach(i=>i.classList.remove('active'));
     document.getElementById('sec-'+id).classList.add('active');
     el.classList.add('active');
     window.scrollTo({top:0,behavior:'smooth'});
+    if(id==='inquiry') loadInquiries();  // 추가
   }
 
   /* ═══ Hours ═══ */
@@ -800,25 +941,81 @@ window.addEventListener('DOMContentLoaded', () => {
     {o:'09:00',c:'22:00',on:true},{o:'10:00',c:'22:00',on:true},
     {o:'10:00',c:'21:00',on:false},
   ];
-  function buildHours(cid) {
-    document.getElementById(cid).innerHTML=DAYS.map((d,i)=>{
-      const h=HOURS_DEFAULTS[i];
-      return `<div class="hours-row ${h.on?'on-row':'closed'}" id="hr${cid}${i}">
-        <span class="day-name">${d}</span>
-        <button class="day-toggle ${h.on?'on':''}" onclick="toggleHourDay('${cid}',${i},this)"></button>
-        <div class="hours-time"><input type="time" value="${h.o}"/><span class="hours-sep">~</span><input type="time" value="${h.c}"/></div>
-        <span class="day-closed">휴무</span>
-      </div>`;
-    }).join('');
-  }
-  function toggleHourDay(cid,i,btn){
-    const row=document.getElementById('hr'+cid+i);
-    const on=btn.classList.toggle('on');
-    row.classList.toggle('closed',!on);row.classList.toggle('on-row',on);
-    row.querySelector('.hours-time').style.display=on?'flex':'none';
-    row.querySelector('.day-closed').style.display=on?'none':'block';
-  }
-  buildHours('shopHours');
+  
+  window.toggleHourDay = function(cid, i, btn) {
+	    const row = document.getElementById('hr' + cid + i);
+	    const on = btn.classList.toggle('on');
+	    row.classList.toggle('closed', !on);
+	    row.classList.toggle('on-row', on);
+	    row.querySelector('.hours-time').style.display = on ? 'flex' : 'none';
+	    row.querySelector('.day-closed').style.display = on ? 'none' : 'block';
+	}
+  
+  function buildHours(cid, data) {
+	  document.getElementById(cid).innerHTML = DAYS.map((d, i) => {
+	    const h = data[i] || { isOpen: false, openTime: '09:00', closeTime: '22:00' };
+	    const on = h.isOpen;
+	    return `<div class="hours-row ${on ? 'on-row' : 'closed'}" id="hr${cid}${i}">
+	      <span class="day-name">${d}</span>
+	      <button class="day-toggle ${on ? 'on' : ''}" onclick="toggleHourDay('${cid}',${i},this)"></button>
+	      <div class="hours-time">
+	        <input type="time" value="${h.openTime || '09:00'}"/>
+	        <span class="hours-sep">~</span>
+	        <input type="time" value="${h.closeTime || '22:00'}"/>
+	      </div>
+	      <span class="day-closed">휴무</span>
+	    </div>`;
+	  }).join('');
+	}
+
+	// 페이지 로드 시 DB에서 영업시간 조회 후 렌더링
+	fetch('/mypage/business-hours')
+	  .then(res => res.json())
+	  .then(data => {
+	    // data가 비어있으면(첫 가입) 기본값 7개로 채움
+	    const filled = DAYS.map((_, i) =>
+	      data.find(d => d.dayOfWeek === i) || { isOpen: i < 5, openTime: '09:00', closeTime: '22:00' }
+	    );
+	    buildHours('shopHours', filled);
+	  })
+	  .catch(() => {
+	    // 통신 실패 시 기본값으로 폴백
+	    const defaults = DAYS.map((_, i) => ({ isOpen: i < 5, openTime: '09:00', closeTime: '22:00' }));
+	    buildHours('shopHours', defaults);
+	  });
+  
+  async function saveBusinessHours(btn) {
+	  await loadingBtn(btn);
+	  const rows = document.querySelectorAll('#shopHours .hours-row');
+	  const hours = Array.from(rows).map((row, i) => {
+	    const isOpen = row.classList.contains('on-row');
+	    const times = row.querySelectorAll('input[type="time"]');
+	    return {
+	      dayOfWeek: i,
+	      isOpen: isOpen,
+	      openTime:  times[0] ? times[0].value : '09:00',
+	      closeTime: times[1] ? times[1].value : '22:00'
+	    };
+	  });
+
+	  try {
+	    const res = await fetch('/mypage/business-hours', {
+	      method: 'POST',
+	      headers: {
+	        'Content-Type': 'application/json',
+	        'X-XSRF-TOKEN': getCsrfToken()
+	      },
+	      body: JSON.stringify(hours)
+	    });
+	    if (res.ok) {
+	      showToast('✅ 영업시간이 저장됐습니다.', 'ok');
+	    } else {
+	      showToast('❌ 저장에 실패했습니다.', 'err');
+	    }
+	  } catch(e) {
+	    showToast('❌ 저장 중 오류가 발생했습니다.', 'err');
+	  }
+	}
 
   /* ═══ Phone verify ═══ */
   let mTimerIv=null,mTimerSec=180;
@@ -851,65 +1048,40 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  /* ═══ Password ═══ */
-  function getPwScore(v){
-    if(!v)return 0;let s=0;
-    if(v.length>=8)s++;if(/[A-Za-z]/.test(v))s++;if(/\d/.test(v))s++;if(/[^A-Za-z0-9]/.test(v))s++;
-    return Math.max(1,s);
-  }
-  function onNewPw(input){
-    const v=input.value,sc=getPwScore(v);
-    const labels=['','취약','보통','양호','강함'];
-    const colors=['','#EF4444','#F59E0B','#14B8A6','#22C55E'];
-    [1,2,3,4].forEach(i=>{const b=document.getElementById('pwb'+i);b.className='pw-bar';if(i<=sc)b.classList.add('s'+sc);});
-    const lbl=document.getElementById('pwLbl');
-    lbl.textContent=v?'강도: '+labels[sc]:'';lbl.style.color=colors[sc];
-    onPwConfirm();
-  }
-  function onPwConfirm(){
-    const n=document.getElementById('pw_new').value;
-    const c=document.getElementById('pw_confirm').value;
-    const msg=document.getElementById('pwConfirmMsg');
-    const inp=document.getElementById('pw_confirm');
-    inp.classList.remove('success','error');
-    if(!c){msg.textContent='';msg.className='field-msg info';return;}
-    if(n===c){inp.classList.add('success');msg.className='field-msg ok';msg.textContent='✓ 비밀번호가 일치합니다.';}
-    else{inp.classList.add('error');msg.className='field-msg err';msg.textContent='비밀번호가 일치하지 않습니다.';}
-  }
-  async function changePw(btn){
-    const cur=document.getElementById('pw_cur').value;
-    const nw=document.getElementById('pw_new').value;
-    const cf=document.getElementById('pw_confirm').value;
-    if(!cur||!nw||!cf){showToast('⚠️ 모든 항목을 입력해 주세요.','err');return;}
-    if(nw!==cf){showToast('⚠️ 새 비밀번호가 일치하지 않습니다.','err');return;}
-    if(getPwScore(nw)<2){showToast('⚠️ 비밀번호 강도가 너무 낮습니다.','err');return;}
-    await loadingBtn(btn);
-    showToast('🔒 비밀번호가 변경됐습니다.','ok');
-    ['pw_cur','pw_new','pw_confirm'].forEach(id=>document.getElementById(id).value='');
-    [1,2,3,4].forEach(i=>document.getElementById('pwb'+i).className='pw-bar');
-    document.getElementById('pwLbl').textContent='';
-    document.getElementById('pwConfirmMsg').textContent='';
-  }
-
-  /* ═══ Image ═══ */
-  function previewImage(e){
-    const f=e.target.files[0];if(!f)return;
-    const r=new FileReader();
-    r.onload=ev=>{const img=document.getElementById('previewImg');img.src=ev.target.result;img.style.display='block';document.getElementById('previewPlaceholder').style.display='none';};
-    r.readAsDataURL(f);showToast('🖼️ 이미지가 등록됐습니다.','ok');
-  }
-  function removeImg(){
-    document.getElementById('previewImg').style.display='none';
-    document.getElementById('previewPlaceholder').style.display='block';
-    document.getElementById('imgFile').value='';
-    showToast('이미지가 삭제됐습니다.','');
-  }
-
   /* ═══ Address ═══ */
-  function mockAddr(){
-    const s=['서울특별시 강남구 테헤란로 456','서울특별시 마포구 합정동 123','서울특별시 서초구 반포대로 78'];
-    document.getElementById('s_addr').value=s[Math.floor(Math.random()*s.length)];
-    showToast('📍 주소가 변경됐습니다.','ok');
+  function mockAddr() {
+    new daum.Postcode({
+      oncomplete: function(data) {
+        document.getElementById('s_addr').value = data.roadAddress || data.jibunAddress;
+        document.getElementById('s_addr_detail').focus();
+        showToast('📍 주소가 선택됐습니다.', 'ok');
+      }
+    }).open();
+  }
+
+  async function saveAddress(btn) {
+    await loadingBtn(btn);
+    const body = new URLSearchParams({
+      roadAddrPart1: document.getElementById('s_addr').value,
+      addrDetail:    document.getElementById('s_addr_detail').value,
+    });
+    try {
+      const res = await fetch('/mypage/address', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-XSRF-TOKEN': getCsrfToken()
+        },
+        body: body.toString()
+      });
+      if (res.ok) {
+        showToast('✅ 주소가 저장됐습니다.', 'ok');
+      } else {
+        showToast('❌ 저장에 실패했습니다.', 'err');
+      }
+    } catch(e) {
+      showToast('❌ 저장 중 오류가 발생했습니다.', 'err');
+    }
   }
 
   /* ═══ Tel ═══ */
@@ -934,151 +1106,240 @@ window.addEventListener('DOMContentLoaded', () => {
     const on=el.classList.toggle('checked');
     el.querySelector('.check-circle').classList.toggle('on',on);
   }
+  
+  /* ═══ Image ═══ */
+  function previewImage(e){
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      const img=document.getElementById('previewImg');
+      img.src=ev.target.result;
+      img.style.display='block';
+      document.getElementById('previewPlaceholder').style.display='none';
+    };
+    r.readAsDataURL(f);
+    uploadImage(f);
+  }
+
+  async function uploadImage(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch('/mypage/brand/image', {
+        method: 'POST',
+        headers: { 'X-XSRF-TOKEN': getCsrfToken() },
+        body: formData
+      });
+      if (res.ok) {
+        const url = await res.text();
+        document.getElementById('previewImg').src = url;
+        showToast('✅ 이미지가 업로드됐습니다.', 'ok');
+      } else {
+        showToast('❌ 이미지 업로드에 실패했습니다.', 'err');
+      }
+    } catch(e) {
+      showToast('❌ 업로드 중 오류가 발생했습니다.', 'err');
+    }
+  }
+
+  function removeImg(){
+    document.getElementById('previewImg').style.display='none';
+    document.getElementById('previewPlaceholder').style.display='block';
+    document.getElementById('imgFile').value='';
+    showToast('이미지가 삭제됐습니다.','');
+  }
 
   /* ═══ SNS accounts ═══ */
-  const SNS_ACCOUNTS=[
-    {id:'instagram',name:'Instagram',icon:'📸',bg:'linear-gradient(135deg,#f09433,#dc2743,#bc1888)',handle:'@sodamoa_cafe',status:'ok'},
-    {id:'naver',name:'네이버 블로그',icon:'📝',bg:'#03C75A',handle:'sodamoa_blog',status:'expired'},
-    {id:'kakao',name:'카카오채널',icon:'💬',bg:'#F9C000',handle:'@소셜다모아카페',status:'ok'},
-    {id:'facebook',name:'Facebook',icon:'👍',bg:'#1877F2',handle:'',status:'none'},
-  ];
-  let disconnectTarget=null;
+  const PLATFORM_META = {
+    instagram: { icon: '📸', bg: 'linear-gradient(135deg,#f09433,#dc2743,#bc1888)' },
+    facebook:  { icon: '👍', bg: '#1877F2' },
+    naver:     { icon: '📝', bg: '#03C75A' },
+    kakao:     { icon: '💬', bg: '#F9C000' },
+  };
 
-  function buildSnsAccounts(){
-    document.getElementById('snsAccountList').innerHTML=SNS_ACCOUNTS.map(a=>{
-      const sm={ok:{label:'정상 연동',cls:'ok',dot:'var(--green)'},expired:{label:'토큰 만료',cls:'expired',dot:'var(--yellow)'},none:{label:'미연동',cls:'none',dot:'var(--border2)'}};
-      const st=sm[a.status];
-      const actions=a.status==='none'
-        ?`<button class="btn-sns connect" onclick="doConnect('${a.id}')">+ 연동하기</button>`
-        :a.status==='expired'
-        ?`<button class="btn-sns reconnect" onclick="doReconnect('${a.id}')">재연동</button><button class="btn-sns disconnect" onclick="openDisconnect('${a.id}','${a.name}')">해제</button>`
-        :`<button class="btn-sns" onclick="doReconnect('${a.id}')">재연동</button><button class="btn-sns disconnect" onclick="openDisconnect('${a.id}','${a.name}')">해제</button>`;
-      return `<div class="sns-account-item" id="sai_${a.id}">
-        <div class="sns-acc-icon" style="background:${a.bg};">${a.icon}</div>
+  let SNS_ACCOUNTS = [];
+  let disconnectTarget = null;
+
+  // 페이지 로드 시 서버에서 데이터 가져오기
+  fetch('/mypage/sns/list')
+    .then(res => res.json())
+    .then(data => { SNS_ACCOUNTS = data; buildSnsAccounts(); })
+    .catch(() => showToast('❌ SNS 연동 정보를 불러오지 못했습니다.', 'err'));
+
+  function buildSnsAccounts() {
+    const sm = {
+      ok:      { label: '정상 연동', cls: 'ok',      dot: 'var(--green)'   },
+      expired: { label: '토큰 만료', cls: 'expired', dot: 'var(--yellow)'  },
+      none:    { label: '미연동',    cls: 'none',    dot: 'var(--border2)' },
+    };
+
+    document.getElementById('snsAccountList').innerHTML = SNS_ACCOUNTS.map(a => {
+      const meta = PLATFORM_META[a.platformCode] || { icon: '🔗', bg: '#888' };
+      const statusKey = !a.isConnected ? 'none'
+                      : a.tokenStatus === 'EXPIRED' ? 'expired'
+                      : 'ok';
+      const st = sm[statusKey];
+
+      const actions = statusKey === 'none'
+        ? `<button class="btn-sns connect"    onclick="doConnect('${a.platformCode}','${a.platformName}')">+ 연동하기</button>`
+        : statusKey === 'expired'
+        ? `<button class="btn-sns reconnect"  onclick="doReconnect('${a.platformCode}','${a.platformName}')">재연동</button>
+           <button class="btn-sns disconnect" onclick="openDisconnect(${a.brandPlatformId},'${a.platformName}')">해제</button>`
+        : `<button class="btn-sns"            onclick="doReconnect('${a.platformCode}','${a.platformName}')">재연동</button>
+           <button class="btn-sns disconnect" onclick="openDisconnect(${a.brandPlatformId},'${a.platformName}')">해제</button>`;
+
+      return `<div class="sns-account-item" id="sai_${a.platformCode}">
+        <div class="sns-acc-icon" style="background:${meta.bg};">${meta.icon}</div>
         <div class="sns-acc-info">
-          <div class="sns-acc-name">${a.name}</div>
-          <div class="sns-acc-id">${a.handle||'미연동'}</div>
-          <div class="sns-acc-status ${st.cls}"><span class="sns-dot" style="background:${st.dot};"></span>${st.label}</div>
+          <div class="sns-acc-name">${a.platformName}</div>
+          <div class="sns-acc-id">${a.channelName || '미연동'}</div>
+          <div class="sns-acc-status ${st.cls}">
+            <span class="sns-dot" style="background:${st.dot};"></span>${st.label}
+          </div>
         </div>
         <div class="sns-acc-actions">${actions}</div>
       </div>`;
     }).join('');
   }
-  buildSnsAccounts();
 
-  async function doConnect(id){
-    const acc=SNS_ACCOUNTS.find(a=>a.id===id);
-    showToast(`🔗 ${acc.name} 연동을 시작합니다...`,'ok');
-    await new Promise(r=>setTimeout(r,1400));
-    acc.status='ok';acc.handle='@new_account';buildSnsAccounts();showToast(`✅ ${acc.name} 연동이 완료됐습니다!`,'ok');
+  function doConnect(platformCode, platformName) {
+    showToast(`🔗 ${platformName} 연동은 준비 중입니다.`, '');
   }
-  async function doReconnect(id){
-    const acc=SNS_ACCOUNTS.find(a=>a.id===id);
-    showToast(`🔄 ${acc.name} 재연동 중...`,'ok');
-    await new Promise(r=>setTimeout(r,1200));
-    acc.status='ok';buildSnsAccounts();showToast(`✅ ${acc.name} 재연동 완료!`,'ok');
+
+  function doReconnect(platformCode, platformName) {
+    showToast(`🔗 ${platformName} 재연동은 준비 중입니다.`, '');
   }
-  function openDisconnect(id,name){
-    disconnectTarget=id;
-    document.getElementById('disconnectTitle').textContent=`${name} 연동 해제`;
-    document.getElementById('disconnectMsg').innerHTML=`<strong>${name}</strong> 계정 연동을 해제하시겠습니까?<br/><br/>해제 후에는 해당 채널의 성과 데이터 수집이 중단되며,<br/>콘텐츠 자동 게시 기능도 사용할 수 없습니다.`;
+
+  function openDisconnect(brandPlatformId, platformName) {
+    disconnectTarget = { brandPlatformId, platformName };
+    document.getElementById('disconnectTitle').textContent = `${platformName} 연동 해제`;
+    document.getElementById('disconnectMsg').innerHTML =
+      `<strong>${platformName}</strong> 계정 연동을 해제하시겠습니까?<br/><br/>` +
+      `해제 후에는 해당 채널의 성과 데이터 수집이 중단되며,<br/>콘텐츠 자동 게시 기능도 사용할 수 없습니다.`;
     openModal('disconnect');
   }
-  function doDisconnect(){
-    if(!disconnectTarget)return;
-    const acc=SNS_ACCOUNTS.find(a=>a.id===disconnectTarget);
-    acc.status='none';acc.handle='';buildSnsAccounts();closeModal('disconnect');
-    showToast(`🔓 ${acc.name} 연동이 해제됐습니다.`,'');disconnectTarget=null;
-  }
+
+  async function doDisconnect() {
+	  if (!disconnectTarget) return;
+	  const { brandPlatformId, platformName } = disconnectTarget;
+
+	  // CSRF 토큰 읽기
+	  const csrfToken  = document.querySelector('meta[name="_csrf"]').content;
+	  const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+	  try {
+	    const res = await fetch(`/mypage/sns/${brandPlatformId}/disconnect`, {
+	      method: 'POST',
+	      headers: { [csrfHeader]: csrfToken }
+	    });
+	    if (res.ok) {
+	      const acc = SNS_ACCOUNTS.find(a => a.brandPlatformId === brandPlatformId);
+	      if (acc) { acc.isConnected = false; acc.tokenStatus = 'EXPIRED'; acc.channelName = ''; }
+	      buildSnsAccounts();
+	      closeModal('disconnect');
+	      showToast(`🔓 ${platformName} 연동이 해제됐습니다.`, '');
+	    } else {
+	      showToast('❌ 해제 중 오류가 발생했습니다.', 'err');
+	    }
+	  } catch (e) {
+	    showToast('❌ 네트워크 오류가 발생했습니다.', 'err');
+	  }
+	  disconnectTarget = null;
+	}
 
   /* ═══ 문의 내역 ═══ */
-  const INQUIRIES=[
-    {id:1,status:'answered',cat:'결제·환불',title:'프리미엄 플랜 결제 후 기능이 활성화되지 않습니다',date:'2025-07-12',
-     content:'어제 프리미엄 플랜을 결제했는데 콘텐츠 생성 기능의 무제한 옵션이 여전히 잠겨 있습니다.',
-     answer:'확인 결과 캐시 동기화 지연이 발생했습니다. 로그아웃 후 재로그인 하시면 즉시 정상 이용 가능합니다.',answeredAt:'2025-07-12'},
-    {id:2,status:'pending',cat:'SNS 연동',title:'네이버 블로그 재연동 시 오류 코드 403 발생',date:'2025-07-18',
-     content:'네이버 블로그를 재연동하려고 했는데 "403 Forbidden" 오류가 발생합니다. 다른 브라우저에서도 동일합니다.',answer:null},
-    {id:3,status:'answered',cat:'기능 오류',title:'인스타그램 자동 게시 시간이 설정과 다르게 발행됩니다',date:'2025-07-05',
-     content:'오후 6시로 예약 설정했는데 오전 6시에 발행됐습니다. 같은 현상이 3번 반복됐습니다.',
-     answer:'서버 타임존 변환 버그로 확인되었습니다. 7월 8일 패치로 수정 완료되었습니다.',answeredAt:'2025-07-08'},
-    {id:4,status:'pending',cat:'요금제·플랜',title:'팀 플랜으로 업그레이드 시 기존 데이터 이관 방법 문의',date:'2025-07-20',
-     content:'현재 프리미엄 개인 플랜 사용 중인데 팀 플랜으로 전환할 예정입니다. 기존 설정이 이관되는지 확인하고 싶습니다.',answer:null},
-  ];
-  let inqFilter='all',inqSearch='';
+  const INQ_USER_EMAIL = document.getElementById('currentUserEmail').value;
+  let INQUIRIES=[], inqFilter='all', inqSearch='';
+
+  async function loadInquiries(){
+    try{
+    	const res = await fetch(`/mypage/inquiry?email=${encodeURIComponent(INQ_USER_EMAIL)}`);
+      if(!res.ok) throw new Error();
+      INQUIRIES = await res.json();
+    } catch(e){
+      INQUIRIES = [];
+    }
+    updateInqStats();
+    renderInqList();
+  }
 
   function updateInqStats(){
-    document.getElementById('statTotal').textContent=INQUIRIES.length;
-    document.getElementById('statPending').textContent=INQUIRIES.filter(i=>i.status==='pending').length;
-    document.getElementById('statDone').textContent=INQUIRIES.filter(i=>i.status==='answered').length;
-    const b=document.getElementById('inqBadge');
-    if(b)b.textContent=INQUIRIES.filter(i=>i.status==='pending').length;
-  }
-  function getFiltered(){
-    return INQUIRIES.filter(i=>{
-      const mf=inqFilter==='all'||i.status===inqFilter;
-      const ms=!inqSearch||i.title.includes(inqSearch)||i.content.includes(inqSearch)||i.cat.includes(inqSearch);
-      return mf&&ms;
-    });
-  }
+	    const pending = INQUIRIES.filter(i=>i.status==='WAIT').length;
+	    document.getElementById('statTotal').textContent   = INQUIRIES.length;
+	    document.getElementById('statPending').textContent = pending;
+	    document.getElementById('statDone').textContent    = INQUIRIES.filter(i=>i.status==='DONE').length;
+	    const b=document.getElementById('inqBadge');
+	    if(b) b.textContent = pending;
+	  }
+
+	function getFiltered(){
+	    return INQUIRIES.filter(i=>{
+	      const mf = inqFilter==='all'
+	        || (inqFilter==='pending'  && i.status==='WAIT')
+	        || (inqFilter==='answered' && i.status==='DONE');
+	      const ms = !inqSearch
+	        || i.title.includes(inqSearch)
+	        || i.body.includes(inqSearch)
+	        || (i.type||'').includes(inqSearch);
+	      return mf && ms;
+	    });
+	  }
+
   function renderInqList(){
-    const list=getFiltered();
-    const c=document.getElementById('inqList');
+    const list = getFiltered();
+    const c = document.getElementById('inqList');
     if(!list.length){
       c.innerHTML=`<div class="inq-empty"><div class="inq-empty-icon">📭</div><div class="inq-empty-title">문의 내역이 없습니다</div><div class="inq-empty-desc">조건에 맞는 문의를 찾을 수 없습니다.<br/>새 문의를 접수해 보세요.</div></div>`;
-      document.getElementById('inqPagination').innerHTML='';return;
+      document.getElementById('inqPagination').innerHTML='';
+      return;
     }
-    const lbl={pending:'답변 대기',answered:'답변 완료',closed:'종료'};
     c.innerHTML=list.map(inq=>{
-      const ab=inq.answer
-        ?`<div class="inq-body-a"><div class="inq-body-a-label">🛎️ 고객지원팀 답변 <span style="font-size:10px;font-weight:500;color:var(--text3);margin-left:6px;">${inq.answeredAt||''}</span></div><div class="inq-body-a-text">${inq.answer}</div></div>`
-        :`<div class="inq-pending-msg"><div class="inq-pending-inner">⏳ 고객지원팀이 검토 중입니다. 보통 1~2 영업일 이내에 답변드립니다.</div></div>`;
+    	const isPending = inq.status==='WAIT';
+      const badgeCls  = isPending ? 'pending' : 'answered';
+      const badgeLbl  = isPending ? '답변 대기' : '답변 완료';
+      const typeBadge = inq.type
+        ? `<span class="inq-cat-badge">${inq.type}</span>` : '';
+      const attachHtml = (inq.attachmentNames||[]).length
+        ? `<div class="inq-attach">📎 ${inq.attachmentNames.join(', ')}</div>` : '';
+      const date = (inq.createdAt||'').slice(0,10);
       return `<div class="inq-item" id="inqi_${inq.id}" onclick="toggleInqItem(${inq.id})">
         <div class="inq-item-head">
-          <span class="inq-badge ${inq.status}">${lbl[inq.status]}</span>
-          <span class="inq-cat-badge">${inq.cat}</span>
+          <span class="inq-badge ${badgeCls}">${badgeLbl}</span>
+          ${typeBadge}
           <span class="inq-title">${inq.title}</span>
-          <span class="inq-date">${inq.date}</span>
+          <span class="inq-date">${date}</span>
           <span class="inq-expand-icon">▼</span>
         </div>
         <div class="inq-body">
-          <div class="inq-body-q"><div class="inq-body-q-label">📝 문의 내용</div><div class="inq-body-q-text">${inq.content}</div></div>
-          ${ab}
+          <div class="inq-body-q">
+            <div class="inq-body-q-label">📝 문의 내용</div>
+            <div class="inq-body-q-text">${inq.body}</div>
+          </div>
+          ${attachHtml}
+          <div class="inq-pending-msg">
+            <div class="inq-pending-inner">⏳ 고객지원팀이 검토 중입니다. 보통 1~2 영업일 이내에 답변드립니다.</div>
+          </div>
         </div>
       </div>`;
     }).join('');
-    document.getElementById('inqPagination').innerHTML=`<button class="inq-page-btn">‹</button><button class="inq-page-btn active">1</button><button class="inq-page-btn">›</button>`;
+    document.getElementById('inqPagination').innerHTML=
+      `<button class="inq-page-btn">‹</button><button class="inq-page-btn active">1</button><button class="inq-page-btn">›</button>`;
   }
+
   function toggleInqItem(id){document.getElementById('inqi_'+id).classList.toggle('open');}
   function filterInq(f,btn){inqFilter=f;document.querySelectorAll('.inq-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderInqList();}
   function searchInq(v){inqSearch=v.trim();renderInqList();}
   function toggleInqForm(show){
-  if(show){ showToast('문의 페이지로 이동합니다.','ok'); return; }
-  const w=document.getElementById('inqFormWrap');w.classList.toggle('show',false);
-}
-  function selInqCat(el){document.querySelectorAll('#inqCatSelect .inq-cat-opt').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');}
-  async function submitInquiry(btn){
-    const title=document.getElementById('inqTitle').value.trim();
-    const content=document.getElementById('inqContent').value.trim();
-    const cat=document.querySelector('#inqCatSelect .selected')?.textContent?.trim()||'기타';
-    if(!title){showToast('⚠️ 제목을 입력해 주세요.','err');return;}
-    if(content.length<10){showToast('⚠️ 내용을 10자 이상 입력해 주세요.','err');return;}
-    await loadingBtn(btn);
-    INQUIRIES.unshift({id:Date.now(),status:'pending',cat,title,date:new Date().toISOString().slice(0,10),content,answer:null});
-    updateInqStats();renderInqList();toggleInqForm(false);
-    document.getElementById('inqTitle').value='';document.getElementById('inqContent').value='';
-    document.getElementById('inqTitleCount').textContent='0/80';document.getElementById('inqContentCount').textContent='0/1000';
-    document.querySelectorAll('#inqCatSelect .inq-cat-opt').forEach((o,i)=>o.classList.toggle('selected',i===0));
-    showToast('✅ 문의가 접수됐습니다. 1~2 영업일 내 답변드립니다.','ok');
+    if(show){ location.href='/inquiry'; return; }
   }
 
   /* ═══ Modal ═══ */
   function openModal(id){document.getElementById('modal'+id.charAt(0).toUpperCase()+id.slice(1)).classList.add('show');}
   function closeModal(id){document.getElementById('modal'+id.charAt(0).toUpperCase()+id.slice(1)).classList.remove('show');}
-  function doWithdraw(){
-    const pw=document.getElementById('withdrawPw').value;
-    if(!pw){showToast('⚠️ 비밀번호를 입력해 주세요.','err');return;}
-    closeModal('withdraw');showToast('탈퇴가 처리됐습니다. 이용해 주셔서 감사합니다.','');
-  }
+  function doWithdraw() {
+	    closeModal('withdraw');
+	    document.getElementById('withdrawForm').submit();
+	}
   document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');}));
 
   /* ═══ Generic save ═══ */
@@ -1087,103 +1348,265 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   async function saveSection(btn,label){await loadingBtn(btn);showToast(`✅ ${label}이(가) 저장됐습니다.`,'ok');}
 
+//CSRF 토큰 쿠키에서 읽기
+  function getCsrfToken() {
+    const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+
+  // 가게 기본 정보 저장
+  async function saveBrandInfo(btn) {
+    await loadingBtn(btn);
+    const body = new URLSearchParams({
+    	  brandName:    document.getElementById('s_name').value,
+    	  industryType: document.getElementById('s_category').value,
+    	  phone:        document.getElementById('s_tel').value,
+    	  address:      document.getElementById('s_addr').value,
+    	  locationName: document.getElementById('s_location_name').value, // 추가
+    	});
+    try {
+      const res = await fetch('/mypage/brand', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-XSRF-TOKEN': getCsrfToken()
+        },
+        body: body.toString()
+      });
+      if (res.ok || res.redirected) {
+        showToast('✅ 가게 기본 정보가 저장됐습니다.', 'ok');
+      } else {
+        showToast('❌ 저장에 실패했습니다.', 'err');
+      }
+    } catch(e) {
+      showToast('❌ 저장 중 오류가 발생했습니다.', 'err');
+    }
+  }
+  
   /* ═══ Toast ═══ */
   function showToast(msg,cls){
     const t=document.getElementById('toast');
     t.textContent=msg;t.className='toast show '+(cls||'');
     clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2800);
   }
+  
+  /* ═══ 콘텐츠 설정 로드 & 저장 ═══ */
+  const TONE_KO_MAP   = { 'default':'기본', 'friendly':'친근', 'clean':'깔끔', 'formal':'격식', 'trendy':'트렌디' };
+  const TONE_KEY_MAP  = { '기본':'default', '친근':'friendly', '깔끔':'clean', '격식':'formal', '트렌디':'trendy' };
+  const EMOJI_KO_MAP  = { 'few':'적게', 'moderate':'적당히', 'many':'많이' };
+  const EMOJI_KEY_MAP = { '적게':'few', '적당히':'moderate', '많이':'many' };
+
+  function loadContentSettings() {
+    fetch('/mypage/content-settings')
+      .then(res => { if (res.status === 204) return null; return res.json(); })
+      .then(data => {
+        if (!data) return;
+        if (data.introTemplate != null) document.getElementById('c_intro').value = data.introTemplate;
+        if (data.outroTemplate != null) document.getElementById('c_outro').value = data.outroTemplate;
+        if (data.tone) {
+          const key = TONE_KEY_MAP[data.tone];
+          document.querySelectorAll('#cToneGrid .tone-card').forEach(c =>
+            c.classList.toggle('selected', c.dataset.tone === key));
+        }
+        if (data.emojiLevel) {
+          const key = EMOJI_KEY_MAP[data.emojiLevel];
+          document.querySelectorAll('#cEmojiGrid .tone-card').forEach(c =>
+            c.classList.toggle('selected', c.dataset.emoji === key));
+        }
+        if (data.targetLength) {
+          const slider = document.getElementById('c_charlen');
+          slider.value = data.targetLength;
+          document.getElementById('cCharLenVal').textContent = data.targetLength + '자';
+        }
+        
+        if (data.preferredSns) {
+        	  const selected = data.preferredSns.split(',').map(s => s.trim());
+        	  document.querySelectorAll('#snsDefaultGrid .sns-check-item').forEach(item => {
+        	    const val = item.dataset.sns;
+        	    const on = selected.includes(val);
+        	    item.classList.toggle('checked', on);
+        	    item.querySelector('.check-circle').classList.toggle('on', on);
+        	  });
+        	}
+      })
+      .catch(e => console.warn('콘텐츠 설정 로드 실패:', e));
+  }
+
+  function getSelectedTone() {
+    const sel = document.querySelector('#cToneGrid .tone-card.selected');
+    return sel ? (TONE_KO_MAP[sel.dataset.tone] || '기본') : '기본';
+  }
+
+  function getSelectedEmoji() {
+    const sel = document.querySelector('#cEmojiGrid .tone-card.selected');
+    return sel ? (EMOJI_KO_MAP[sel.dataset.emoji] || '적당히') : '적당히';
+  }
+  
+  // 기본 SNS 세팅 함수 추가 (현재 미구현)
+  async function saveContentSettings(btn, label) {
+  const selected = Array.from(
+    document.querySelectorAll('#snsDefaultGrid .sns-check-item.checked')
+  ).map(el => el.dataset.sns).join(',');
+
+  await postContentSettings(btn, label, {
+    preferredSns: selected
+  });
+}
+
+  // 공통 POST 함수
+  async function postContentSettings(btn, label, body) {
+    await loadingBtn(btn);
+    try {
+      const res = await fetch('/mypage/content-settings', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': getCsrfToken() },
+        body:    JSON.stringify(body)
+      });
+      showToast(res.ok ? `✅ ${label}이(가) 저장됐습니다.` : '❌ 저장에 실패했습니다.', res.ok ? 'ok' : 'err');
+    } catch(e) {
+      showToast('❌ 저장 중 오류가 발생했습니다.', 'err');
+    }
+  }
+
+  // 인트로·아웃트로만 저장
+  async function saveIntroOutro(btn) {
+    await postContentSettings(btn, '인트로·아웃트로', {
+      introTemplate: document.getElementById('c_intro').value,
+      outroTemplate: document.getElementById('c_outro').value
+    });
+  }
+
+  // 스타일 설정만 저장 (말투 + 이모지 + 글자수)
+  async function saveContentStyle(btn) {
+    await postContentSettings(btn, '스타일 설정', {
+      tone:         getSelectedTone(),
+      emojiLevel:   getSelectedEmoji(),
+      targetLength: parseInt(document.getElementById('c_charlen').value)
+    });
+  }
+
+  loadContentSettings();
 
   /* ═══ Init ═══ */
   updateInqStats();
   renderInqList();
-    
-    /* ═══ Plan ═══ */
-let currentBilling = 'monthly';
-const PRICES = {
-  pro:  { monthly: '₩29,000', annual: '₩23,200' },
-  biz:  { monthly: '₩79,000', annual: '₩63,200' },
-};
-function setBilling(type) {
-  currentBilling = type;
-  const mBtn = document.getElementById('billingMonthly');
-  const aBtn = document.getElementById('billingAnnual');
-  const active = 'background:linear-gradient(135deg,var(--teal),var(--indigo));color:#fff;box-shadow:0 2px 6px rgba(20,184,166,.3);';
-  const inactive = 'background:transparent;color:var(--text3);';
-  mBtn.style.cssText = mBtn.style.cssText.replace(/background[^;]+;|color[^;]+;|box-shadow[^;]+;/g,'') + (type==='monthly' ? active : inactive);
-  aBtn.style.cssText = aBtn.style.cssText.replace(/background[^;]+;|color[^;]+;|box-shadow[^;]+;/g,'') + (type==='annual'  ? active : inactive);
-  document.getElementById('proPrice').innerHTML = PRICES.pro[type] + '<span style="font-size:12px;font-weight:500;color:var(--text3);">/월</span>';
-  document.getElementById('bizPrice').innerHTML = PRICES.biz[type] + '<span style="font-size:12px;font-weight:500;color:var(--text3);">/월</span>';
-  showToast(type==='annual' ? '🎉 연간 결제 시 20% 할인 적용됩니다.' : '월간 결제로 변경됐습니다.', 'ok');
-}
-function selectPlan(plan) {
-  if(plan==='pro') return; // 현재 플랜
-  if(plan==='free') { showToast('무료 플랜으로 다운그레이드하려면 구독을 취소해 주세요.','err'); return; }
-  showToast('비즈니스 플랜 업그레이드 페이지로 이동합니다.','ok');
-}
 
-/* ═══ 콘텐츠 히스토리 필터 ═══ */
-const HISTORY_DATA = [
-  { date:'2025-07-20', platform:'instagram', label:'Instagram',   icon:'📷', text:'여름 신메뉴 출시 🍹 시원한 피치 에이드와 함께하는 여름',  url:'#' },
-  { date:'2025-07-18', platform:'naver',     label:'네이버 블로그', icon:'🟢', text:'소셜다모아 카페의 여름 인테리어 변경 소식을 전합니다',      url:'#' },
-  { date:'2025-07-15', platform:'kakao',     label:'카카오 채널',   icon:'💛', text:'7월 멤버십 이벤트 안내 — 적립 2배 혜택 놓치지 마세요!',   url:'#' },
-  { date:'2025-07-10', platform:'facebook',  label:'Facebook',     icon:'📘', text:'카페 오픈 3주년 기념 감사 이벤트를 진행합니다 🎉',         url:'#' },
-  { date:'2025-07-05', platform:'community', label:'커뮤니티',      icon:'💬', text:'강남 카페 추천 — 소셜다모아 카페를 소개합니다',             url:'#' },
-  { date:'2025-02-14', platform:'instagram', label:'Instagram',   icon:'📷', text:'발렌타인데이 특별 음료 이벤트 안내',                        url:'#' },
-  { date:'2025-02-08', platform:'naver',     label:'네이버 블로그', icon:'🟢', text:'2월 신메뉴 소개 — 딸기 라떼 시즌 시작',                    url:'#' },
-];
+  /* ═══ 콘텐츠 히스토리 필터 ═══ */
+  const PLATFORM_STYLES = {
+    instagram: { bg:'#FDF2F8', border:'#FBCFE8', color:'#E1306C', icon:'📷', label:'Instagram'   },
+    facebook:  { bg:'#EFF6FF', border:'#BFDBFE', color:'#1877F2', icon:'📘', label:'Facebook'     },
+    naver:     { bg:'#F0FFF4', border:'#86EFAC', color:'#03C75A', icon:'🟢', label:'네이버 블로그' },
+    kakao:     { bg:'#FFFBEB', border:'#FDE68A', color:'#92400E', icon:'💛', label:'카카오 채널'   },
+    community: { bg:'#EEF2FF', border:'#C7D2FE', color:'#4F46E5', icon:'💬', label:'커뮤니티'     },
+  };
 
-const PLATFORM_STYLES = {
-  instagram: { bg:'#FDF2F8', border:'#FBCFE8', color:'#E1306C' },
-  facebook:  { bg:'#EFF6FF', border:'#BFDBFE', color:'#1877F2' },
-  naver:     { bg:'#F0FFF4', border:'#86EFAC', color:'#03C75A' },
-  kakao:     { bg:'#FFFBEB', border:'#FDE68A', color:'#92400E' },
-  community: { bg:'#EEF2FF', border:'#C7D2FE', color:'#4F46E5' },
-};
+  let _historyData = [];
 
-function renderHistory() {
-  const platform = document.getElementById('historyPlatformFilter').value;
-  const month    = document.getElementById('historyMonthFilter').value; // e.g. "2025-07"
+  // 오늘 날짜로 월 필터 초기화
+const _today = new Date();
+document.getElementById('historyMonthFilter').value =
+  _today.getFullYear() + '-' + String(_today.getMonth() + 1).padStart(2, '0');
 
-  const filtered = HISTORY_DATA.filter(h => {
-    const matchPlatform = platform === 'all' || h.platform === platform;
-    const matchMonth    = !month || h.date.startsWith(month);
-    return matchPlatform && matchMonth;
-  });
+loadContentHistory();
 
-  document.getElementById('historyCount').textContent = filtered.length;
-
-  const list = document.getElementById('historyList');
-  if (!filtered.length) {
-    list.innerHTML = `<div style="text-align:center;padding:40px;font-size:13px;color:var(--text3);">해당 조건의 콘텐츠가 없습니다.</div>`;
-    return;
+  async function loadContentHistory() {
+    try {
+      const res  = await fetch('/mypage/content-history');
+      _historyData = await res.json();
+    } catch(e) {
+      console.error('히스토리 로드 실패:', e);
+      _historyData = [];
+    }
+    renderHistory();
   }
 
-  list.innerHTML = filtered.map((h, i) => {
-    const s = PLATFORM_STYLES[h.platform];
-    const isLast = i === filtered.length - 1;
-    return `
-      <div style="display:flex;align-items:center;gap:14px;padding:14px 22px;${isLast ? '' : 'border-bottom:1px solid var(--border);'}transition:background .15s;"
-           onmouseover="this.style.background='var(--slate)'" onmouseout="this.style.background=''">
-        <div style="font-size:11px;color:var(--text3);white-space:nowrap;min-width:86px;">${h.date.replace(/-/g,'.')}</div>
-        <div style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;background:${s.bg};border:1px solid ${s.border};font-size:11px;font-weight:700;color:${s.color};white-space:nowrap;">
-          ${h.icon} ${h.label}
-        </div>
-        <div style="flex:1;font-size:13px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.text}</div>
-        <a href="${h.url}" target="_blank"
-           style="flex-shrink:0;height:30px;padding:0 12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--white);font-size:11px;font-weight:700;color:var(--text2);text-decoration:none;display:inline-flex;align-items:center;gap:4px;"
-           onmouseover="this.style.borderColor='var(--teal)';this.style.color='var(--teal-dark)'"
-           onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">원문 보기 ↗</a>
-      </div>`;
-  }).join('');
-}
+  function renderHistory() {
+    const platform = document.getElementById('historyPlatformFilter').value;
+    const month    = document.getElementById('historyMonthFilter').value;
 
-// 필터 변경 시 자동 적용
-document.getElementById('historyPlatformFilter').addEventListener('change', renderHistory);
-document.getElementById('historyMonthFilter').addEventListener('change', renderHistory);
+    const filtered = _historyData.filter(h => {
+      const matchPlatform = platform === 'all' || h.platformCode === platform;
+      const matchMonth    = !month || (h.publishedAt && h.publishedAt.startsWith(month));
+      return matchPlatform && matchMonth;
+    });
 
-// 초기 렌더
-renderHistory();
+    document.getElementById('historyCount').textContent = filtered.length;
+
+    const list = document.getElementById('historyList');
+    if (!filtered.length) {
+      list.innerHTML = `<div style="text-align:center;padding:40px;font-size:13px;color:var(--text3);">해당 조건의 콘텐츠가 없습니다.</div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map((h, i) => {
+      const s       = PLATFORM_STYLES[h.platformCode] || { bg:'#F5F5F5', border:'#DDD', color:'#999', icon:'📄', label: h.platformName };
+      const isLast  = i === filtered.length - 1;
+      const dateStr = h.publishedAt ? h.publishedAt.substring(0,10).replace(/-/g,'.') : '-';
+      const preview = h.postBody ? h.postBody.replace(/\n/g,' ').substring(0,40) + '…' : '';
+
+      return `
+        <div style="display:flex;align-items:center;gap:14px;padding:14px 22px;${isLast ? '' : 'border-bottom:1px solid var(--border);'}transition:background .15s;cursor:pointer;"
+             onmouseover="this.style.background='var(--slate)'" onmouseout="this.style.background=''"
+             onclick="openHistoryModal(${h.postId})">
+          <div style="font-size:11px;color:var(--text3);white-space:nowrap;min-width:86px;">${dateStr}</div>
+          <div style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;background:${s.bg};border:1px solid ${s.border};font-size:11px;font-weight:700;color:${s.color};white-space:nowrap;">
+            ${s.icon} ${s.label}
+          </div>
+          <div style="flex:1;font-size:13px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            ${h.postTitle || ''} — ${preview}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function openHistoryModal(postId) {
+    const h = _historyData.find(d => d.postId === postId);
+    if (!h) return;
+    const s = PLATFORM_STYLES[h.platformCode] || { bg:'#F5F5F5', border:'#DDD', color:'#999', icon:'📄', label: h.platformName };
+    document.getElementById('historyModalBody').innerHTML = `
+      <div style="margin-bottom:12px;">
+        <span style="padding:3px 10px;border-radius:100px;background:${s.bg};border:1px solid ${s.border};font-size:11px;font-weight:700;color:${s.color};">
+          ${s.icon} ${s.label}
+        </span>
+        <span style="margin-left:8px;font-size:12px;color:var(--text3);">${h.publishedAt ? h.publishedAt.substring(0,10) : ''}</span>
+      </div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:12px;">${h.postTitle || ''}</div>
+      <div style="font-size:13px;color:var(--text2);white-space:pre-wrap;line-height:1.8;">${h.postBody || ''}</div>`;
+    document.getElementById('historyModal').style.display = 'flex';
+  }
+
+  document.getElementById('historyPlatformFilter').addEventListener('change', renderHistory);
+  document.getElementById('historyMonthFilter').addEventListener('change', renderHistory);
+
+  loadContentHistory();
+  
+  /* ── 드로어 제어 ── */
+  function openDrawer(){
+    document.getElementById('drawer').classList.add('open');
+    document.getElementById('drawerOverlay').classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+  function closeDrawer(){
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('drawerOverlay').classList.remove('open');
+    document.body.style.overflow='';
+  }
+  /* ESC 키로 닫기 */
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
+
   </script>
+
+  <!-- 콘텐츠 히스토리 상세 모달 -->
+<div id="historyModal"
+  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;"
+  onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:var(--white);border-radius:var(--radius);padding:28px;width:520px;max-width:90vw;max-height:80vh;overflow-y:auto;position:relative;">
+    <button onclick="document.getElementById('historyModal').style.display='none'"
+      style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--text3);">✕</button>
+    <h3 style="margin:0 0 16px;font-size:16px;">콘텐츠 상세</h3>
+    <div id="historyModalBody"></div>
+  </div>
+</div>
+  
 </body>
 </html>
