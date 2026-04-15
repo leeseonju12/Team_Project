@@ -430,8 +430,7 @@ em {
       <div class="snav-divider"></div>
 
       <div class="snav-group-label">기타</div>
-      <div class="snav-item" data-sec="inquiry" onclick="showSection('inquiry',this);closeDrawer()"><span class="sni">💬</span>1:1 문의</div>
-      <div class="snav-item snav-danger" onclick="confirmWithdraw();closeDrawer()"><span class="sni">🚪</span>회원 탈퇴</div>
+      <div class="snav-item" data-sec="inquiry" onclick="showSection('inquiry',this);closeDrawer()"><span class="sni">📋</span>문의 내역</div>
     </nav>
   </div>
 
@@ -940,6 +939,8 @@ function showSection(id, el) {
     window.scrollTo({top:0,behavior:'smooth'});
     if(id==='inquiry') loadInquiries();  // 추가
   }
+  
+  
 
   /* ═══ Hours ═══ */
   const DAYS=['월','화','수','목','금','토','일'];
@@ -1270,6 +1271,14 @@ function showSection(id, el) {
     updateInqStats();
     renderInqList();
   }
+  
+  /* ═══ 문의하기 버튼 → customer-center 이동 ═══ */
+  window.toggleInqForm = function(open) {
+    if (!open) return;
+    const email = document.getElementById('currentUserEmail')?.value || '';
+    const url = '/customer-center.html?tab=inquiry' + (email ? '&email=' + encodeURIComponent(email) : '');
+    window.location.href = url;
+  };
 
   function updateInqStats(){
 	    const pending = INQUIRIES.filter(i=>i.status==='미처리').length;
@@ -1602,6 +1611,10 @@ loadContentHistory();
   /* ESC 키로 닫기 */
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
 
+  
+  
+  
+  
   </script>
 
   <!-- 콘텐츠 히스토리 상세 모달 -->
