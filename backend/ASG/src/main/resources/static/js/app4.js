@@ -6,14 +6,14 @@
 /* --------------------------------------------------------------------------
    1. Config
    -------------------------------------------------------------------------- */
-const PLATFORM_CONFIG = {
-  instagram: { label: 'INSTAGRAM', color: '#E1306C' },
-  facebook: { label: 'FACEBOOK', color: '#1877F2' },
-  naver: { label: 'BLOG', color: '#03C75A' },
-  blog: { label: 'BLOG', color: '#03C75A' },
-  kakao: { label: 'KAKAO', color: '#FEE500' },
-  community: { label: 'COMMUNITY', color: '#6366F1' }
-};
+   const PLATFORM_CONFIG = {
+     instagram: { label: 'INSTAGRAM', color: '#E1306C', actionType: 'publish', actionLabel: '즉시 발행' },
+     facebook:  { label: 'FACEBOOK',  color: '#1877F2', actionType: 'publish', actionLabel: '즉시 발행' },
+     naver:     { label: 'BLOG',      color: '#03C75A', actionType: 'copy',    actionLabel: '복사 후 발행' },
+     blog:      { label: 'BLOG',      color: '#03C75A', actionType: 'copy',    actionLabel: '복사 후 발행' },
+     kakao:     { label: 'KAKAO',     color: '#FEE500', actionType: 'copy',    actionLabel: '복사 후 발행' },
+     community: { label: 'COMMUNITY', color: '#6366F1', actionType: 'copy',    actionLabel: '복사 후 발행' }
+   };
 
 const PASTEL_PALETTE = {
   instagram: { backgroundColor: '#fce4ec', textColor: '#880e4f', borderColor: '#e1306c' },
@@ -143,6 +143,13 @@ const uiManager = {
     if (modalBody) {
       modalBody.innerHTML = (props.bodyText || '내용이 없습니다.').replace(/\n/g, '<br>');
     }
+
+    const currentPost = {
+      sns: normalizePlatformKey(props.sns || props.platform || '')
+    };
+
+    modal.dataset.sns = currentPost.sns;
+    updatePublishButtonByPlatform(currentPost);
 
     modal.classList.remove('hidden');
   },
@@ -317,6 +324,23 @@ function animateGeneratedText(sns, text, imageUrl) {
   }, 15);
 }
 
+function updatePublishButtonByPlatform(post) {
+  const btn = document.getElementById('pmBtnPublish');
+  if (!btn || !post) return;
+
+  const snsKey = normalizePlatformKey(post.sns);
+  const config = PLATFORM_CONFIG[snsKey];
+
+  btn.dataset.actionType = config?.actionType || 'publish';
+  btn.innerHTML = `
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <line x1="22" y1="2" x2="11" y2="13" />
+      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+    </svg>
+    ${config?.actionLabel || '즉시 발행'}
+  `;
+}
+
 /* --------------------------------------------------------------------------
    6. Core Actions
    -------------------------------------------------------------------------- */
@@ -359,36 +383,68 @@ function animateGeneratedText(sns, text, imageUrl) {
      }
    };
 
-window.publishPost = async function (sns) {
-  const content = state.generatedContent[sns];
+   window.publishPost = async function (sns) {
+     const content = state.generatedContent[sns];
 
-  if (!content?.text) {
-    uiManager.showToast('먼저 AI 콘텐츠를 생성해주세요.');
-    return;
-  }
+     if (!content?.text) {
+       uiManager.showToast('먼저 AI 콘텐츠를 생성해주세요.');
+       return;
+     }
 
-  uiManager.toggleLoading(true);
-  uiManager.showToast(`${PLATFORM_CONFIG[sns]?.label || sns}에 게시 중입니다. 잠시만 기다려주세요...`);
+     uiManager.toggleLoading(true);
+     uiManager.showToast(`${PLATFORM_CONFIG[sns]?.label || sns}에 게시 중입니다. 잠시만 기다려주세요...`);
 
-  try {
-    const result = await apiService.publishContent(
-      sns,
-      content.text,
-      state.uploadedFiles[0] || null
-    );
+     try {
+       const result = await apiService.publishContent(
+         sns,
+         content.text,
+         state.uploadedFiles[0] || null
+       );
 
-    if (result.status === 'success') {
-      uiManager.showToast(`${PLATFORM_CONFIG[sns]?.label || sns}에 성공적으로 게시되었습니다!`);
-    } else {
-      uiManager.showToast(`게시 실패: ${result.message || '알 수 없는 오류'}`);
-    }
-  } catch (error) {
-    console.error('[App] 발행 통신 오류:', error);
-    uiManager.showToast('서버와의 통신 중 오류가 발생했습니다.');
-  } finally {
-    uiManager.toggleLoading(false);
-  }
-};
+       if (result.status === 'success') {
+         uiManager.showToast(`${PLATFORM_CONFIG[sns]?.label || sns}에 성공적으로 게시되었습니다!`);
+       } else {
+         uiManager.showToast(`게시 실패: ${result.message || '알 수 없는 오류'}`);
+       }
+     } catch (error) {
+       console.error('[App] 발행 통신 오류:', error);
+       uiManager.showToast('서버와의 통신 중 오류가 발생했습니다.');
+     } finally {
+       uiManager.toggleLoading(false);
+     }
+   };
+   
+   window.copyPostContent = async function (sns) {
+     const content = state.generatedContent[sns];
+
+     if (!content?.text) {
+       uiManager.showToast('먼저 AI 콘텐츠를 생성해주세요.');
+       return;
+     }
+
+     try {
+       await navigator.clipboard.writeText(content.text);
+       uiManager.showToast('복사 완료! 붙여넣어 발행하세요.');
+     } catch (error) {
+       console.error(error);
+       uiManager.showToast('복사 실패');
+     }
+   };
+   
+   window.handlePmPublishAction = async function () {
+     const modal = document.getElementById('previewModal');
+     const sns = normalizePlatformKey(modal?.dataset?.sns || '');
+
+     if (!sns) return;
+
+     const config = PLATFORM_CONFIG[sns];
+
+     if (config?.actionType === 'copy') {
+       await copyPostContent(sns);
+     } else {
+       await publishPost(sns);
+     }
+   };
 
 /* --------------------------------------------------------------------------
    7. Pending Posts & Data Synchronization
