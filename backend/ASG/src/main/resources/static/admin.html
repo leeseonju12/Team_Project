@@ -1230,13 +1230,22 @@
               ${renderAttachments(inq)}
               ${renderReplies(inq)}
 
-              <div class="new-reply-box">
-                <div class="new-reply-title">답변 등록</div>
-                <textarea id="reply-new-${inq.id}" class="reply-edit-ta" placeholder="답변 내용을 입력하세요"></textarea>
-                <div class="reply-inline-actions">
-                  <button type="button" class="btn-main" onclick="createReply(${inq.id})">답변 등록</button>
+              ${inq.status !== '처리완료' ? `
+                <div class="new-reply-box">
+                  <div class="new-reply-title">답변 등록</div>
+                  <textarea id="reply-new-${inq.id}" class="reply-edit-ta" placeholder="답변 내용을 입력하세요"></textarea>
+                  <div class="reply-inline-actions">
+                    <button type="button" class="btn-line"
+                      onclick="event.stopPropagation(); setStatus(${inq.id}, '처리중')">
+                      🔄 처리중
+                    </button>
+                    <button type="button" class="btn-main"
+                      onclick="event.stopPropagation(); createReply(${inq.id})">
+                      답변 등록
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ` : ''}
             </div>
           </div>
         `).join('') : `
@@ -1288,6 +1297,21 @@
         if (editWrap) editWrap.style.display = 'none';
         if (actions) actions.style.display = 'flex';
     }
+    
+ // 추가
+    async function setStatus(inquiryId, status) {
+        try {
+            await fetchWithAdmin(`/api/admin/inquiries/${inquiryId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            await loadInquiries();
+        } catch (err) {
+            console.error(err);
+            alert('상태 변경 실패\n' + err.message);
+        }
+    }
 
     async function createReply(inquiryId) {
         const textarea = document.getElementById(`reply-new-${inquiryId}`);
@@ -1299,11 +1323,11 @@
         }
 
         try {
-            await fetchWithAdmin(`/api/admin/inquiries/${inquiryId}/replies`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content })
-            });
+        	await fetchWithAdmin(`/api/admin/replies/${inquiryId}`, {
+        	    method: 'POST',
+        	    headers: { 'Content-Type': 'application/json' },
+        	    body: JSON.stringify({ content })
+        	});
 
             textarea.value = '';
             await loadInquiries();
@@ -1323,11 +1347,11 @@
         }
 
         try {
-            await fetchWithAdmin(`/api/admin/inquiries/${inquiryId}/replies/${replyId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content })
-            });
+        	await fetchWithAdmin(`/api/admin/replies/${replyId}/edit`, {
+        	    method: 'PUT',
+        	    headers: { 'Content-Type': 'application/json' },
+        	    body: JSON.stringify({ content })
+        	});
 
             await loadInquiries();
         } catch (err) {
@@ -1340,9 +1364,9 @@
         if (!confirm('답변을 삭제하시겠습니까?')) return;
 
         try {
-            await fetchWithAdmin(`/api/admin/inquiries/${inquiryId}/replies/${replyId}`, {
-                method: 'DELETE'
-            });
+        	await fetchWithAdmin(`/api/admin/replies/${replyId}`, {
+        	    method: 'DELETE'
+        	});
 
             await loadInquiries();
         } catch (err) {

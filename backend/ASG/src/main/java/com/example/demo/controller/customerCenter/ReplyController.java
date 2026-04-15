@@ -39,13 +39,28 @@ public class ReplyController {
         reply.setContent(content);
 
         Reply savedReply = replyRepository.save(reply);
+        
+     // 답변 등록 시 상태 자동 처리완료 변경
+        inquiry.setStatus("처리완료");
+        inquiryRepository.save(inquiry);
 
-        // 답변 등록 후 사용자 이메일 발송
+        /* 답변 등록 후 사용자 이메일 발송, 비활성
         emailService.sendReplyToUser(
                 inquiry.getEmail(),
                 inquiry.getTitle(),
                 content
-        );
+        );*/
+        
+     // 이메일 발송 (더미 계정 사용 중 — 실패해도 답변 등록은 정상 처리)
+        try {
+            emailService.sendReplyToUser(
+                    inquiry.getEmail(),
+                    inquiry.getTitle(),
+                    content
+            );
+        } catch (Exception e) {
+            System.out.println("[이메일 발송 스킵] " + e.getMessage());
+        }
 
         return savedReply;
     }
@@ -64,12 +79,25 @@ public class ReplyController {
     }
 
     // 답변 삭제
+ // 수정 후
     @DeleteMapping("/api/admin/replies/{replyId}")
     public Map<String, String> deleteReply(@PathVariable Long replyId) {
         Reply reply = replyRepository.findById(replyId)
                 .orElseThrow(() -> new RuntimeException("답변 없음"));
 
+        Long inquiryId = reply.getInquiryId();
         replyRepository.delete(reply);
+
+        // 남은 답변이 0개면 문의 상태를 미처리로 복구
+        List<Reply> remaining = replyRepository.findByInquiryIdOrderByIdAsc(inquiryId);
+        if (remaining.isEmpty()) {
+            Inquiry inquiry = inquiryRepository.findById(inquiryId).orElse(null);
+            if (inquiry != null) {
+                inquiry.setStatus("미처리");
+                inquiryRepository.save(inquiry);
+            }
+        }
+
         return Map.of("result", "ok");
     }
 }

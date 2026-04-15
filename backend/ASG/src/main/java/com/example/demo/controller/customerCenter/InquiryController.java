@@ -14,6 +14,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Value;
 
+import com.example.demo.entity.customerCenter.Reply;
+import com.example.demo.repository.customerCenter.ReplyRepository;
+import java.util.LinkedHashMap;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -106,9 +110,26 @@ public class InquiryController {
      * 관리자 전체 문의 조회
      * GET /api/admin/inquiries
      */
+ // 수정 후
     @GetMapping("/api/admin/inquiries")
-    public List<Inquiry> getAll() {
-        return inquiryRepository.findAllByOrderByIdDesc();
+    public List<Map<String, Object>> getAll() {
+        List<Inquiry> inquiries = inquiryRepository.findAllByOrderByIdDesc();
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (Inquiry inq : inquiries) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("id",                  inq.getId());
+            item.put("type",                inq.getType());
+            item.put("email",               inq.getEmail());
+            item.put("title",               inq.getTitle());
+            item.put("body",                inq.getBody() != null ? inq.getBody() : inq.getContent());
+            item.put("status",              inq.getStatus());
+            item.put("createdAt",           inq.getCreatedAt());
+            item.put("attachmentNames",     parseAttachmentNames(inq.getAttachmentNames()));
+            item.put("replies",             replyRepository.findByInquiryIdOrderByIdAsc(inq.getId()));
+            result.add(item);
+        }
+        return result;
     }
 
     /**
