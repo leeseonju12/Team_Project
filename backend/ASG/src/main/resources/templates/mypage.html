@@ -1261,7 +1261,7 @@ function showSection(id, el) {
 
   async function loadInquiries(){
     try{
-    	const res = await fetch(`/mypage/inquiry?email=${encodeURIComponent(INQ_USER_EMAIL)}`);
+    	const res = await fetch(`/api/inquiry?email=${encodeURIComponent(INQ_USER_EMAIL)}`);
       if(!res.ok) throw new Error();
       INQUIRIES = await res.json();
     } catch(e){
@@ -1272,19 +1272,19 @@ function showSection(id, el) {
   }
 
   function updateInqStats(){
-	    const pending = INQUIRIES.filter(i=>i.status==='WAIT').length;
+	    const pending = INQUIRIES.filter(i=>i.status==='미처리').length;
 	    document.getElementById('statTotal').textContent   = INQUIRIES.length;
 	    document.getElementById('statPending').textContent = pending;
-	    document.getElementById('statDone').textContent    = INQUIRIES.filter(i=>i.status==='DONE').length;
+	    document.getElementById('statDone').textContent    = INQUIRIES.filter(i=>i.status==='처리완료').length;
 	    const b=document.getElementById('inqBadge');
 	    if(b) b.textContent = pending;
-	  }
+	}
 
 	function getFiltered(){
 	    return INQUIRIES.filter(i=>{
 	      const mf = inqFilter==='all'
-	        || (inqFilter==='pending'  && i.status==='WAIT')
-	        || (inqFilter==='answered' && i.status==='DONE');
+	        || (inqFilter==='pending'  && i.status==='미처리')
+	        || (inqFilter==='answered' && i.status==='처리완료');
 	      const ms = !inqSearch
 	        || i.title.includes(inqSearch)
 	        || i.body.includes(inqSearch)
@@ -1302,7 +1302,7 @@ function showSection(id, el) {
       return;
     }
     c.innerHTML=list.map(inq=>{
-    	const isPending = inq.status==='WAIT';
+    	const isPending = inq.status==='미처리';
       const badgeCls  = isPending ? 'pending' : 'answered';
       const badgeLbl  = isPending ? '답변 대기' : '답변 완료';
       const typeBadge = inq.type
