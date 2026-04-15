@@ -188,6 +188,16 @@ public class User {
     public void applyContentSettings(ContentSettings settings) {
         this.contentSettings = settings;
     }
+    
+    // 탈퇴 관련 메서드
+    public void withdraw() {
+        this.status = UserStatus.INACTIVE;
+    }
+    
+    // 가게 대표 전화번호 업데이트
+    public void updateStorePhone(String storePhoneNumber) {
+        this.storePhoneNumber = storePhoneNumber;
+    }
 
     public static User createSocialUser(String provider, String providerId,
                                          String email, String name) {

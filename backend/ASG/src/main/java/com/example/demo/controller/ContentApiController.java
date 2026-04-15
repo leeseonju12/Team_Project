@@ -8,9 +8,7 @@ import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -76,39 +74,19 @@ public class ContentApiController {
 		}).collect(Collectors.toList());
 	}
 
-//	/**
-//	 * 3. 일정 저장 및 변경 (드래그 앤 드롭)
-//	 */
-//	@PostMapping("/schedule")
-//	public ResponseEntity<?> updateSchedule(@RequestBody ScheduleRequestDto request) {
-//		try {
-//			// DTO 필드명 contentId 및 서비스 메서드명 변경 반영
-//			generatedContentService.updateContentSchedule(request.getContentId(), request.getScheduledDate());
-//			return ResponseEntity.ok(Map.of("success", true, "message", "일정이 업데이트되었습니다."));
-//		} catch (Exception e) {
-//			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//					.body(Map.of("success", false, "message", e.getMessage()));
-//		}
-//	}
-	
-	@PutMapping("/{contentId}/schedule")
-	public ResponseEntity<?> updateSchedule(
-	        @PathVariable Long contentId,
-	        @RequestBody ScheduleRequestDto request) {
-	    try {
-	        // 식별자는 URL Path에서, 수정할 날짜 데이터는 Request Body에서 추출하여 서비스 메서드 호출
-	        generatedContentService.updateContentSchedule(contentId, request.getScheduledDate());
-	        
-	        return ResponseEntity.ok(Map.of("success", true, "message", "일정이 업데이트되었습니다."));
-	    } catch (IllegalArgumentException e) {
-	        // 리소스를 찾을 수 없거나 유효하지 않은 요청일 경우 400 상태 코드 반환
-	        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-	                .body(Map.of("success", false, "message", e.getMessage()));
-	    } catch (Exception e) {
-	        // 그 외 서버 에러 발생 시 500 상태 코드 반환
-	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-	                .body(Map.of("success", false, "message", "일정 처리 중 서버 오류가 발생했습니다."));
-	    }
+	/**
+	 * 3. 일정 저장 및 변경 (드래그 앤 드롭)
+	 */
+	@PostMapping("/schedule")
+	public ResponseEntity<?> updateSchedule(@RequestBody ScheduleRequestDto request) {
+		try {
+			// DTO 필드명 contentId 및 서비스 메서드명 변경 반영
+			generatedContentService.updateContentSchedule(request.getContentId(), request.getScheduledDate());
+			return ResponseEntity.ok(Map.of("success", true, "message", "일정이 업데이트되었습니다."));
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(Map.of("success", false, "message", e.getMessage()));
+		}
 	}
 
 	// --- 기존 SNS 콘텐츠 생성 및 발행 로직 ---

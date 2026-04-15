@@ -362,7 +362,7 @@
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
           </svg>수정하기</button>
-        <button class="pm-btn pm-btn-publish" id="pmBtnPublish"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <button class="pm-btn pm-btn-publish" id="pmBtnPublish" onclick="handlePmPublishAction()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="22" y1="2" x2="11" y2="13" />
             <polygon points="22 2 15 22 11 13 2 9 22 2" />
           </svg>즉시 발행</button>
@@ -377,7 +377,6 @@
         <div class="logo-text">소셜다모아<span>Intelligence Marketing</span></div>
       </div>
       <div class="header-right">
-        <div class="header-stat" id="scheduledCount">📅 예약 0건</div>
         <div class="header-badge">AI 자동화 활성</div>
       </div>
     </header>
@@ -500,7 +499,6 @@
             <button class="btn-generate" id="generateBtn" onclick="generateContent()">
               <div class="spinner"></div>
               <span class="btn-text">✦ AI 콘텐츠 생성하기</span>
-              <span class="ai-badge" style="background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.35);color:#fff;">Claude</span>
             </button>
           </div>
         </div>
@@ -508,7 +506,23 @@
 
 <div class="center-col">
   <div class="panel" style="min-height:800px;">
-    
+
+    <!-- 생성 결과 / 기록 불러오기 -->
+    <div class="result-header" style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:1px solid #f1f5f9;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div class="panel-icon" style="background:rgba(99,102,241,0.14); padding:4px; border-radius:6px;">✨</div>
+        <h2 style="font-size:14px; font-weight:700; color:#1e293b; margin:0;">콘텐츠 생성 결과</h2>
+      </div>
+
+      <button class="btn-history-load" onclick="loadCenterHistory()" style="display:flex; align-items:center; gap:5px; padding:6px 12px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; font-size:12px; font-weight:600; color:#64748b; cursor:pointer; transition:all 0.2s;">
+        <svg width="14" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        기록 불러오기
+      </button>
+    </div>
+
+    <!-- 탭바 -->
     <div class="tab-bar" id="tabBar">
       <button class="tab-btn active" data-tab="instagram"><span class="dot"></span>Instagram</button>
       <button class="tab-btn" data-tab="facebook"><span class="dot"></span>Facebook</button>
@@ -516,21 +530,7 @@
       <button class="tab-btn" data-tab="kakao"><span class="dot"></span>카카오</button>
       <button class="tab-btn" data-tab="community"><span class="dot"></span>커뮤니티</button>
     </div>
-
-    <div class="result-header" style="display:flex; justify-content:space-between; align-items:center; padding:15px 20px; border-bottom:1px solid #f1f5f9;">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <div class="panel-icon" style="background:rgba(99,102,241,0.14); padding:5px; border-radius:6px;">✨</div>
-        <h2 style="font-size:16px; font-weight:700; color:#1e293b; margin:0;">생성 결과</h2>
-      </div>
-      
-      <button class="btn-history-load" onclick="loadCenterHistory()" style="display:flex; align-items:center; gap:5px; padding:6px 12px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; font-size:12px; font-weight:600; color:#64748b; cursor:pointer; transition:all 0.2s;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        기록 불러오기
-      </button>
-    </div>
-
+    
     <div class="panes-container">
       
       <div class="output-pane active" id="pane-instagram">
@@ -693,16 +693,20 @@
           <div id="fullcalendar" style="padding:0 8px 10px;"></div>
         </div>
 
-        <div class="pending-panel" id="pendingPanel">
+        <div class="panel pending-panel" id="pendingPanel">
           <div class="pending-header">
             <div class="panel-icon" style="background:rgba(99,102,241,0.14);font-size:12px;">📋</div>
             <h3>미배정 포스트 (Pending)</h3>
             <button class="btn-load-pending" onclick="loadPendingFromDB()" title="과거 내역 불러오기">
-	            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-		        	<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-		      	</svg>
-		      불러오기
-		    </button>
+			  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+			       stroke="currentColor"
+			       stroke-width="1.5"
+			       stroke-linecap="round"
+			       stroke-linejoin="round">
+			    <path d="M12 8v4l3 3"/>
+			    <circle cx="12" cy="12" r="9"/>
+			  </svg>
+			</button>
             <div class="pending-count-badge" id="pendingCountBadge">0</div>
           </div>
           <div id="pendingList" class="pending-list">
