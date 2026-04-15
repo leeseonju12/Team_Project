@@ -16,7 +16,7 @@
       --text:#0F172A;--text2:#475569;--text3:#94A3B8;
       --white:#FFFFFF;--border:#E2E8F0;--border2:#CBD5E1;
       --green:#22C55E;--green-light:#DCFCE7;
-      --red:#EF4444;--red-light:#FEE2E2;
+      --red:#EF4444;--red-light:#FEE2E2;+
       --yellow:#F59E0B;--yellow-light:#FEF3C7;
       --orange:#F97316;--purple:#8B5CF6;--purple-light:#EDE9FE;
       --radius:14px;--radius-sm:9px;
@@ -267,6 +267,8 @@
     .inq-badge{padding:3px 8px;border-radius:100px;font-size:10px;font-weight:800;white-space:nowrap;flex-shrink:0;}
     .inq-badge.pending{background:var(--yellow-light);color:#92400E;}
     .inq-badge.answered{background:var(--green-light);color:#15803D;}
+    /* 추가 */
+	.inq-badge.processing{background:rgba(59,130,246,.12);color:#1d4ed8;}
     .inq-badge.closed{background:var(--slate2);color:var(--text3);}
     .inq-cat-badge{padding:3px 8px;border-radius:100px;font-size:10px;font-weight:700;background:var(--indigo-light);color:var(--indigo-dark);white-space:nowrap;flex-shrink:0;}
     .inq-title{font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -858,9 +860,11 @@ em {
         
         <div class="inq-filter-row">
           <div class="inq-filter-tabs">
-            <button class="inq-tab active" onclick="filterInq('all',this)">전체</button>
-            <button class="inq-tab" onclick="filterInq('pending',this)">답변 대기</button>
-            <button class="inq-tab" onclick="filterInq('answered',this)">답변 완료</button>
+            <!-- 수정 후 -->
+<button class="inq-tab active" onclick="filterInq('all',this)">전체</button>
+<button class="inq-tab" onclick="filterInq('pending',this)">답변 대기</button>
+<button class="inq-tab" onclick="filterInq('processing',this)">처리중</button>
+<button class="inq-tab" onclick="filterInq('answered',this)">답변 완료</button>
           </div>
           <div class="inq-search-wrap">
             <input class="inq-search" type="text" placeholder="🔍  문의 검색" oninput="searchInq(this.value)" />
@@ -1261,16 +1265,27 @@ function showSection(id, el) {
   let INQUIRIES=[], inqFilter='all', inqSearch='';
 
   async function loadInquiries(){
-    try{
-    	const res = await fetch(`/api/inquiry?email=${encodeURIComponent(INQ_USER_EMAIL)}`);
-      if(!res.ok) throw new Error();
-      INQUIRIES = await res.json();
-    } catch(e){
-      INQUIRIES = [];
-    }
-    updateInqStats();
-    renderInqList();
-  }
+	    try{
+	        const res = await fetch(`/api/inquiry?email=${encodeURIComponent(INQ_USER_EMAIL)}`);
+	        if(!res.ok) throw new Error();
+	        INQUIRIES = await res.json();
+	    } catch(e){
+	        INQUIRIES = [];
+	    }
+	    updateInqStats();
+
+	    // 추가 — URL 파라미터로 탭 자동 활성화
+	    const urlParams = new URLSearchParams(window.location.search);
+	    const filter = urlParams.get('filter');
+	    if (filter === 'pending') {
+	        inqFilter = 'pending';
+	        document.querySelectorAll('.inq-tab').forEach(t => {
+	            t.classList.toggle('active', t.textContent.trim() === '답변 대기');
+	        });
+	    }
+
+	    renderInqList();
+	}
   
   /* ═══ 문의하기 버튼 → customer-center 이동 ═══ */
   window.toggleInqForm = function(open) {
@@ -1291,9 +1306,10 @@ function showSection(id, el) {
 
 	function getFiltered(){
 	    return INQUIRIES.filter(i=>{
-	      const mf = inqFilter==='all'
-	        || (inqFilter==='pending'  && i.status==='미처리')
-	        || (inqFilter==='answered' && i.status==='처리완료');
+	    	const mf = inqFilter==='all'
+	    		  || (inqFilter==='pending'    && i.status==='미처리')
+	    		  || (inqFilter==='processing' && i.status==='처리중')
+	    		  || (inqFilter==='answered'   && i.status==='처리완료');
 	      const ms = !inqSearch
 	        || i.title.includes(inqSearch)
 	        || i.body.includes(inqSearch)
@@ -1311,9 +1327,15 @@ function showSection(id, el) {
       return;
     }
     c.innerHTML=list.map(inq=>{
-    	const isPending = inq.status==='미처리';
-      const badgeCls  = isPending ? 'pending' : 'answered';
-      const badgeLbl  = isPending ? '답변 대기' : '답변 완료';
+    	// 수정 후
+    	const badgeMap = {
+    	  '미처리':  { cls: 'pending',    lbl: '답변 대기' },
+    	  '처리중':  { cls: 'processing', lbl: '처리중'    },
+    	  '처리완료':{ cls: 'answered',   lbl: '답변 완료' },
+    	};
+    	const badge    = badgeMap[inq.status] || badgeMap['미처리'];
+    	const badgeCls = badge.cls;
+    	const badgeLbl = badge.lbl;
       const typeBadge = inq.type
         ? `<span class="inq-cat-badge">${inq.type}</span>` : '';
       const attachHtml = (inq.attachmentNames||[]).length

@@ -1587,11 +1587,15 @@
 
             if (!response.ok) throw new Error('문의 접수 실패');
 
+         // 수정 후
             await response.json();
             inquiryForm.reset();
             selectedFiles = [];
             renderFiles();
-            showMessage('문의가 정상적으로 접수되었습니다.', 'success');
+            showMessage('문의가 정상적으로 접수되었습니다. 잠시 후 마이페이지로 이동합니다.', 'success');
+            setTimeout(() => {
+                window.location.href = '/mypage#sec-inquiry?filter=pending';
+            }, 1500);
         } catch (error) {
             console.error(error);
             showMessage('문의 접수 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
@@ -1601,11 +1605,15 @@
         }
     });
 
-    bindFaqTypeTabs();
-    renderFiles();
-    loadFaqs();
-    loadNotices();
-    switchView('faq');
+ // URL 파라미터 확인 후 탭 결정
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam === 'inquiry') {
+        switchView('inquiry');
+    } else {
+        switchView('faq');
+    }
+    
 </script>
 </body>
 </html>
