@@ -404,7 +404,7 @@
     .stag.completed { background: var(--green-light); color: var(--green-dark); }
     .stag.sending { background: var(--orange-light); color: #C2410C; }
 
-    .review-cell { max-width: 280px; color: var(--text); line-height: 1.65; word-break: keep-all; white-space: pre-wrap; }
+    .review-cell { max-width: 800px; color: var(--text); line-height: 1.65; word-break: keep-all; white-space: pre-wrap; }
     .reply-full { min-width: 270px; max-width: 420px; white-space: pre-wrap; line-height: 1.65; color: var(--teal-dark); font-size: 12px; word-break: keep-all; }
     .reply-empty { font-size: 12px; color: var(--text3); font-style: italic; }
 
@@ -1125,6 +1125,13 @@
     // --- 초기 실행 ---
     fetchFeedbackData();
   </script>
+  
+  
+  	<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  
+     <link rel="stylesheet" href="/css/chat-widget.css">
+    <script src="/js/chat-widget.js"></script>
 </body>
 
 </html>
