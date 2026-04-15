@@ -111,7 +111,7 @@ window.CalendarManager = (function () {
         if (deps.state.calendarInstance) {
             deps.state.calendarInstance.destroy();
             deps.state.calendarInstance = null;
-            calendarDropEventsBound = false; // [FIX] 재초기화 시 드롭존 재바인딩 허용
+            calendarDropEventsBound = false; 
         }
 
         deps.state.calendarInstance = new FullCalendar.Calendar(calEl, {
@@ -123,24 +123,19 @@ window.CalendarManager = (function () {
             droppable: true,
             events: '/api/posts/events',
 			
-			// [추가] 이벤트가 렌더링될 때 HTML 구조를 직접 정의 (파란 점 생성)
 			        eventContent: function(arg) {
-			            // resolveEventSns는 기존 코드의 6번 섹션에 있는 함수를 활용
 			            const sns = resolveEventSns(arg.event);
 			            const palette = deps.PASTEL_PALETTE[sns] || { borderColor: '#6366f1' };
 			            
-			            // 점(pi-dot)에 borderColor를 주입하여 색상 동기화
 			            return {
 			                html: `
 			                    <div class="fc-event-main-frame">
-			                        <span class="pi-dot" style="background-color: ${palette.borderColor}"></span>
 			                        <span class="fc-event-title">${arg.event.title}</span>
 			                    </div>
 			                `
 			            };
 			        },
 
-			        // [추가] 요소가 생성된 후 배경색과 왼쪽 선 색상을 강제 주입
 			        eventDidMount: function(arg) {
 			            const sns = resolveEventSns(arg.event);
 			            const palette = deps.PASTEL_PALETTE[sns];
