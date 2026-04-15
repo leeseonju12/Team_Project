@@ -927,11 +927,20 @@ em {
   /* ═══ Nav ═══ */
   
   // 페이지 로드 시 ?sec=xxx 파라미터 확인
+// 수정 후
 window.addEventListener('DOMContentLoaded', () => {
-  const sec = new URLSearchParams(window.location.search).get('sec');
+  const params = new URLSearchParams(window.location.search);
+  const sec = params.get('sec');
+  const filter = params.get('filter');
+
   if (sec) {
     const el = document.querySelector(`.snav-item[data-sec="${sec}"]`);
     if (el) showSection(sec, el);
+  }
+
+  if (filter === 'pending') {
+    const el = document.querySelector(`.snav-item[data-sec="inquiry"]`);
+    if (el) showSection('inquiry', el);
   }
 });
   
