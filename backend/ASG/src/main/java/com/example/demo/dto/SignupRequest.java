@@ -18,6 +18,7 @@ public class SignupRequest {
     private String companyName;
     private String businessCategory;
     private String preferredChannel;
+    private String locationName;   // 지점명 추가
 
     // ── Screen 3-①: 주소 
     private String roadAddrPart1;   // 도로명주소 본체

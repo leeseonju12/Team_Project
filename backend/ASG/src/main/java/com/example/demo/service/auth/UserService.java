@@ -70,8 +70,8 @@ public class UserService {
 		brand.setUser(user);
 		brand.setBrandName(dto.getCompanyName());
 		brand.setIndustryType(dto.getBusinessCategory());
-		brand.setAddress(dto.getRoadAddrPart1());
-		brand.setLocationName(dto.getAddrDetail());
+		brand.setAddress(stripZipCode(dto.getRoadAddrPart1()));
+		brand.setLocationName(dto.getLocationName());
 		brandRepository.save(brand);
 
 		log.info("회원가입 온보딩 완료 - userId={}, nickname={}", userId, user.getNickname());
@@ -103,5 +103,11 @@ public class UserService {
 
 		return ContentSettings.createFromOnboarding(user, dto.getIntroTemplate(), dto.getOutroTemplate(), dto.getTone(),
 				dto.getEmojiLevel(), dto.getTargetLength());
+	}
+	
+	// ── 우편번호 제거 헬퍼 ──────────────────────────────────
+	private String stripZipCode(String address) {
+	    if (address == null) return null;
+	    return address.replaceAll("^\\[\\d+\\]\\s*", "").trim();
 	}
 }

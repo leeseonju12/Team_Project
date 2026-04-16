@@ -931,6 +931,12 @@ em {
               <option value="YOUTUBE">YouTube</option>
             </select>
           </div>
+          
+          <!-- 지점명 -->
+<div class="field">
+  <label class="field-label" for="locationName">지점명</label>
+  <input type="text" class="input" id="locationName" placeholder="예) 본점, 강남점 (없으면 비워두세요)" />
+</div>
 
           <!-- 주소 -->
           <div class="field">
@@ -1264,6 +1270,7 @@ em {
 	 const roadAddrPart1 = document.getElementById('addressText')?.textContent.trim() || ''; // DTO 필드명 매핑
 	 const addrDetail = document.getElementById('addressDetail')?.value.trim() || '';
 	 const storePhoneNumber = document.getElementById('storeTel')?.value.replace(/\D/g,'') || '';
+	 const locationName = document.getElementById('locationName')?.value.trim() || ''; // 지점명 추가
 	 
 	 // 2. 영업시간 데이터 수집 (DTO의 List<BusinessHourItem> 구조 생성)
 	 const businessHoursData = [];
@@ -1299,7 +1306,7 @@ em {
 	 // 6. 일반 필드 추가 (address -> roadAddrPart1 로 매핑 변경)
 	 const fields = {
     contactPhone, nickname, companyName, businessCategory,
-    preferredChannel, roadAddrPart1, addrDetail, storePhoneNumber,
+    preferredChannel, locationName, roadAddrPart1, addrDetail, storePhoneNumber,
     // true/false를 1/0으로 명확히 변환
     termsAgreed: termState.checkT1 ? "true" : "false", 
     privacyAgreed: termState.checkT2 ? "true" : "false", 

@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
     List<Inquiry> findByEmailOrderByCreatedAtDesc(String email);
+    List<Inquiry> findAllByOrderByIdDesc();
 }

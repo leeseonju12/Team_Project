@@ -1,4 +1,7 @@
-/* 정렬 및 실행 순서
+/* 
+260414 마지막 수정
+
+정렬 및 실행 순서
 create > index > alter > insert
 
 [실행 순서 보장 근거]
@@ -10,6 +13,13 @@ create > index > alter > insert
   date_dimension : content_post(published_date_key) / *_metric_daily 의 date_key FK 선행 필요
   content_post   : post_metric_daily 의 post_id FK 선행 필요
   users          : brand UPDATE(user_id) 는 users INSERT 이후 → 마지막 블록
+
+[customerCenter 관련 테이블]
+  inquiry        : type / body / attachment_names / attachment_saved_names 컬럼 포함, status 기본값 '미처리'
+  notice         : 공지사항 (독립 테이블, FK 없음)
+  faq            : 자주묻는질문 (독립 테이블, FK 없음)
+  reply          : inquiry_id 논리적 참조 (물리 FK 없음 — cascade 충돌 방지)
+  admin_user     : 고객센터 관리자 계정 (독립 테이블, FK 없음)
 */
 
 DROP DATABASE IF EXISTS gather;
@@ -399,14 +409,59 @@ CREATE TABLE `strategy_recommendation_item` (
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `inquiry` (
-  `id`         BIGINT       NOT NULL AUTO_INCREMENT,
-  `title`      VARCHAR(255) NOT NULL,
-  `content`    TEXT         NOT NULL,
-  `email`      VARCHAR(255) NOT NULL,
-  `status`     VARCHAR(50)  NOT NULL DEFAULT 'WAIT',
-  `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `id`                    BIGINT       NOT NULL AUTO_INCREMENT,
+  `type`                  VARCHAR(50)  NULL     COMMENT '문의 유형 (가입·연동/콘텐츠 생성/시스템오류/계정/기타)',
+  `email`                 VARCHAR(255) NOT NULL,
+  `title`                 VARCHAR(255) NOT NULL,
+  `body`                  TEXT         NULL     COMMENT '문의 본문 (content 컬럼과 동일 역할, customerCenter 호환용)',
+  `content`               TEXT         NULL     COMMENT '문의 본문 (myPage 기존 호환용)',
+  `status`                VARCHAR(50)  NOT NULL DEFAULT '미처리' COMMENT '미처리 / 처리중 / 처리완료',
+  `attachment_names`      TEXT         NULL     COMMENT '첨부파일 원본 파일명 (콤마 구분)',
+  `attachment_saved_names` TEXT        NULL     COMMENT '첨부파일 서버 저장명 (콤마 구분)',
+  `created_at`            DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
+
+-- notice (공지사항)
+CREATE TABLE `notice` (
+  `id`         BIGINT       NOT NULL AUTO_INCREMENT,
+  `title`      VARCHAR(200) NOT NULL,
+  `content`    LONGTEXT     NOT NULL,
+  `category`   VARCHAR(30)  NOT NULL DEFAULT '공지' COMMENT '공지 / 업데이트 / 점검',
+  `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COMMENT='공지사항';
+
+-- faq (자주 묻는 질문)
+CREATE TABLE `faq` (
+  `id`         BIGINT       NOT NULL AUTO_INCREMENT,
+  `category`   VARCHAR(100) NOT NULL COMMENT '가입·연동 / 콘텐츠 생성 / 시스템오류 / 계정',
+  `question`   VARCHAR(255) NOT NULL,
+  `answer`     LONGTEXT     NOT NULL,
+  `created_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COMMENT='자주 묻는 질문';
+
+-- reply (문의 답변 — inquiry_id 논리적 참조, 물리 FK 없음)
+CREATE TABLE `reply` (
+  `id`         BIGINT   NOT NULL AUTO_INCREMENT,
+  `inquiry_id` BIGINT   NOT NULL COMMENT 'inquiry.id 논리적 참조',
+  `content`    TEXT     NOT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_reply_inquiry_id` (`inquiry_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COMMENT='문의 답변';
+
+-- admin_user (고객센터 관리자 계정)
+CREATE TABLE `admin_user` (
+  `id`       BIGINT       NOT NULL AUTO_INCREMENT,
+  `login_id` VARCHAR(100) NOT NULL UNIQUE COMMENT '관리자 로그인 ID',
+  `password` VARCHAR(255) NOT NULL,
+  `name`     VARCHAR(50)  NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COMMENT='고객센터 관리자 계정';
 
 
 -- ══════════════════════════════════════════════
@@ -479,26 +534,26 @@ VALUES
 
 -- 2. 브랜드
 INSERT IGNORE INTO brand (brand_id, user_id, brand_name, service_name, industry_type, location_name, address, phone, profile_image_url, created_at, updated_at) VALUES
-(1,  NULL, '어글리베이커리',     'uglybakery',             'CAFE_BAKERY',           '망원본점',   '서울 마포구 월드컵로13길 73',           '02-338-2018',   NULL, NOW(), NOW()),
-(2,  NULL, '을밀대',             'eulmildae',              'FOOD_RESTAURANT',       '염리동본점', '서울 마포구 숭문길 24',                 '02-717-1922',   NULL, NOW(), NOW()),
-(3,  NULL, '와드',               'wad_seongsu',            'BEAUTY_SALON',          '성수점',     '서울 성동구 서울숲길 51',               '0507-1389-8378',NULL, NOW(), NOW()),
-(4,  NULL, '선데이클로즈',       'sundayclothes_official', 'FASHION_CLOTHING',      '을지로점',   '서울 중구 수표로 28',                   '010-4227-6051', NULL, NOW(), NOW()),
-(5,  NULL, '산방댁게스트하우스', 'sanbangdaek',            'ACCOMMODATION_PENSION', '사계점',     '제주 서귀포시 안덕면 사계신항로 6',     '010-9179-7585', NULL, NOW(), NOW()),
-(6,  NULL, '메인필라테스',       'mainpilates',            'FITNESS_SPORTS',        '잠실본점',   '종로구 자하문로2길 4 4',                '070-8861-6833', NULL, NOW(), NOW()),
-(7,  NULL, '슈잇베이킹스튜디오', 'choueat_bakingstudio',   'EDUCATION_ACADEMY',     '성수동본점', '서울 성동구 상원6길 10',                'none',          NULL, NOW(), NOW()),
-(8,  NULL, '서울SY피부과',       'sydermatology',          'MEDICAL_HOSPITAL',      '본점',       '서울 강남구 논현로171길 11',            '02-517-2696',   NULL, NOW(), NOW()),
-(9,  NULL, '인덱스숍',           'indexshop.kr',           'RETAIL_SHOPPING',       '건대점',     '서울 광진구 아차산로 200',              '02-2122-1259',  NULL, NOW(), NOW()),
-(10, NULL, '플로애',             '_floae_',                'ETC',                   '역삼본점',   '서울 강남구 역삼동 778-6',              '010-5915-6228', NULL, NOW(), NOW()),
-(11, NULL, '몽심',               '_creative_mongsim',      'CAFE_BAKERY',           '한남대본점', '대전 대덕구 한남로38번길 28',           '010-4459-1014', NULL, NOW(), NOW()),
-(12, NULL, '연돈',               'yeondon2014',            'FOOD_RESTAURANT',       '중문점',     '제주 서귀포시 색달로 10',               '0507-1386-7060',NULL, NOW(), NOW()),
-(13, NULL, '헤어웰',             'hairwell',               'BEAUTY_SALON',          '서신점',     '전북 전주시 완산구 서신로 104',         '0507-1418-2513',NULL, NOW(), NOW()),
-(14, NULL, '너겟',               'nugget_min',             'FASHION_CLOTHING',      '강릉본점',   '강릉시 원대로8번길 9',                  '070-8848-3542', NULL, NOW(), NOW()),
-(15, NULL, '한옥스테이소화',     'tdesign71',              'ACCOMMODATION_PENSION', '황리단길점', '경북 경주시 국당2길 5',                 '010-4800-7205', NULL, NOW(), NOW()),
-(16, NULL, '요가베르데',         'yoga__verde',            'FITNESS_SPORTS',        '비자림점',   '제주 제주시 구좌읍 비자림로 1999-6',   '0507-1393-6090',NULL, NOW(), NOW()),
-(17, NULL, '씨앤씨미술학원',     'suwan_cnc',              'EDUCATION_ACADEMY',     '수완본점',   '광주 광산구 장신로 164',                '062-954-9711',  NULL, NOW(), NOW()),
-(18, NULL, '서산연세치과',       'seosan_yonsei',          'MEDICAL_HOSPITAL',      '본점',       '충남 서산시 율지8로 1',                 '041-664-1616',  NULL, NOW(), NOW()),
-(19, NULL, '책방오늘',           'onulbooks_in_seochon',   'RETAIL_SHOPPING',       '서촌점',     '서울 종로구 자하문로6길 11',            '02-733-7077',   NULL, NOW(), NOW()),
-(20, NULL, '삶은감자',           'life_gamja',             'ETC',                   '강릉본점',   '강원 강릉시 임영로 197-1',              '0507-1371-4429',NULL, NOW(), NOW());
+(1,  NULL, '어글리베이커리',     'uglybakery',             '카페 / 베이커리',           '망원본점',   '서울 마포구 월드컵로13길 73',           '023382018',   NULL, NOW(), NOW()),
+(2,  NULL, '을밀대',             'eulmildae',              '음식점 / 식당',       '염리동본점', '서울 마포구 숭문길 24',                 '027171922',   NULL, NOW(), NOW()),
+(3,  NULL, '와드',               'wad_seongsu',            '미용 / 뷰티',          '성수점',     '서울 성동구 서울숲길 51',               '050713898378',NULL, NOW(), NOW()),
+(4,  NULL, '선데이클로즈',       'sundayclothes_official', '패션 / 의류',      '을지로점',   '서울 중구 수표로 28',                   '01042276051', NULL, NOW(), NOW()),
+(5,  NULL, '산방댁게스트하우스', 'sanbangdaek',            '숙박 / 펜션', 		'사계점',     '제주 서귀포시 안덕면 사계신항로 6',     '01091797585', NULL, NOW(), NOW()),
+(6,  NULL, '메인필라테스',       'mainpilates',            '피트니스 / 스포츠',        '잠실본점',   '종로구 자하문로2길 4 4',                '07088616833', NULL, NOW(), NOW()),
+(7,  NULL, '슈잇베이킹스튜디오', 'choueat_bakingstudio',   '교육 / 학원',     	'성수동본점', '서울 성동구 상원6길 10',                NULL,          NULL, NOW(), NOW()),
+(8,  NULL, '서울SY피부과',       'sydermatology',          '의료 / 병원',      '본점',       '서울 강남구 논현로171길 11',            '025172696',   NULL, NOW(), NOW()),
+(9,  NULL, '인덱스숍',           'indexshop.kr',           '소매 / 쇼핑',       '건대점',     '서울 광진구 아차산로 200',              '0221221259',  NULL, NOW(), NOW()),
+(10, NULL, '플로애',             '_floae_',                '기타',                   '역삼본점',   '서울 강남구 역삼동 778-6',              '01059156228', NULL, NOW(), NOW()),
+(11, NULL, '몽심',               '_creative_mongsim',      '카페 / 베이커리',           '한남대본점', '대전 대덕구 한남로38번길 28',           '01044591014', NULL, NOW(), NOW()),
+(12, NULL, '연돈',               'yeondon2014',            '음식점 / 식당',       '중문점',     '제주 서귀포시 색달로 10',               '050713867060',NULL, NOW(), NOW()),
+(13, NULL, '헤어웰',             'hairwell',               '미용 / 뷰티',          '서신점',     '전북 전주시 완산구 서신로 104',         '050714182513',NULL, NOW(), NOW()),
+(14, NULL, '너겟',               'nugget_min',             '패션 / 의류',      '강릉본점',   '강릉시 원대로8번길 9',                  '07088483542', NULL, NOW(), NOW()),
+(15, NULL, '한옥스테이소화',     'tdesign71',              '숙박 / 펜션', 		'황리단길점', '경북 경주시 국당2길 5',                 '01048007205', NULL, NOW(), NOW()),
+(16, NULL, '요가베르데',         'yoga__verde',            '피트니스 / 스포츠',        '비자림점',   '제주 제주시 구좌읍 비자림로 1999-6',   '050713936090',NULL, NOW(), NOW()),
+(17, NULL, '씨앤씨미술학원',     'suwan_cnc',              '교육 / 학원',     '수완본점',   '광주 광산구 장신로 164',                '0629549711',  NULL, NOW(), NOW()),
+(18, NULL, '서산연세치과',       'seosan_yonsei',          '의료 / 병원',      '본점',       '충남 서산시 율지8로 1',                 '0416641616',  NULL, NOW(), NOW()),
+(19, NULL, '책방오늘',           'onulbooks_in_seochon',   '소매 / 쇼핑',       '서촌점',     '서울 종로구 자하문로6길 11',            '027337077',   NULL, NOW(), NOW()),
+(20, NULL, '삶은감자',           'life_gamja',             '기타',                   '강릉본점',   '강원 강릉시 임영로 197-1',              '050713714429',NULL, NOW(), NOW());
 
 -- 3. 브랜드 플랫폼 (채널 성과 분석 더미가 brand_platform_id 1,2 를 참조하므로 더미보다 선행)
 INSERT IGNORE INTO brand_platform (brand_platform_id, brand_id, platform_id, channel_name, channel_url, is_connected, token_status, connected_at, created_at, updated_at)
@@ -591,7 +646,8 @@ VALUES
 (1, 'month', YEAR(CURDATE()), MONTH(CURDATE()), 12.3, 8.5, 6, 2, '18:00-21:00', NOW()),
 (2, 'month', YEAR(CURDATE()), MONTH(CURDATE()),  8.1, 6.2, 5, 2, '12:00-14:00', NOW());
 
--- ===== users, brand 1번 데이터 =====
+-- ===== users, brand 데이터 =====
+-- [1] 구글 유저 - 어글리 베이커리 (카페 / 베이커리)
 INSERT INTO `users` (
   email, NAME, nickname, provider, provider_id,
   contact_phone, company_name, business_category,
@@ -602,18 +658,25 @@ INSERT INTO `users` (
   signup_completed, STATUS, ROLE,
   created_at, updated_at
 ) VALUES (
-  'test@social.com', '어글리', '베이커리', 'kakao', 'kakao_test_001',
-  '010-4568-5213', '어글리베이커리', 'CAFE_BAKERY',
-  'instagram', '02-338-2018',
-  '서울특별시 마포구 월드컵로13길 73', '1층',
-  1, 1, 1,
-  1, 0,
-  1, 'ACTIVE', 'ROLE_USER',
-  NOW(), NOW()
+  'test@social.com', 
+  '어글리', 
+  '베이커리', 
+  'kakao', 
+  '1159314857642691679112', -- 22자리 난수화, 
+  '01045685213', 
+  '어글리베이커리', 
+  '카페 / 베이커리', -- 실제 데이터의 '피트니스 / 스포츠' 형식에 맞춤
+  'INSTAGRAM',      -- 대문자로 통일
+  '023382018',
+  '[04014] 서울특별시 마포구 월드컵로13길 73', -- 우편번호 추가 (예시 번호)
+  '1층',
+  1, 1, 1, 1, 1,    -- event_consent 포함 모든 동의 값을 1로 설정
+  1, 
+  'ACTIVE', 
+  'ROLE_USER',
+  NOW(), 
+  NOW()
 );
-
--- brand의 user_id 연결 (brand_id=1 → users id=1)
-UPDATE brand SET user_id = 1, phone = '02-338-2018' WHERE brand_id = 1;
 
 -- business_hours (0=월~6=일, 월·화 정기휴무)
 INSERT INTO business_hours (user_id, day_of_week, is_open, open_time, close_time) VALUES
@@ -657,9 +720,218 @@ INSERT INTO brand_operation_profile (
   NOW(), NOW()
 );
 
-INSERT INTO inquiry (title, content, email, STATUS, created_at) VALUES
-('인스타그램 연동 후 게시물이 업로드되지 않습니다', '인스타그램 계정 연동은 완료됐는데 게시물 업로드 버튼을 눌러도 아무 반응이 없습니다.', 'test@social.com', 'WAIT', NOW()),
-('AI 콘텐츠 생성 시 오류 메시지가 표시됩니다', 'AI 콘텐츠 생성 버튼 클릭 시 "생성에 실패했습니다" 메시지가 반복적으로 나타납니다.', 'test@social.com', 'WAIT', NOW() - INTERVAL 2 DAY),
-('네이버 블로그 연동 후 계정이 바로 해제됩니다', '네이버 블로그를 연동하면 잠시 후 자동으로 연동이 해제되는 현상이 반복됩니다.', 'test@social.com', 'DONE', NOW() - INTERVAL 5 DAY),
-('예약 게시 시간이 설정한 시간과 다르게 발행됩니다', '오후 6시로 예약했는데 오전 6시에 발행됐습니다. 동일한 현상이 3번 반복됐습니다.', 'test@social.com', 'WAIT', NOW() - INTERVAL 7 DAY);
--- ===== users, brand 1번 데이터 =====
+INSERT INTO inquiry (type, email, title, body, content, status, created_at) VALUES
+('시스템오류', 'test@social.com', '인스타그램 연동 후 게시물이 업로드되지 않습니다',  '인스타그램 계정 연동은 완료됐는데 게시물 업로드 버튼을 눌러도 아무 반응이 없습니다.',        '인스타그램 계정 연동은 완료됐는데 게시물 업로드 버튼을 눌러도 아무 반응이 없습니다.',        '미처리',   NOW()),
+('시스템오류', 'test@social.com', 'AI 콘텐츠 생성 시 오류 메시지가 표시됩니다',        'AI 콘텐츠 생성 버튼 클릭 시 "생성에 실패했습니다" 메시지가 반복적으로 나타납니다.',          'AI 콘텐츠 생성 버튼 클릭 시 "생성에 실패했습니다" 메시지가 반복적으로 나타납니다.',          '미처리',   NOW() - INTERVAL 2 DAY),
+('가입·연동', 'test@social.com', '네이버 블로그 연동 후 계정이 바로 해제됩니다',        '네이버 블로그를 연동하면 잠시 후 자동으로 연동이 해제되는 현상이 반복됩니다.',               '네이버 블로그를 연동하면 잠시 후 자동으로 연동이 해제되는 현상이 반복됩니다.',               '처리완료', NOW() - INTERVAL 5 DAY),
+('시스템오류', 'test@social.com', '예약 게시 시간이 설정한 시간과 다르게 발행됩니다',   '오후 6시로 예약했는데 오전 6시에 발행됐습니다. 동일한 현상이 3번 반복됐습니다.',            '오후 6시로 예약했는데 오전 6시에 발행됐습니다. 동일한 현상이 3번 반복됐습니다.',            '미처리',   NOW() - INTERVAL 7 DAY);
+
+-- [2] 네이버 유저 - 을밀대 (음식점/식당)
+INSERT INTO `users` (
+  email, NAME, nickname, provider, provider_id,
+  contact_phone, company_name, business_category,
+  preferred_channel, store_phone_number,
+  road_addr_part1, addr_detail,
+  terms_agreed, privacy_agreed, location_agreed,
+  marketing_consent, event_consent,
+  signup_completed, STATUS, ROLE,
+  created_at, updated_at
+) VALUES (
+  'eulmildae@naver.com',
+  '을밀대',
+  '을밀대',
+  'naver',
+  '1159314857642691679113', -- 22자리 난수화, 
+  '01011112222',
+  '을밀대',
+  '음식점 / 식당',
+  'NAVER',
+  '027171922',
+  '[04016] 서울 마포구 숭문길 24',
+  '염리동본점',
+  1, 1, 1, 1, 1,
+  1,
+  'ACTIVE',
+  'ROLE_USER',
+  NOW(),
+  NOW()
+);
+
+-- [3] 구글 유저 - 와드 (미용/뷰티)
+INSERT INTO `users` (
+  email, NAME, nickname, provider, provider_id,
+  contact_phone, company_name, business_category,
+  preferred_channel, store_phone_number,
+  road_addr_part1, addr_detail,
+  terms_agreed, privacy_agreed, location_agreed,
+  marketing_consent, event_consent,
+  signup_completed, STATUS, ROLE,
+  created_at, updated_at
+) VALUES (
+  'wad@google.com',
+  '와드',
+  '와드',
+  'google',
+  '1159314857642691679114', -- 22자리 난수화, 
+  '01033334444',
+  '와드',
+  '미용 / 뷰티',
+  'INSTAGRAM',
+  '050713898378',
+  '[04779] 서울 성동구 서울숲길 51',
+  '성수점',
+  1, 1, 1, 0, 0,
+  1,
+  'ACTIVE',
+  'ROLE_USER',
+  NOW(),
+  NOW()
+);
+
+-- [4] 카카오 유저 - 선데이클로즈 (패션/의류)
+INSERT INTO `users` (
+  email, NAME, nickname, provider, provider_id,
+  contact_phone, company_name, business_category,
+  preferred_channel, store_phone_number,
+  road_addr_part1, addr_detail,
+  terms_agreed, privacy_agreed, location_agreed,
+  marketing_consent, event_consent,
+  signup_completed, STATUS, ROLE,
+  created_at, updated_at
+) VALUES (
+  'sundayclothes@kakao.com',
+  '선데이클로즈',
+  '선데이클로즈',
+  'kakao',
+  '1159314857642691679114=5', -- 22자리 난수화, 
+  '01055556666',
+  '선데이클로즈',
+  '패션 / 의류',
+  'INSTAGRAM',
+  '01042276051',
+  '[04554] 서울 중구 수표로 28',
+  '을지로점',
+  1, 1, 1, 1, 0,
+  1,
+  'ACTIVE',
+  'ROLE_USER',
+  NOW(),
+  NOW()
+);
+
+-- business_hours (2번 유저 - 을밀대, 일요일 휴무)
+INSERT INTO business_hours (user_id, day_of_week, is_open, open_time, close_time) VALUES
+(2, 0, 1, '11:30', '21:00'),
+(2, 1, 1, '11:30', '21:00'),
+(2, 2, 1, '11:30', '21:00'),
+(2, 3, 1, '11:30', '21:00'),
+(2, 4, 1, '11:30', '21:00'),
+(2, 5, 1, '11:30', '21:00'),
+(2, 6, 0, NULL,    NULL   );
+
+-- business_hours (3번 유저 - 와드, 월요일 휴무)
+INSERT INTO business_hours (user_id, day_of_week, is_open, open_time, close_time) VALUES
+(3, 0, 0, NULL,    NULL   ),
+(3, 1, 1, '10:00', '20:00'),
+(3, 2, 1, '10:00', '20:00'),
+(3, 3, 1, '10:00', '20:00'),
+(3, 4, 1, '10:00', '20:00'),
+(3, 5, 1, '10:00', '20:00'),
+(3, 6, 1, '10:00', '20:00');
+
+-- business_hours (4번 유저 - 선데이클로즈, 일요일 휴무)
+INSERT INTO business_hours (user_id, day_of_week, is_open, open_time, close_time) VALUES
+(4, 0, 1, '12:00', '21:00'),
+(4, 1, 1, '12:00', '21:00'),
+(4, 2, 1, '12:00', '21:00'),
+(4, 3, 1, '12:00', '21:00'),
+(4, 4, 1, '12:00', '21:00'),
+(4, 5, 1, '12:00', '21:00'),
+(4, 6, 0, NULL,    NULL   );
+
+-- content_settings (2번 유저 - 을밀대)
+INSERT INTO content_settings (
+  user_id,
+  intro_template, outro_template,
+  tone, emoji_level, target_length,
+  preferred_sns
+) VALUES (
+  2,
+  '안녕하세요, 마포 냉면 맛집 을밀대입니다 🍜',
+  '오늘도 맛있는 식사와 함께 행복한 하루 되세요 😊',
+  '친근한', '적당히', 300,
+  'naver,kakao'
+);
+
+-- content_settings (3번 유저 - 와드)
+INSERT INTO content_settings (
+  user_id,
+  intro_template, outro_template,
+  tone, emoji_level, target_length,
+  preferred_sns
+) VALUES (
+  3,
+  '안녕하세요, 성수 감성 헤어샵 와드입니다 ✂️',
+  '오늘도 예쁘고 당당하게! 다음에 또 만나요 💙',
+  '세련된', '적당히', 250,
+  'instagram,kakao'
+);
+
+-- content_settings (4번 유저 - 선데이클로즈)
+INSERT INTO content_settings (
+  user_id,
+  intro_template, outro_template,
+  tone, emoji_level, target_length,
+  preferred_sns
+) VALUES (
+  4,
+  '안녕하세요, 을지로 감성 패션 브랜드 선데이클로즈입니다 👗',
+  '오늘도 나만의 스타일로 빛나세요 ✨',
+  '트렌디한', '많이', 280,
+  'instagram'
+);
+
+-- inquiry (2번 유저 - 을밀대)
+INSERT INTO inquiry (type, email, title, body, content, status, created_at) VALUES
+('가입·연동', 'eulmildae@naver.com', '네이버 예약 연동 후 알림이 오지 않습니다', '네이버 예약 연동 완료 후 신규 예약이 들어와도 알림이 전혀 오지 않습니다.', '네이버 예약 연동 완료 후 신규 예약이 들어와도 알림이 전혀 오지 않습니다.', '미처리',   NOW()),
+('시스템오류', 'eulmildae@naver.com', '메뉴 사진 업로드 시 오류가 발생합니다',    '메뉴 사진 등록 시 "업로드 실패" 메시지가 표시됩니다.',                     '메뉴 사진 등록 시 "업로드 실패" 메시지가 표시됩니다.',                     '처리완료', NOW() - INTERVAL 3 DAY);
+
+-- inquiry (3번 유저 - 와드)
+INSERT INTO inquiry (type, email, title, body, content, status, created_at) VALUES
+('시스템오류', 'wad@google.com', '인스타그램 게시물 예약이 되지 않습니다', '예약 게시 설정 후 지정 시간에 발행되지 않는 문제가 반복됩니다.', '예약 게시 설정 후 지정 시간에 발행되지 않는 문제가 반복됩니다.', '미처리', NOW() - INTERVAL 1 DAY);
+
+-- inquiry (4번 유저 - 선데이클로즈)
+INSERT INTO inquiry (type, email, title, body, content, status, created_at) VALUES
+('콘텐츠 생성', 'sundayclothes@kakao.com', '콘텐츠 자동 생성 시 이미지가 누락됩니다', 'AI 콘텐츠 생성 후 이미지가 첨부되지 않은 상태로 생성됩니다.',    'AI 콘텐츠 생성 후 이미지가 첨부되지 않은 상태로 생성됩니다.',    '처리완료', NOW() - INTERVAL 4 DAY),
+('시스템오류', 'sundayclothes@kakao.com', '해시태그 추천 기능이 동작하지 않습니다',   '해시태그 자동 추천 버튼 클릭 시 아무 반응이 없습니다.',           '해시태그 자동 추천 버튼 클릭 시 아무 반응이 없습니다.',           '미처리',   NOW() - INTERVAL 2 DAY);
+
+-- ══════════════════════════════════════════════
+-- customerCenter 시드 데이터
+-- 순서: admin_user → faq → notice → reply
+-- ══════════════════════════════════════════════
+
+-- admin_user (관리자 계정, 비밀번호: admin1234)
+INSERT INTO admin_user (login_id, password, name) VALUES
+('admin', 'admin1234', '관리자');
+
+-- faq
+INSERT INTO faq (category, question, answer) VALUES
+('가입·연동', '소셜 계정 연동은 어떻게 하나요?',                      '마이페이지 > SNS 연동 메뉴에서 연동할 소셜 계정을 선택하고 로그인 절차를 진행하시면 됩니다.'),
+('가입·연동', '연동한 계정을 해제하려면 어떻게 하나요?',               '마이페이지 > SNS 연동 메뉴에서 연동된 계정 옆의 해제 버튼을 클릭하시면 됩니다.'),
+('콘텐츠 생성', 'AI 콘텐츠 자동 생성은 어떻게 사용하나요?',           '콘텐츠 생성 메뉴에서 업종·톤·길이 등을 설정한 후 생성 버튼을 클릭하시면 AI가 자동으로 콘텐츠를 작성해 드립니다.'),
+('콘텐츠 생성', '생성된 콘텐츠를 수정할 수 있나요?',                   '네, 생성 후 편집 화면에서 내용을 자유롭게 수정하실 수 있습니다.'),
+('시스템오류', '게시물 업로드 중 오류가 발생할 경우 어떻게 하나요?',   '잠시 후 재시도하시거나, 문제가 지속될 경우 고객센터 문의하기를 통해 오류 화면 캡처와 함께 접수해 주세요.'),
+('계정', '회원 탈퇴는 어떻게 하나요?',                                 '마이페이지 > 회원 탈퇴 메뉴에서 진행하실 수 있습니다. 탈퇴 후 데이터는 복구되지 않으니 신중히 결정해 주세요.'),
+('계정', '이메일 주소를 변경하고 싶어요.',                             '현재 소셜 로그인 기반으로 운영되어 이메일 직접 변경은 지원되지 않습니다. 소셜 계정의 이메일을 변경하시면 자동으로 반영됩니다.');
+
+-- notice
+INSERT INTO notice (category, title, content) VALUES
+('공지',    '[공지] 소셜다모아 서비스 오픈 안내',                     '안녕하세요, 소셜다모아입니다.\n소셜다모아 정식 서비스가 오픈되었습니다. 많은 이용 부탁드립니다.\n문의사항은 고객센터를 통해 접수해 주세요.'),
+('점검',    '[점검] 4월 정기 시스템 점검 안내 (04/20 02:00~04:00)', '정기 시스템 점검이 진행될 예정입니다.\n- 일시: 2025년 4월 20일(일) 02:00 ~ 04:00\n- 영향: 전 서비스 일시 중단\n점검 중에는 서비스 이용이 불가합니다.'),
+('업데이트', '[업데이트] AI 콘텐츠 생성 기능 개선',                   'AI 콘텐츠 생성 품질이 향상되었습니다.\n- 업종별 맞춤 톤 적용 개선\n- 해시태그 추천 정확도 향상\n- 이미지 첨부 안정성 개선\n더 나은 서비스로 찾아뵙겠습니다.');
+
+-- reply (위에서 INSERT된 inquiry id 기준 — 처리완료 건에만 답변 등록)
+INSERT INTO reply (inquiry_id, content) VALUES
+(3, '안녕하세요, 소셜다모아 고객센터입니다.\n네이버 블로그 연동 해제 문제는 토큰 만료 이슈로 확인되었습니다.\n현재 패치가 완료되었으니 재연동 후 이용 부탁드립니다. 감사합니다.'),
+(6, '안녕하세요, 소셜다모아 고객센터입니다.\n메뉴 사진 업로드 오류는 파일 크기 제한(10MB) 초과 시 발생할 수 있습니다.\n파일 크기를 줄여 재시도 부탁드립니다. 감사합니다.'),
+(9, '안녕하세요, 소셜다모아 고객센터입니다.\nAI 이미지 첨부 누락 건은 콘텐츠 생성 엔진 업데이트로 수정 완료되었습니다.\n불편을 드려 죄송합니다.');

@@ -37,8 +37,9 @@ spring:
     cache: false
     servlet:
       produce-partial-output-while-processing: false
+
   servlet:
     multipart:
-      max-file-size: 5MB
-      max-request-size: 10MB
-# api 키 삭제
+      max-file-size: 10MB
+      max-request-size: 30MB
+
