@@ -111,7 +111,7 @@ window.CalendarManager = (function () {
         if (deps.state.calendarInstance) {
             deps.state.calendarInstance.destroy();
             deps.state.calendarInstance = null;
-            calendarDropEventsBound = false; // [FIX] 재초기화 시 드롭존 재바인딩 허용
+            calendarDropEventsBound = false; 
         }
 
         deps.state.calendarInstance = new FullCalendar.Calendar(calEl, {
@@ -122,17 +122,42 @@ window.CalendarManager = (function () {
             editable: true,
             droppable: true,
             events: '/api/posts/events',
-            eventDrop: onCalendarEventDrop,
-            eventClick: (info) => {
-                info.jsEvent.preventDefault();
-                openPreviewModal(info.event);
-            }
-        });
+			
+			        eventContent: function(arg) {
+			            const sns = resolveEventSns(arg.event);
+			            const palette = deps.PASTEL_PALETTE[sns] || { borderColor: '#6366f1' };
+			            
+			            return {
+			                html: `
+			                    <div class="fc-event-main-frame">
+			                        <span class="fc-event-title">${arg.event.title}</span>
+			                    </div>
+			                `
+			            };
+			        },
 
-        deps.state.calendarInstance.render();
-        setupCalendarDropZones();
-    }
+			        eventDidMount: function(arg) {
+			            const sns = resolveEventSns(arg.event);
+			            const palette = deps.PASTEL_PALETTE[sns];
+			            
+			            if (palette) {
+			                arg.el.style.backgroundColor = palette.backgroundColor;
+			                arg.el.style.borderLeftColor = palette.borderColor; // 세로선 색상
+			                arg.el.style.color = palette.textColor;             // 글자색
+			            }
+			        },
 
+			        eventDrop: onCalendarEventDrop,
+			        eventClick: (info) => {
+			            info.jsEvent.preventDefault();
+			            openPreviewModal(info.event);
+			        }
+			    });
+
+			    deps.state.calendarInstance.render();
+			    setupCalendarDropZones();
+			}
+			
     function onCalendarEventDrop(info) {
         try {
             const newStart = info.event.start;
@@ -592,6 +617,18 @@ window.CalendarManager = (function () {
         const pillDot   = document.getElementById('pmPillDot');
         const pillLabel = document.getElementById('pmPlatformLabel');
         const timeText  = document.getElementById('pmTimeText');
+		const publishBtn = document.getElementById('pmBtnPublish');
+
+		if (publishBtn) {
+		    publishBtn.dataset.actionType = platform.actionType || 'publish';
+		    publishBtn.innerHTML = `
+		        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+		            <line x1="22" y1="2" x2="11" y2="13"></line>
+		            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+		        </svg>
+		        ${platform.actionLabel || '즉시 발행'}
+		    `;
+		}
 
         if (pillDot)   pillDot.style.background = platform.color;
         if (pillLabel) pillLabel.textContent = platform.label;
@@ -760,14 +797,38 @@ window.CalendarManager = (function () {
             };
         }
 
-        if (publishBtn) {
-            publishBtn.onclick = () => {
-                closePreviewModal();
-                deps.publishPost?.(sns);
-            };
-        }
+		if (publishBtn) {
+		    publishBtn.onclick = () => {
+		        closePreviewModal();
+
+		        const config = deps.PLATFORM_CONFIG[sns];
+
+		        if (config?.actionType === 'copy') {
+		            copyPostContent(sns);
+		        } else {
+		            deps.publishPost?.(sns);
+		        }
+		    };
+		}
     }
 
+	function copyPostContent(sns) {
+	    const content = deps.state.generatedContent[sns];
+
+	    if (!content?.text) {
+	        safeToast('복사할 콘텐츠가 없습니다.');
+	        return;
+	    }
+
+	    navigator.clipboard.writeText(content.text)
+	        .then(() => {
+	            safeToast('복사 완료! 붙여넣어 발행하세요.');
+	        })
+	        .catch(() => {
+	            safeToast('복사 실패');
+	        });
+	}
+	
     function closePreviewModal() {
         const modal = document.getElementById('previewModal');
         const shell = document.getElementById('pmShell');

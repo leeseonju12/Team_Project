@@ -350,6 +350,29 @@ input[type=range]::-webkit-slider-thumb {
   opacity: .65;
 }
 
+.btn-load-pending {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-load-pending:hover {
+  background: #f8fafc;
+  color: #334155;
+  border-color: #cbd5f5;
+}
+
+.btn-load-pending svg {
+  display: block;
+}
+
 /* ── IMAGE UPLOAD ── */
 .img-upload {
   border: 2px dashed var(--border2);

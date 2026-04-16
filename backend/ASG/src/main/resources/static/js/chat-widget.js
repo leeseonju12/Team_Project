@@ -133,16 +133,28 @@ class SocialDamoaChatWidget {
         if (this.isOpen) this.syncWindowPosition(fab.offsetLeft, fab.offsetTop);
     }
 
-    connectWebSocket() {
-        const socket = new SockJS('/ws/chatbot');
-        this.stompClient = Stomp.over(socket);
-        this.stompClient.connect({}, () => {
-            this.stompClient.subscribe('/topic/' + this.roomId, (res) => {
-                const data = JSON.parse(res.body);
-                this.appendMessage(data.content, 'bot');
-            });
-        });
-    }
+	connectWebSocket() {
+	    const socket = new SockJS('/ws/chatbot');
+	    this.stompClient = Stomp.over(socket);
+	    this.stompClient.connect({}, () => {
+	        /* 접속 성공 시 초기 메뉴를 요청하여 챗봇 시나리오 시작 */
+	        this.sendInitialMenuRequest();
+
+	        this.stompClient.subscribe('/topic/' + this.roomId, (res) => {
+	            const data = JSON.parse(res.body);
+	            /* 봇의 메시지와 선택지 버튼 배열을 함께 렌더링 함수로 전달 */
+	            this.appendMessage(data.content, 'bot', data.quickReplies);
+	        });
+	    });
+	}
+	
+	sendInitialMenuRequest() {
+	    this.stompClient.send("/app/chat.sendMessage", {}, JSON.stringify({
+	        roomId: this.roomId,
+	        senderType: 'USER',
+	        content: '시작'
+	    }));
+	}
 
     sendMessage() {
         const input = document.getElementById('sd-chat-input');
@@ -158,17 +170,54 @@ class SocialDamoaChatWidget {
         }
     }
 
-    appendMessage(msg, sender) {
-        const msgDiv = document.createElement('div');
-        msgDiv.style.margin = '10px 0';
-        msgDiv.style.textAlign = sender === 'user' ? 'right' : 'left';
-        msgDiv.innerHTML = `<span style="background:${sender === 'user' ? '#e3f2fd' : '#ffffff'}; border: 1px solid #eee; padding:10px 15px; border-radius:15px; display:inline-block; max-width:80%; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">${msg}</span>`;
-        const container = document.getElementById('sd-messages');
-        container.appendChild(msgDiv);
-        container.scrollTop = container.scrollHeight;
-    }
-}
+	appendMessage(msg, sender, quickReplies = []) {
+	    const container = document.getElementById('sd-messages');
+
+	    /* 1. 기본 메시지 말풍선 렌더링 */
+	    const msgDiv = document.createElement('div');
+	    msgDiv.style.margin = '10px 0';
+	    msgDiv.style.textAlign = sender === 'user' ? 'right' : 'left';
+	    msgDiv.innerHTML = `<span style="background:${sender === 'user' ? '#e3f2fd' : '#ffffff'}; border: 1px solid #eee; padding:10px 15px; border-radius:15px; display:inline-block; max-width:80%; box-shadow: 0 2px 4px rgba(0,0,0,0.05); line-height: 1.4;">${msg}</span>`;
+	    container.appendChild(msgDiv);
+
+	    /* 2. 퀵 리플라이 버튼 렌더링 (봇 메시지이며 버튼 배열이 존재하는 경우) */
+	    if (sender === 'bot' && quickReplies && quickReplies.length > 0) {
+	        const replyContainer = document.createElement('div');
+	        replyContainer.style.textAlign = 'left';
+	        replyContainer.style.marginTop = '8px';
+	        replyContainer.style.marginBottom = '15px';
+	        replyContainer.style.display = 'flex';
+	        replyContainer.style.flexWrap = 'wrap';
+	        replyContainer.style.gap = '8px';
+
+	        quickReplies.forEach(replyText => {
+	            const btn = document.createElement('button');
+	            btn.innerText = replyText;
+	            btn.style.cssText = 'padding: 8px 14px; background: white; border: 1px solid #1A73E8; color: #1A73E8; border-radius: 20px; cursor: pointer; font-size: 13px; transition: background 0.2s;';
+
+	            /* 호버 효과 */
+	            btn.onmouseover = () => { btn.style.background = '#e3f2fd'; };
+	            btn.onmouseout = () => { btn.style.background = 'white'; };
+
+	            /* 버튼 클릭 이벤트: 클릭한 텍스트를 메시지로 전송 */
+	            btn.onclick = () => {
+	                this.appendMessage(replyText, 'user');
+	                this.stompClient.send("/app/chat.sendMessage", {}, JSON.stringify({
+	                    roomId: this.roomId,
+	                    senderType: 'USER',
+	                    content: replyText
+	                }));
+	            };
+	            replyContainer.appendChild(btn);
+	        });
+	        container.appendChild(replyContainer);
+	    }
+
+	    container.scrollTop = container.scrollHeight;
+	}
+	}
 
 document.addEventListener('DOMContentLoaded', () => {
     new SocialDamoaChatWidget();
 });
+

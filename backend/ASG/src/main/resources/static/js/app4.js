@@ -6,18 +6,20 @@
 /* --------------------------------------------------------------------------
    1. Config
    -------------------------------------------------------------------------- */
-const PLATFORM_CONFIG = {
-  instagram: { label: 'Instagram', color: '#E1306C' },
-  facebook: { label: 'Facebook', color: '#1877F2' },
-  naver: { label: '네이버 블로그', color: '#03C75A' },
-  kakao: { label: '카카오 채널', color: '#FEE500' },
-  community: { label: '커뮤니티', color: '#6366F1' }
-};
+   const PLATFORM_CONFIG = {
+     instagram: { label: 'INSTAGRAM', color: '#E1306C', actionType: 'publish', actionLabel: '즉시 발행' },
+     facebook:  { label: 'FACEBOOK',  color: '#1877F2', actionType: 'publish', actionLabel: '즉시 발행' },
+     naver:     { label: 'BLOG',      color: '#03C75A', actionType: 'copy',    actionLabel: '복사 후 발행' },
+     blog:      { label: 'BLOG',      color: '#03C75A', actionType: 'copy',    actionLabel: '복사 후 발행' },
+     kakao:     { label: 'KAKAO',     color: '#FEE500', actionType: 'copy',    actionLabel: '복사 후 발행' },
+     community: { label: 'COMMUNITY', color: '#6366F1', actionType: 'copy',    actionLabel: '복사 후 발행' }
+   };
 
 const PASTEL_PALETTE = {
   instagram: { backgroundColor: '#fce4ec', textColor: '#880e4f', borderColor: '#e1306c' },
   facebook: { backgroundColor: '#e3f0fd', textColor: '#0d47a1', borderColor: '#1877f2' },
   naver: { backgroundColor: '#e6f9ee', textColor: '#1b5e20', borderColor: '#03c75a' },
+  blog: { backgroundColor: '#e6f9ee', textColor: '#1b5e20', borderColor: '#03c75a' },
   kakao: { backgroundColor: '#fffde7', textColor: '#4a3000', borderColor: '#fee500' },
   community: { backgroundColor: '#ede9fe', textColor: '#3730a3', borderColor: '#6366f1' }
 };
@@ -141,6 +143,13 @@ const uiManager = {
     if (modalBody) {
       modalBody.innerHTML = (props.bodyText || '내용이 없습니다.').replace(/\n/g, '<br>');
     }
+
+    const currentPost = {
+      sns: normalizePlatformKey(props.sns || props.platform || '')
+    };
+
+    modal.dataset.sns = currentPost.sns;
+    updatePublishButtonByPlatform(currentPost);
 
     modal.classList.remove('hidden');
   },
@@ -283,7 +292,7 @@ function updatePlatformVisibility() {
   }
 }
 
-/* app4.js - 5. Helpers 내 animateGeneratedText 수정 */
+/* Helpers 내 animateGeneratedText 수정 */
 function animateGeneratedText(sns, text, imageUrl) {
   const textEl = document.getElementById(`text-${sns}`);
   if (!textEl) return;
@@ -310,10 +319,26 @@ function animateGeneratedText(sns, text, imageUrl) {
     if (index >= text.length) {
       clearInterval(interval);
       uiManager.updatePreview(sns);
-      addToPending(sns, document.getElementById('menuName')?.value, text);
       updatePlatformVisibility();
     }
   }, 15);
+}
+
+function updatePublishButtonByPlatform(post) {
+  const btn = document.getElementById('pmBtnPublish');
+  if (!btn || !post) return;
+
+  const snsKey = normalizePlatformKey(post.sns);
+  const config = PLATFORM_CONFIG[snsKey];
+
+  btn.dataset.actionType = config?.actionType || 'publish';
+  btn.innerHTML = `
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <line x1="22" y1="2" x2="11" y2="13" />
+      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+    </svg>
+    ${config?.actionLabel || '즉시 발행'}
+  `;
 }
 
 /* --------------------------------------------------------------------------
@@ -358,56 +383,115 @@ function animateGeneratedText(sns, text, imageUrl) {
      }
    };
 
-window.publishPost = async function (sns) {
-  const content = state.generatedContent[sns];
+   window.publishPost = async function (sns) {
+     const content = state.generatedContent[sns];
 
-  if (!content?.text) {
-    uiManager.showToast('먼저 AI 콘텐츠를 생성해주세요.');
-    return;
-  }
+     if (!content?.text) {
+       uiManager.showToast('먼저 AI 콘텐츠를 생성해주세요.');
+       return;
+     }
 
-  uiManager.toggleLoading(true);
-  uiManager.showToast(`${PLATFORM_CONFIG[sns]?.label || sns}에 게시 중입니다. 잠시만 기다려주세요...`);
+     uiManager.toggleLoading(true);
+     uiManager.showToast(`${PLATFORM_CONFIG[sns]?.label || sns}에 게시 중입니다. 잠시만 기다려주세요...`);
 
-  try {
-    const result = await apiService.publishContent(
-      sns,
-      content.text,
-      state.uploadedFiles[0] || null
-    );
+     try {
+       const result = await apiService.publishContent(
+         sns,
+         content.text,
+         state.uploadedFiles[0] || null
+       );
 
-    if (result.status === 'success') {
-      uiManager.showToast(`${PLATFORM_CONFIG[sns]?.label || sns}에 성공적으로 게시되었습니다!`);
-    } else {
-      uiManager.showToast(`게시 실패: ${result.message || '알 수 없는 오류'}`);
-    }
-  } catch (error) {
-    console.error('[App] 발행 통신 오류:', error);
-    uiManager.showToast('서버와의 통신 중 오류가 발생했습니다.');
-  } finally {
-    uiManager.toggleLoading(false);
-  }
-};
+       if (result.status === 'success') {
+         uiManager.showToast(`${PLATFORM_CONFIG[sns]?.label || sns}에 성공적으로 게시되었습니다!`);
+       } else {
+         uiManager.showToast(`게시 실패: ${result.message || '알 수 없는 오류'}`);
+       }
+     } catch (error) {
+       console.error('[App] 발행 통신 오류:', error);
+       uiManager.showToast('서버와의 통신 중 오류가 발생했습니다.');
+     } finally {
+       uiManager.toggleLoading(false);
+     }
+   };
+   
+   window.copyPostContent = async function (sns) {
+     const content = state.generatedContent[sns];
+
+     if (!content?.text) {
+       uiManager.showToast('먼저 AI 콘텐츠를 생성해주세요.');
+       return;
+     }
+
+     try {
+       await navigator.clipboard.writeText(content.text);
+       uiManager.showToast('복사 완료! 붙여넣어 발행하세요.');
+     } catch (error) {
+       console.error(error);
+       uiManager.showToast('복사 실패');
+     }
+   };
+   
+   window.handlePmPublishAction = async function () {
+     const modal = document.getElementById('previewModal');
+     const sns = normalizePlatformKey(modal?.dataset?.sns || '');
+
+     if (!sns) return;
+
+     const config = PLATFORM_CONFIG[sns];
+
+     if (config?.actionType === 'copy') {
+       await copyPostContent(sns);
+     } else {
+       await publishPost(sns);
+     }
+   };
 
 /* --------------------------------------------------------------------------
    7. Pending Posts & Data Synchronization
    -------------------------------------------------------------------------- */
+
+/**
+ * [공통] DB 또는 생성 API로부터 받은 원본 데이터를 state 규격에 맞게 변환
+ * @param {Object} item - 백엔드에서 전달받은 포스트 객체
+ */
+function mapDtoToPost(item) {
+  const snsKey = (item.platform || '').toLowerCase();
+  const config = PLATFORM_CONFIG[snsKey] || { label: snsKey, color: '#6366F1', icon: '📌' };
+  const palette = PASTEL_PALETTE[snsKey] || {
+    backgroundColor: '#f1f5f9',
+    textColor: '#475569',
+    borderColor: '#cbd5e1'
+  };
+
+  return {
+    // CRITICAL FIX: 'db-' 접두어를 제거하고 순수 ID(String)만 사용해야 캘린더 드래그 시 DB 저장이 가능함
+    id: String(item.id || `pending-${snsKey}-${Date.now()}`), 
+    sns: snsKey,
+    // 필드명 매핑 (menuName 또는 title 둘 다 대응)
+    menu: item.menuName || item.title || '제목 없음',
+    bodyText: item.content || '',
+    hashtags: item.hashtags ? (Array.isArray(item.hashtags) ? item.hashtags : item.hashtags.split(',').map(t => t.trim())) : [],
+    imageUrl: item.imageUrl || null,
+    originUrl: item.originUrl || null,
+    label: config.label || snsKey.toUpperCase(),
+    icon: config.icon || '📄',
+    color: config.color || palette.borderColor,
+    palette: palette
+  };
+}
+
+/**
+ * 콘텐츠 생성 시 리스트에 추가 (로컬 전용)
+ */
 function addToPending(sns, menu, bodyText) {
-  const platform = PLATFORM_CONFIG[sns] || { label: sns, color: '#6366F1', icon: '📌' };
-
-  state.pendingPosts.push({
-    id: `pending-${sns}-${Date.now()}`,
-    sns,
-    menu,
-    bodyText,
-    label: platform.label,
-    color: platform.color,
-    icon: platform.icon || '📌'
-  });
-
+  const newPost = mapDtoToPost({ platform: sns, title: menu, content: bodyText });
+  state.pendingPosts.push(newPost);
   renderPendingHTML();
 }
 
+/**
+ * 대기 목록 UI 렌더링
+ */
 function renderPendingHTML() {
   const list = document.getElementById('pendingList');
   const badge = document.getElementById('pendingCountBadge');
@@ -428,12 +512,15 @@ function renderPendingHTML() {
   }
 
   list.innerHTML = state.pendingPosts
-    .map(
-      (post) => `
+    .map((post) => {
+      if (!post) return '';
+      const dotColor = post.palette?.borderColor || post.color || '#6366F1';
+
+      return `
         <div class="pending-item" id="${post.id}" draggable="true"
              ondragstart="onPendingDragStart(event,'${post.id}')"
              ondragend="onPendingDragEnd(event)">
-          <span class="pi-dot" style="background:${post.color};"></span>
+          <span class="pi-dot" style="background-color: ${dotColor} !important;"></span>
           <div class="pi-info">
             <div class="pi-name">${post.icon ? post.icon + ' ' : ''}${post.menu}</div>
             <div class="pi-platform">${post.label}</div>
@@ -441,81 +528,69 @@ function renderPendingHTML() {
           <div class="pi-drag-hint">드래그</div>
           <button class="pi-remove-btn" type="button" onclick="removePending('${post.id}')">✕</button>
         </div>
-      `
-    )
+      `;
+    })
     .join('');
 }
 
-window.removePending = function (id) {
-  if (typeof CalendarManager !== 'undefined' && CalendarManager.removePending) {
-    CalendarManager.removePending(id);
-  } else {
-    state.pendingPosts = state.pendingPosts.filter(p => p.id !== id);
-    renderPendingHTML();
-  }
-};
-
-window.loadPendingFromDB = async function() {
-  uiManager.showToast("저장된 데이터를 불러오는 중...");
-  
+/**
+ * DB로부터 대기 목록 동기화 (수동/자동 통합)
+ * @param {boolean} isManual - 수동 클릭 여부 (토스트 메시지 출력 제어)
+ */
+window.syncPendingPosts = async function(isManual = false) {
   try {
     const response = await fetch('/api/posts/pending');
     if (!response.ok) throw new Error("데이터 로드 실패");
     
     const dbData = await response.json();
     
-    const loadedPosts = dbData.map(item => {
-      const tagArray = item.hashtags ? item.hashtags.split(',').map(t => t.trim()) : [];
-      return {
-        id: `db-${item.id}`,
-        sns: item.platform,
-        menu: item.menuName,
-        bodyText: item.content,
-        hashtags: tagArray,
-        imageUrl: item.imageUrl,
-        originUrl: item.originUrl,
-        label: PLATFORM_CONFIG[item.platform]?.label || item.platform,
-        icon: PLATFORM_CONFIG[item.platform]?.icon || '📄',
-        color: PLATFORM_CONFIG[item.platform]?.color || '#cbd5e1'
-      };
-    });
-
-    state.pendingPosts = loadedPosts;
+    // 전체 데이터를 mapDtoToPost를 통해 규격화된 형태로 변환
+    state.pendingPosts = dbData.map(item => mapDtoToPost(item));
+    
     renderPendingHTML();
     
-    uiManager.showToast(`${loadedPosts.length}개의 포스트를 불러왔습니다.`);
+    if (isManual) {
+      uiManager.showToast(`${state.pendingPosts.length}개의 포스트를 불러왔습니다.`);
+    }
   } catch (error) {
-    console.error(error);
-    uiManager.showToast("데이터를 불러오지 못했습니다.");
+    console.error("Sync Error:", error);
+    if (isManual) uiManager.showToast("데이터를 불러오지 못했습니다.");
   }
 };
 
+// 기존 함수명 유지 (버튼 바인딩용)
+window.loadPendingFromDB = () => window.syncPendingPosts(true);
+
+/**
+ * 중앙 편집 영역에 과거 기록 로드
+ */
 window.loadCenterHistory = async function() {
   uiManager.showToast("최근 기록을 불러오는 중...");
   
   try {
     const response = await fetch('/api/posts/pending');
     if (!response.ok) throw new Error("Network response was not ok");
-    let data = await response.json();
     
+    let data = await response.json();
     if (data.length === 0) return uiManager.showToast("저장된 기록이 없습니다.");
 
-    // Fix: 최신 데이터 우선 처리를 위해 id 역순 정렬 (백엔드 처리가 안 되어 있을 경우를 대비한 방어 로직)
-    data = data.sort((a, b) => b.id - a.id);
+    // 최신순 정렬
+    data.sort((a, b) => b.id - a.id);
 
     state.generatedContent = {}; 
 
     data.forEach(item => {
-      // 이미 해당 플랫폼의 최신 데이터가 적재되었다면 과거 데이터로 덮어쓰지 않음
-      if (!state.generatedContent[item.platform]) {
-        state.generatedContent[item.platform] = {
+      const sns = (item.platform || '').toLowerCase();
+      if (!state.generatedContent[sns]) {
+        state.generatedContent[sns] = {
           text: item.content,
-          hashtags: item.hashtags ? item.hashtags.split(',') : []
+          imageUrl: item.imageUrl,
+          hashtags: item.hashtags ? (Array.isArray(item.hashtags) ? item.hashtags : item.hashtags.split(',')) : []
         };
         
-        const textEl = document.getElementById(`text-${item.platform}`);
-        const resultDiv = document.getElementById(`result-${item.platform}`);
-        const emptyDiv = document.getElementById(`empty-${item.platform}`);
+        const textEl = document.getElementById(`text-${sns}`);
+        const resultDiv = document.getElementById(`result-${sns}`);
+        const emptyDiv = document.getElementById(`empty-${sns}`);
         
         if (textEl) textEl.innerHTML = item.content.replace(/\n/g, '<br>');
         if (resultDiv) resultDiv.style.display = 'block';
@@ -524,10 +599,19 @@ window.loadCenterHistory = async function() {
     });
 
     updatePlatformVisibility();
-    uiManager.showToast("과거 기록이 로드되었습니다.");
+    uiManager.showToast("과거 기록이 중앙 영역에 로드되었습니다.");
   } catch (err) {
     console.error(err);
     uiManager.showToast("기록 로드 실패");
+  }
+};
+
+window.removePending = function (id) {
+  if (typeof CalendarManager !== 'undefined' && CalendarManager.removePending) {
+    CalendarManager.removePending(id);
+  } else {
+    state.pendingPosts = state.pendingPosts.filter(p => p.id !== id);
+    renderPendingHTML();
   }
 };
 
@@ -759,53 +843,56 @@ function bindAllUIEvents() {
 /* --------------------------------------------------------------------------
    10. Dashboard Init
    -------------------------------------------------------------------------- */
-async function initializeDashboard() {
-  const dashboardData = await apiService.fetchDashboardData();
+   async function initializeDashboard() {
+     // 1. 캘린더 매니저 초기화 및 즉시 렌더링
+     // 데이터 로드보다 먼저 실행하여 캘린더 '틀'을 먼저 화면에 띄웁니다.
+     if (typeof CalendarManager !== 'undefined') {
+       try {
+         CalendarManager.init({
+           state,
+           uiManager,
+           PLATFORM_CONFIG,
+           PASTEL_PALETTE,
+           renderPendingHTML,
+           publishPost: window.publishPost
+         });
+         CalendarManager.initCalendar();
+         console.log("[Dash] Calendar initialized");
+       } catch (e) {
+         console.error("[Dash] Calendar Init Error:", e);
+       }
+     }
 
-  if (typeof CalendarManager !== 'undefined') {
-    CalendarManager.init({
-      state,
-      uiManager,
-      PLATFORM_CONFIG,
-      PASTEL_PALETTE,
-      renderPendingHTML,
-      publishPost: window.publishPost
-    });
-    CalendarManager.initCalendar();
-  }
-
-  mergePendingPosts(dashboardData.pending);
-  renderPendingHTML();
-  updateRetouchState();
+     
+     updateRetouchState();
 }
-
 /* --------------------------------------------------------------------------
    11. Boot
    -------------------------------------------------------------------------- */
-document.addEventListener('DOMContentLoaded', async () => {
-  bindAllUIEvents();
-  await initializeDashboard();
-});
-
-
-async function uploadToCloudinary(file) {
-  const formData = new FormData();
-  formData.append('file', file);
-
-  try {
-    const response = await fetch('/api/posts/upload', {
-      method: 'POST',
-      body: formData
-    });
-
-    if (!response.ok) {
-      throw new Error('서버 이미지 업로드 API 호출 실패');
-    }
-
-    const data = await response.json();
-    return data.imageUrl;
-  } catch (error) {
-    console.error('업로드 중 오류 발생:', error);
-    throw error;
-  }
-}
+	document.addEventListener('DOMContentLoaded', async () => {
+	  bindAllUIEvents();
+	  await initializeDashboard();
+	});
+	
+	
+	async function uploadToCloudinary(file) {
+	  const formData = new FormData();
+	  formData.append('file', file);
+	
+	  try {
+	    const response = await fetch('/api/posts/upload', {
+	      method: 'POST',
+	      body: formData
+	    });
+	
+	    if (!response.ok) {
+	      throw new Error('서버 이미지 업로드 API 호출 실패');
+	    }
+	
+	    const data = await response.json();
+	    return data.imageUrl;
+	  } catch (error) {
+	    console.error('업로드 중 오류 발생:', error);
+	    throw error;
+		}
+	}

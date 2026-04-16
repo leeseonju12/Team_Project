@@ -1,4 +1,4 @@
-#chatbot-fab {
+#sd-chatbot-fab {
     position: fixed;
     bottom: 20px;
     right: 20px;
@@ -16,7 +16,7 @@
     font-size: 24px;
 }
 
-#chatbot-window {
+#sd-chatbot-window {
     position: fixed;
     bottom: 90px;
     right: 20px;
@@ -31,26 +31,26 @@
     overflow: hidden;
 }
 
-#chatbot-messages {
+#sd-chatbot-messages {
     flex: 1;
     padding: 15px;
     overflow-y: auto;
 }
 
-#chatbot-input-area {
+#sd-chatbot-input-area {
     display: flex;
     padding: 10px;
     border-top: 1px solid #ddd;
 }
 
-#chatbot-input {
+#sd-chatbot-input {
     flex: 1;
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 4px;
 }
 
-#chatbot-send {
+#sd-chatbot-send {
     margin-left: 5px;
     padding: 8px 15px;
     background-color: #007bff;
@@ -71,7 +71,7 @@
     --sd-shadow: rgba(0, 0, 0, 0.15);
 }
 
-#chatbot-fab {
+#sd-chatbot-fab {
     position: fixed;
     bottom: 30px;
     right: 30px;
@@ -92,13 +92,13 @@
     transition: transform 0.2s ease;
 }
 
-#chatbot-fab:active {
+#sd-chatbot-fab:active {
     cursor: grabbing;
     transform: scale(0.95);
 }
 
 /* 챗봇 윈도우 디자인 고도화 */
-#chatbot-window {
+#sd-chatbot-window {
     position: fixed;
     bottom: 110px;
     right: 30px;
@@ -114,7 +114,7 @@
     border: 1px solid #e0e0e0;
 }
 
-#chatbot-header {
+#sd-chatbot-header {
     background: linear-gradient(to right, var(--sd-primary), var(--sd-secondary));
     color: white;
     padding: 20px;
