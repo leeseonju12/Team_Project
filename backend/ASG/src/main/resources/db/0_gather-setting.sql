@@ -720,7 +720,7 @@ INSERT INTO brand_operation_profile (
   NOW(), NOW()
 );
 
-INSERT INTO inquiry (type, email, title, body, content, status, created_at) VALUES
+INSERT INTO inquiry (TYPE, email, title, BODY, content, STATUS, created_at) VALUES
 ('시스템오류', 'test@social.com', '인스타그램 연동 후 게시물이 업로드되지 않습니다',  '인스타그램 계정 연동은 완료됐는데 게시물 업로드 버튼을 눌러도 아무 반응이 없습니다.',        '인스타그램 계정 연동은 완료됐는데 게시물 업로드 버튼을 눌러도 아무 반응이 없습니다.',        '미처리',   NOW()),
 ('시스템오류', 'test@social.com', 'AI 콘텐츠 생성 시 오류 메시지가 표시됩니다',        'AI 콘텐츠 생성 버튼 클릭 시 "생성에 실패했습니다" 메시지가 반복적으로 나타납니다.',          'AI 콘텐츠 생성 버튼 클릭 시 "생성에 실패했습니다" 메시지가 반복적으로 나타납니다.',          '미처리',   NOW() - INTERVAL 2 DAY),
 ('가입·연동', 'test@social.com', '네이버 블로그 연동 후 계정이 바로 해제됩니다',        '네이버 블로그를 연동하면 잠시 후 자동으로 연동이 해제되는 현상이 반복됩니다.',               '네이버 블로그를 연동하면 잠시 후 자동으로 연동이 해제되는 현상이 반복됩니다.',               '처리완료', NOW() - INTERVAL 5 DAY),
@@ -892,18 +892,33 @@ INSERT INTO content_settings (
 );
 
 -- inquiry (2번 유저 - 을밀대)
-INSERT INTO inquiry (type, email, title, body, content, status, created_at) VALUES
+INSERT INTO inquiry (TYPE, email, title, BODY, content, STATUS, created_at) VALUES
 ('가입·연동', 'eulmildae@naver.com', '네이버 예약 연동 후 알림이 오지 않습니다', '네이버 예약 연동 완료 후 신규 예약이 들어와도 알림이 전혀 오지 않습니다.', '네이버 예약 연동 완료 후 신규 예약이 들어와도 알림이 전혀 오지 않습니다.', '미처리',   NOW()),
 ('시스템오류', 'eulmildae@naver.com', '메뉴 사진 업로드 시 오류가 발생합니다',    '메뉴 사진 등록 시 "업로드 실패" 메시지가 표시됩니다.',                     '메뉴 사진 등록 시 "업로드 실패" 메시지가 표시됩니다.',                     '처리완료', NOW() - INTERVAL 3 DAY);
 
 -- inquiry (3번 유저 - 와드)
-INSERT INTO inquiry (type, email, title, body, content, status, created_at) VALUES
+INSERT INTO inquiry (TYPE, email, title, BODY, content, STATUS, created_at) VALUES
 ('시스템오류', 'wad@google.com', '인스타그램 게시물 예약이 되지 않습니다', '예약 게시 설정 후 지정 시간에 발행되지 않는 문제가 반복됩니다.', '예약 게시 설정 후 지정 시간에 발행되지 않는 문제가 반복됩니다.', '미처리', NOW() - INTERVAL 1 DAY);
 
 -- inquiry (4번 유저 - 선데이클로즈)
-INSERT INTO inquiry (type, email, title, body, content, status, created_at) VALUES
+INSERT INTO inquiry (TYPE, email, title, BODY, content, STATUS, created_at) VALUES
 ('콘텐츠 생성', 'sundayclothes@kakao.com', '콘텐츠 자동 생성 시 이미지가 누락됩니다', 'AI 콘텐츠 생성 후 이미지가 첨부되지 않은 상태로 생성됩니다.',    'AI 콘텐츠 생성 후 이미지가 첨부되지 않은 상태로 생성됩니다.',    '처리완료', NOW() - INTERVAL 4 DAY),
 ('시스템오류', 'sundayclothes@kakao.com', '해시태그 추천 기능이 동작하지 않습니다',   '해시태그 자동 추천 버튼 클릭 시 아무 반응이 없습니다.',           '해시태그 자동 추천 버튼 클릭 시 아무 반응이 없습니다.',           '미처리',   NOW() - INTERVAL 2 DAY);
+
+
+-- 브랜드 아이디 21번 콘텐츠 히스토리 확인 용 테스트 데이터
+INSERT INTO brand_platform (brand_id, platform_id, is_connected, token_status, created_at, updated_at)
+VALUES 
+(21, 1, 0, 'ACTIVE', NOW(), NOW()),
+(21, 2, 0, 'ACTIVE', NOW(), NOW()),
+(21, 3, 0, 'ACTIVE', NOW(), NOW()),
+(21, 4, 0, 'ACTIVE', NOW(), NOW());
+
+INSERT INTO content_post (brand_platform_id, post_title, post_type, post_body, STATUS, created_at, updated_at, published_at)
+VALUES 
+(5, '딸기 크림 라떼', 'AI생성', '🍓 봄의 시작을 알리는 딸기 크림 라떼가 출시되었습니다! 진한 딸기향과 부드러운 크림의 조화를 느껴보세요.', 'published', NOW(), NOW(), NOW()),
+(6, '딸기 크림 라떼', 'AI생성', '봄 신메뉴 딸기 크림 라떼 출시! 매장에서 직접 만나보세요.', 'published', NOW(), NOW(), NOW()),
+(7, '딸기 크림 라떼', 'AI생성', '봄 시즌 한정 딸기 크림 라떼를 소개합니다. 신선한 딸기와 크림의 완벽한 조화입니다.', 'published', NOW(), NOW(), NOW());
 
 -- ══════════════════════════════════════════════
 -- customerCenter 시드 데이터
@@ -911,7 +926,7 @@ INSERT INTO inquiry (type, email, title, body, content, status, created_at) VALU
 -- ══════════════════════════════════════════════
 
 -- admin_user (관리자 계정, 비밀번호: admin1234)
-INSERT INTO admin_user (login_id, password, name) VALUES
+INSERT INTO admin_user (login_id, PASSWORD, NAME) VALUES
 ('admin', 'admin1234', '관리자');
 
 -- faq

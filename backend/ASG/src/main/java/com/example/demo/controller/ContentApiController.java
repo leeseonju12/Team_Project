@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import jakarta.servlet.http.HttpSession;
 
 import com.example.demo.dto.ContentRequest;
 import com.example.demo.dto.ScheduleRequestDto;
@@ -89,11 +90,13 @@ public class ContentApiController {
 		}
 	}
 
-	// --- 기존 SNS 콘텐츠 생성 및 발행 로직 ---
+	// --- 기존 SNS 콘텐츠 생성 및 발행 로직 --- ++++ 로그인 세션 추가
 
 	@PostMapping("/generate")
-
-	public Map<String, String> generateForApi(@RequestBody ContentRequest request) {
+	public Map<String, String> generateForApi(HttpSession session,
+	                                          @RequestBody ContentRequest request) {
+		Long userId = (Long) session.getAttribute("userId");
+		request.setUserId(userId);
 		List<SnsResult> results = contentService.generateAllSnsContent(request);
 		return results.stream().collect(Collectors.toMap(
 				res -> res.getPlatform().toLowerCase(),

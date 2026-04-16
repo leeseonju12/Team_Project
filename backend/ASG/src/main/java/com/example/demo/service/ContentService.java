@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ContentService {
 
-	private final GeminiApiClient geminiClient; // 공통 모듈 주입!
+	private final GeminiApiClient geminiClient;
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	private final GeneratedContentRepository contentRepository;
@@ -30,6 +30,7 @@ public class ContentService {
 	// 마이페이지 구현용 필드
 	private final com.example.demo.repository.myPage.ContentPostRepository contentPostRepository;
 	private final com.example.demo.repository.myPage.BrandPlatformRepository brandPlatformRepository;
+	private final com.example.demo.repository.myPage.BrandRepository brandRepository; // 추가
 	private static final Long BRAND_ID = 1L;
 
 	@Transactional
@@ -46,17 +47,19 @@ public class ContentService {
 				request.getTones(), request.getEmojiLevel(), request.getMaxLength());
 
 		String rawJsonContent = geminiClient.requestToGemini(prompt);
-		// List<SnsResult> results = parseAndEnrichResults(rawJsonContent);
 		List<SnsResult> results = parseAndEnrichResults(rawJsonContent, request.getImageUrl());
 
 		for (SnsResult res : results) {
 			GeneratedContent entity = GeneratedContent.builder().menuName(request.getMenuName())
 					.platform(res.getPlatform()).content(res.getContent())
-					.hashtags(res.getHashtags() != null ? String.join(",", res.getHashtags()) : "")
-					/* Rationale: LLM 응답이 아닌 클라이언트 요청 객체에서 이미지 URL 추출 */
+					.hashtags(res.getHashtags() != null ?
+					String.join(",", res.getHashtags()) : "")
 					.imageUrl(request.getImageUrl()).build();
 			contentRepository.save(entity);
 		}
+
+		// 마이페이지 히스토리 저장
+		saveGeneratedContents(request.getMenuName(), results, request.getUserId());
 
 		return results;
 	}
@@ -65,14 +68,11 @@ public class ContentService {
 		List<SnsResult> results = new ArrayList<>();
 
 		try {
-			// AI가 가끔 마크다운 찌꺼기(```json)를 붙여서 주면 파싱 에러가 나므로 안전하게 제거
 			String cleanJson = rawJsonContent.replace("```json", "").replace("```", "").trim();
 
-			// JSON 문자열 -> List<SnsResult> 변환
 			List<SnsResult> parsedList = objectMapper.readValue(cleanJson, new TypeReference<List<SnsResult>>() {
 			});
 
-			// 화면을 그리는 데 필요한 UI 데이터 덧붙이기
 			for (SnsResult item : parsedList) {
 				item.setImageUrl(requestImageUrl);
 				switch (item.getPlatform()) {
@@ -109,31 +109,36 @@ public class ContentService {
 			}
 		} catch (Exception e) {
 			System.err.println("AI JSON 파싱 중 오류 발생: " + e.getMessage());
-			// 필요한 경우 여기서 기본(Fallback) 에러 메시지를 담은 SnsResult를 반환하도록 처리할 수 있습니다.
 		}
 
 		return results;
 	}
 
 	// 마이페이지-컨텐츠 생성 내역
-	private void saveGeneratedContents(String menuName, List<SnsResult> results) {
-		List<com.example.demo.entity.myPage.BrandPlatform> brandPlatforms = brandPlatformRepository
-				.findByBrand_BrandId(BRAND_ID);
+		private void saveGeneratedContents(String menuName, List<SnsResult> results, Long userId) {
+			// userId → brandId 해석 (null이면 하드코딩 fallback)
+			Long resolvedBrandId = BRAND_ID;
+			if (userId != null) {
+			resolvedBrandId = brandRepository.findByUser_Id(userId)
+					.map(b -> b.getBrandId())
+					.orElse(BRAND_ID);
+		}
 
-		// platform_code → BrandPlatform 맵 구성
+		List<com.example.demo.entity.myPage.BrandPlatform> brandPlatforms = brandPlatformRepository
+				.findByBrand_BrandId(resolvedBrandId);
+
 		Map<String, com.example.demo.entity.myPage.BrandPlatform> platformMap = brandPlatforms.stream()
 				.filter(bp -> bp.getPlatform() != null).collect(java.util.stream.Collectors
-						.toMap(bp -> bp.getPlatform().getPlatformCode(), bp -> bp, (a, b) -> a // 중복 시 첫 번째 사용
-						));
+						.toMap(bp -> bp.getPlatform().getPlatformCode(), bp -> bp, (a, b) -> a));
 
 		for (SnsResult result : results) {
 			com.example.demo.entity.myPage.BrandPlatform bp = platformMap.get(result.getPlatform());
 			if (bp == null)
-				continue; // brand_platform 미존재 플랫폼은 스킵
+				continue;
 
 			com.example.demo.entity.myPage.ContentPost post = new com.example.demo.entity.myPage.ContentPost();
 			post.setBrandPlatform(bp);
-			post.setPostTitle(menuName); // 메뉴명을 제목으로
+			post.setPostTitle(menuName);
 			post.setPostType("AI생성");
 			post.setPostBody(result.getContent());
 			post.setStatus("published");
@@ -141,7 +146,6 @@ public class ContentService {
 			try {
 				contentPostRepository.save(post);
 			} catch (Exception e) {
-				// 저장 실패해도 화면 렌더링은 정상 진행
 				System.err.println("content_post 저장 실패 [" + result.getPlatform() + "]: " + e.getMessage());
 			}
 		}
