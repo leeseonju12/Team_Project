@@ -59,7 +59,7 @@ public class MypageService {
 	            .findByBrand_BrandId(brand.getBrandId()).orElse(null);
 
 	    if (brand.getAddress() != null) {
-	        brand.setAddress(brand.getAddress().replaceAll("^\\[\\d+\\]\\s*", ""));
+	        brand.setAddress(stripZipCode(brand.getAddress()));
 	    }
 	    return new BrandInfoResponse(brand, profile);
 	}
@@ -76,9 +76,9 @@ public class MypageService {
 
 	    User user = userRepository.findById(userId)
 	            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
-	    user.updateAddress(request.getAddress(), request.getLocationName());
+	    // ❌ 제거: user.updateAddress(request.getAddress(), request.getLocationName());
 	    user.updateStorePhone(request.getPhone());
-	    brand.setAddress(request.getAddress());
+	    brand.setAddress(stripZipCode(request.getAddress()));
 	    brand.setLocationName(request.getLocationName());
 
 	    BrandOperationProfile profile = operationProfileRepository
@@ -89,6 +89,12 @@ public class MypageService {
 	    profile.setCloseTime(request.getCloseTime());
 	    profile.setRegularClosedWeekday(request.getRegularClosedWeekday());
 	    operationProfileRepository.save(profile);
+	}
+	
+	// ── 우편번호 제거 헬퍼 ──────────────────────────────────
+	private String stripZipCode(String address) {
+	    if (address == null) return null;
+	    return address.replaceAll("^\\[\\d+\\]\\s*", "").trim();
 	}
 
 	// ── 콘텐츠 설정 조회 ────────────────────────────────────
