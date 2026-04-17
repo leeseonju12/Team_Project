@@ -111,19 +111,19 @@ INDUSTRY_PROFILES: dict[IndustryType, IndustryProfile] = {
         lens_style="45-degree overhead angle, 35mm lens, sharp food detail",
     ),
     IndustryType.BEAUTY: IndustryProfile(
-    style_template=(
-        "clean premium beauty aesthetic, soft diffused or natural lighting, "
-        "balanced exposure, refined texture detail, professional and trustworthy mood"
-    ),
-    style_focus=(
-        "subject-focused composition, clean environment, natural skin and hair detail"
-    ),
-    scene=(
-        "in a modern beauty space such as salon, clinic, studio, or cosmetic shop, "
-        "featuring product, service, or result-focused composition"
-    ),
-    lighting="soft diffused or clean indoor lighting",
-    lens_style="macro, portrait, or wide lens depending on subject",
+        style_template=(
+            "clean premium beauty aesthetic, soft diffused or natural lighting, "
+            "balanced exposure, refined texture detail, professional and trustworthy mood"
+        ),
+        style_focus=(
+            "subject-focused composition, clean environment, natural skin and hair detail"
+        ),
+        scene=(
+            "in a modern beauty space such as salon, clinic, studio, or cosmetic shop, "
+            "featuring product, service, or result-focused composition"
+        ),
+        lighting="soft diffused or clean indoor lighting",
+        lens_style="macro, portrait, or wide lens depending on subject",
     ),
     IndustryType.FASHION: IndustryProfile(
         style_template=(
@@ -161,20 +161,21 @@ INDUSTRY_PROFILES: dict[IndustryType, IndustryProfile] = {
     ),
     IndustryType.FITNESS_SPORTS: IndustryProfile(
         style_template=(
-            "Hard dramatic lighting, rim lighting to define muscle and shape, "
-            "high contrast, vibrant energetic palette, gym or stadium background, "
-            "grit and determination atmosphere, sharp motion freeze."
+            "Dynamic range of lighting from high-contrast rim light to soft natural airy glow, "
+            "vibrant and motivating color palette, versatile settings (modern gym, serene studio, or outdoor track), "
+            "capturing both peak athletic performance and mindful wellness, "
+            "crisp details with professional depth of field."
         ),
         style_focus=(
-            "gym or stadium background, energetic palette, grit and determination, "
-            "sharp motion freeze"
+            "versatile lighting (dramatic or airy), motivating atmosphere, "
+            "human-centric focus on form and movement, clean and modern environments"
         ),
         scene=(
-            "positioned on a polished gym floor surrounded by equipment, "
-            "high-energy athletic atmosphere"
+            "in a state-of-the-art fitness center, a minimalist yoga studio, or a sun-drenched outdoor path, "
+            "surrounded by relevant high-quality equipment or peaceful natural elements"
         ),
-        lighting="hard dramatic rim lighting, high contrast, vivid shadows",
-        lens_style="24mm wide lens, motion-freeze shutter, dynamic diagonal composition",
+        lighting="adaptive: hard rim lighting for muscle definition OR soft natural light for wellness and glow",
+        lens_style="wide-angle for scale (24mm) or portrait prime (50mm-85mm) for emotional focus and bokeh",
     ),
     IndustryType.EDUCATION: IndustryProfile(
         style_template=(
@@ -258,7 +259,7 @@ QUALITY_BOOSTERS: list[str] = [
     "photorealistic",
 ]
 
-PROMPT_TOKEN_THRESHOLD = 100
+PROMPT_TOKEN_THRESHOLD = 90
 BOOSTER_REDUCE_STEP = 2
 
 
