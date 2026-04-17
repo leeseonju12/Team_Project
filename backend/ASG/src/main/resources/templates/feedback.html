@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 
 <head>
   <meta charset="UTF-8" />
@@ -114,79 +114,6 @@
       background: linear-gradient(90deg, var(--teal) 0%, var(--indigo) 55%, var(--blue-light-alt) 100%);
     }
 
-    header {
-      background: var(--white);
-      border-bottom: 1px solid var(--border);
-      padding: 0 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 64px;
-      position: sticky;
-      top: 0;
-      z-index: 200;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-    }
-
-    .logo-mark {
-      width: 34px;
-      height: 34px;
-      border-radius: 9px;
-      background: linear-gradient(135deg, var(--teal), var(--indigo));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--white);
-      font-weight: 900;
-      font-size: 15px;
-      box-shadow: 0 2px 8px var(--indigo-alpha-24);
-    }
-
-    .logo-name {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .logo-sub {
-      font-size: 11px;
-      color: var(--text3);
-    }
-
-    .nav-pills {
-      display: flex;
-      gap: 4px;
-    }
-
-    .nav-pill {
-      padding: 6px 14px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text2);
-      text-decoration: none;
-      border: 1.5px solid transparent;
-      transition: all .18s;
-      background: transparent;
-    }
-
-    .nav-pill:hover {
-      background: var(--slate2);
-    }
-
-    .nav-pill.active {
-      background: var(--indigo-light);
-      border-color: var(--indigo-200);
-      color: var(--indigo-dark);
-      font-weight: 700;
-    }
 
     .status-pill {
       display: flex;
@@ -419,7 +346,7 @@
     .table-head h3 { font-size: 13px; font-weight: 800; color: var(--text); display: flex; align-items: center; gap: 8px; }
 
     .badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 800; }
-    .badge.indigo { background: var(--indigo-light); color: var(--indigo-dark); }
+    .badge.indigo { color: var(--indigo-dark); }
     .badge.teal { background: var(--teal-light); color: var(--teal-dark); }
 
     table { width: 100%; border-collapse: collapse; }
@@ -506,20 +433,12 @@
 </head>
 
 <body>
-  <div class="top-stripe"></div>
+
+<div th:replace="~{fragments/header :: global-header(currentMenu='feedback')}"></div>
+
 
   <header>
-    <div class="logo">
-      <div class="logo-mark">S</div>
-      <span class="logo-name">소셜다모아</span>
-      <span class="logo-sub">All Social Gather</span>
-    </div>
-    <nav class="nav-pills">
-      <a href="#" class="nav-pill">✏️ 콘텐츠 생성</a>
-      <a href="#" class="nav-pill active">💬 고객 관리</a>
-      <a href="#" class="nav-pill">📊 성과 분석</a>
-    </nav>
-    <div class="status-pill"><span class="status-dot"></span>DB 연결됨</div>
+
   </header>
 
   <div class="page">
@@ -636,7 +555,7 @@
         <h3>
           수집된 리뷰 / 댓글
           <span class="badge indigo" id="countBadge">0</span>
-          <span class="badge teal" id="selectBadge">0개 선택</span>
+          <span class="badge indigo"  id="selectBadge">0개 선택</span>
         </h3>
         <label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer;">
           <input type="checkbox" id="selectAll" class="cb" onchange="toggleSelectAll(this)"> 전체 선택

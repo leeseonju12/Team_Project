@@ -11,9 +11,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class PageController {
 
 	@GetMapping("/feedbacks")
-	public String feedbackPage() {
+	public String feedbackPage(Model model) {
+		
+	    Map<String, String> fakeUser = new HashMap<>();
+	    fakeUser.put("name", "테스트");
+	    fakeUser.put("email", "test@example.com");
 
-		return "forward:/feedback.html";
+	    model.addAttribute("userInfo", fakeUser);
+		return "feedback";
 	}
 	
 
