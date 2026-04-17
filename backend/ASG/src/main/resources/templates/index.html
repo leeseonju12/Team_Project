@@ -431,11 +431,13 @@
 			<div class="ai-image-section">
 				<input type="hidden" id="businessCategory" th:value="${businessCategory}">
 			  <div class="ai-image-section-title">AI 이미지 자동 생성</div>
+			  
 			  <button type="button" class="btn-ai-generate" id="btn-ai-generate" onclick="handleAiImageGenerate()">
 			    <div class="ai-spinner"></div>
 			    <span class="ai-btn-text">🪄 AI로 이미지 생성하기</span>
 			  </button>
-			  <div class="ai-status" id="ai-status"></div>
+			  <div class="ai-status" id="ai-status">클릭 한 번으로 완성하는 마케팅 이미지</div>
+			  <div id="aiImgPreviews" class="img-previews"></div>
 			</div>
             </div>
             <div class="divider"></div>
