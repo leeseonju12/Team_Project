@@ -14,6 +14,7 @@ import com.example.demo.dto.ContentRequest;
 import com.example.demo.dto.SnsResult;
 import com.example.demo.service.ContentService;
 
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 @Controller
@@ -25,18 +26,20 @@ public class ContentController {
 
     @GetMapping("/generate")
     public String showGeneratePage() {
-    	
         return "index";
     }
 
     @PostMapping("/generate")
-    public String generate(@ModelAttribute ContentRequest request, Model model) {
+    public String generate(HttpSession session,
+                           @ModelAttribute ContentRequest request, Model model) {
 
-    	
+        Long userId = (Long) session.getAttribute("userId");
+        request.setUserId(userId); // null이면 ContentService에서 BRAND_ID=1L로 fallback
+
         List<SnsResult> results = geminiService.generateAllSnsContent(request);
         
         model.addAttribute("results", results);
-        model.addAttribute("req", request); // 입력했던 내용 유지용
+        model.addAttribute("req", request);
         
         return "index";
     }

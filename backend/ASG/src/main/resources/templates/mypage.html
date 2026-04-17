@@ -267,6 +267,8 @@
     .inq-badge{padding:3px 8px;border-radius:100px;font-size:10px;font-weight:800;white-space:nowrap;flex-shrink:0;}
     .inq-badge.pending{background:var(--yellow-light);color:#92400E;}
     .inq-badge.answered{background:var(--green-light);color:#15803D;}
+    /* 추가 */
+	.inq-badge.processing{background:rgba(59,130,246,.12);color:#1d4ed8;}
     .inq-badge.closed{background:var(--slate2);color:var(--text3);}
     .inq-cat-badge{padding:3px 8px;border-radius:100px;font-size:10px;font-weight:700;background:var(--indigo-light);color:var(--indigo-dark);white-space:nowrap;flex-shrink:0;}
     .inq-title{font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -404,7 +406,11 @@ em {
       </div>
       <div class="profile-name" th:text="${userInfo.name}"></div>
       <div class="profile-email" th:text="${userInfo.email}"></div>
-      <div class="profile-badge">카카오 가입자</div>
+      <div class="profile-badge"
+     th:text="${userInfo.provider == 'kakao' ? '카카오 가입자' :
+               userInfo.provider == 'naver' ? '네이버 가입자' :
+               userInfo.provider == 'google' ? '구글 가입자' : '소셜 가입자'}">
+</div>
     </div>
     <!-- 네비 — showSection() 호출 후 드로어 닫기 -->
     <nav class="sidebar-nav">
@@ -426,8 +432,7 @@ em {
       <div class="snav-divider"></div>
 
       <div class="snav-group-label">기타</div>
-      <div class="snav-item" data-sec="inquiry" onclick="showSection('inquiry',this);closeDrawer()"><span class="sni">💬</span>1:1 문의</div>
-      <div class="snav-item snav-danger" onclick="confirmWithdraw();closeDrawer()"><span class="sni">🚪</span>회원 탈퇴</div>
+      <div class="snav-item" data-sec="inquiry" onclick="showSection('inquiry',this);closeDrawer()"><span class="sni">📋</span>문의 내역</div>
     </nav>
   </div>
 
@@ -475,7 +480,11 @@ em {
         </div>
         <div class="profile-name" th:text="${userInfo.name}"></div>
         <div class="profile-email" th:text="${userInfo.email}"></div>
-        <div class="profile-badge">카카오 가입자</div>
+        <div class="profile-badge"
+     th:text="${userInfo.provider == 'kakao' ? '카카오 가입자' :
+               userInfo.provider == 'naver' ? '네이버 가입자' :
+               userInfo.provider == 'google' ? '구글 가입자' : '소셜 가입자'}">
+</div>
       </div>
       <!-- ── mypage Sidebar ── -->
       <nav class="sidebar-nav">
@@ -623,16 +632,16 @@ em {
       <div class="field">
         <label>업종 <span class="req">*</span></label>
 <select id="s_category">
-  <option value="CAFE_BAKERY"           th:selected="${userInfo.businessCategory == 'CAFE_BAKERY'}">카페 / 베이커리</option>
-  <option value="FOOD_RESTAURANT"       th:selected="${userInfo.businessCategory == 'FOOD_RESTAURANT'}">음식점 / 식당</option>
-  <option value="BEAUTY_SALON"          th:selected="${userInfo.businessCategory == 'BEAUTY_SALON'}">미용 / 뷰티</option>
-  <option value="FASHION_CLOTHING"      th:selected="${userInfo.businessCategory == 'FASHION_CLOTHING'}">패션 / 의류</option>
-  <option value="ACCOMMODATION_PENSION" th:selected="${userInfo.businessCategory == 'ACCOMMODATION_PENSION'}">숙박 / 펜션</option>
-  <option value="FITNESS_SPORTS"        th:selected="${userInfo.businessCategory == 'FITNESS_SPORTS'}">피트니스 / 스포츠</option>
-  <option value="EDUCATION_ACADEMY"     th:selected="${userInfo.businessCategory == 'EDUCATION_ACADEMY'}">교육 / 학원</option>
-  <option value="MEDICAL_HOSPITAL"      th:selected="${userInfo.businessCategory == 'MEDICAL_HOSPITAL'}">의료 / 병원</option>
-  <option value="RETAIL_SHOPPING"       th:selected="${userInfo.businessCategory == 'RETAIL_SHOPPING'}">소매 / 쇼핑</option>
-  <option value="ETC"                   th:selected="${userInfo.businessCategory == 'ETC'}">기타</option>
+<option value="카페 / 베이커리"    th:selected="${userInfo.businessCategory == '카페 / 베이커리'}">카페 / 베이커리</option>
+<option value="음식점 / 식당"      th:selected="${userInfo.businessCategory == '음식점 / 식당'}">음식점 / 식당</option>
+<option value="미용 / 뷰티"        th:selected="${userInfo.businessCategory == '미용 / 뷰티'}">미용 / 뷰티</option>
+<option value="패션 / 의류"        th:selected="${userInfo.businessCategory == '패션 / 의류'}">패션 / 의류</option>
+<option value="숙박 / 펜션"        th:selected="${userInfo.businessCategory == '숙박 / 펜션'}">숙박 / 펜션</option>
+<option value="피트니스 / 스포츠"  th:selected="${userInfo.businessCategory == '피트니스 / 스포츠'}">피트니스 / 스포츠</option>
+<option value="교육 / 학원"        th:selected="${userInfo.businessCategory == '교육 / 학원'}">교육 / 학원</option>
+<option value="의료 / 병원"        th:selected="${userInfo.businessCategory == '의료 / 병원'}">의료 / 병원</option>
+<option value="소매 / 쇼핑"        th:selected="${userInfo.businessCategory == '소매 / 쇼핑'}">소매 / 쇼핑</option>
+<option value="기타"               th:selected="${userInfo.businessCategory == '기타'}">기타</option>
 </select>
       </div>
     </div>
@@ -851,9 +860,11 @@ em {
         
         <div class="inq-filter-row">
           <div class="inq-filter-tabs">
-            <button class="inq-tab active" onclick="filterInq('all',this)">전체</button>
-            <button class="inq-tab" onclick="filterInq('pending',this)">답변 대기</button>
-            <button class="inq-tab" onclick="filterInq('answered',this)">답변 완료</button>
+            <!-- 수정 후 -->
+<button class="inq-tab active" onclick="filterInq('all',this)">전체</button>
+<button class="inq-tab" onclick="filterInq('pending',this)">답변 대기</button>
+<button class="inq-tab" onclick="filterInq('processing',this)">처리중</button>
+<button class="inq-tab" onclick="filterInq('answered',this)">답변 완료</button>
           </div>
           <div class="inq-search-wrap">
             <input class="inq-search" type="text" placeholder="🔍  문의 검색" oninput="searchInq(this.value)" />
@@ -916,11 +927,20 @@ em {
   /* ═══ Nav ═══ */
   
   // 페이지 로드 시 ?sec=xxx 파라미터 확인
+// 수정 후
 window.addEventListener('DOMContentLoaded', () => {
-  const sec = new URLSearchParams(window.location.search).get('sec');
+  const params = new URLSearchParams(window.location.search);
+  const sec = params.get('sec');
+  const filter = params.get('filter');
+
   if (sec) {
     const el = document.querySelector(`.snav-item[data-sec="${sec}"]`);
     if (el) showSection(sec, el);
+  }
+
+  if (filter === 'pending') {
+    const el = document.querySelector(`.snav-item[data-sec="inquiry"]`);
+    if (el) showSection('inquiry', el);
   }
 });
   
@@ -932,6 +952,8 @@ function showSection(id, el) {
     window.scrollTo({top:0,behavior:'smooth'});
     if(id==='inquiry') loadInquiries();  // 추가
   }
+  
+  
 
   /* ═══ Hours ═══ */
   const DAYS=['월','화','수','목','금','토','일'];
@@ -1252,31 +1274,51 @@ function showSection(id, el) {
   let INQUIRIES=[], inqFilter='all', inqSearch='';
 
   async function loadInquiries(){
-    try{
-    	const res = await fetch(`/mypage/inquiry?email=${encodeURIComponent(INQ_USER_EMAIL)}`);
-      if(!res.ok) throw new Error();
-      INQUIRIES = await res.json();
-    } catch(e){
-      INQUIRIES = [];
-    }
-    updateInqStats();
-    renderInqList();
-  }
+	    try{
+	        const res = await fetch(`/api/inquiry?email=${encodeURIComponent(INQ_USER_EMAIL)}`);
+	        if(!res.ok) throw new Error();
+	        INQUIRIES = await res.json();
+	    } catch(e){
+	        INQUIRIES = [];
+	    }
+	    updateInqStats();
+
+	    // 추가 — URL 파라미터로 탭 자동 활성화
+	    const urlParams = new URLSearchParams(window.location.search);
+	    const filter = urlParams.get('filter');
+	    if (filter === 'pending') {
+	        inqFilter = 'pending';
+	        document.querySelectorAll('.inq-tab').forEach(t => {
+	            t.classList.toggle('active', t.textContent.trim() === '답변 대기');
+	        });
+	    }
+
+	    renderInqList();
+	}
+  
+  /* ═══ 문의하기 버튼 → customer-center 이동 ═══ */
+  window.toggleInqForm = function(open) {
+    if (!open) return;
+    const email = document.getElementById('currentUserEmail')?.value || '';
+    const url = '/customer-center.html?tab=inquiry' + (email ? '&email=' + encodeURIComponent(email) : '');
+    window.location.href = url;
+  };
 
   function updateInqStats(){
-	    const pending = INQUIRIES.filter(i=>i.status==='WAIT').length;
+	    const pending = INQUIRIES.filter(i=>i.status==='미처리').length;
 	    document.getElementById('statTotal').textContent   = INQUIRIES.length;
 	    document.getElementById('statPending').textContent = pending;
-	    document.getElementById('statDone').textContent    = INQUIRIES.filter(i=>i.status==='DONE').length;
+	    document.getElementById('statDone').textContent    = INQUIRIES.filter(i=>i.status==='처리완료').length;
 	    const b=document.getElementById('inqBadge');
 	    if(b) b.textContent = pending;
-	  }
+	}
 
 	function getFiltered(){
 	    return INQUIRIES.filter(i=>{
-	      const mf = inqFilter==='all'
-	        || (inqFilter==='pending'  && i.status==='WAIT')
-	        || (inqFilter==='answered' && i.status==='DONE');
+	    	const mf = inqFilter==='all'
+	    		  || (inqFilter==='pending'    && i.status==='미처리')
+	    		  || (inqFilter==='processing' && i.status==='처리중')
+	    		  || (inqFilter==='answered'   && i.status==='처리완료');
 	      const ms = !inqSearch
 	        || i.title.includes(inqSearch)
 	        || i.body.includes(inqSearch)
@@ -1294,9 +1336,15 @@ function showSection(id, el) {
       return;
     }
     c.innerHTML=list.map(inq=>{
-    	const isPending = inq.status==='WAIT';
-      const badgeCls  = isPending ? 'pending' : 'answered';
-      const badgeLbl  = isPending ? '답변 대기' : '답변 완료';
+    	// 수정 후
+    	const badgeMap = {
+    	  '미처리':  { cls: 'pending',    lbl: '답변 대기' },
+    	  '처리중':  { cls: 'processing', lbl: '처리중'    },
+    	  '처리완료':{ cls: 'answered',   lbl: '답변 완료' },
+    	};
+    	const badge    = badgeMap[inq.status] || badgeMap['미처리'];
+    	const badgeCls = badge.cls;
+    	const badgeLbl = badge.lbl;
       const typeBadge = inq.type
         ? `<span class="inq-cat-badge">${inq.type}</span>` : '';
       const attachHtml = (inq.attachmentNames||[]).length
@@ -1594,6 +1642,10 @@ loadContentHistory();
   /* ESC 키로 닫기 */
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
 
+  
+  
+  
+  
   </script>
 
   <!-- 콘텐츠 히스토리 상세 모달 -->

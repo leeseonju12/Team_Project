@@ -2,22 +2,24 @@ package com.example.demo.dto.myPage;
 
 import com.example.demo.entity.myPage.BrandPlatform;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Getter
+@Setter
 public class SnsAccountResponse {
 
-    private final Long brandPlatformId;
-    private final String platformCode;   // instagram / facebook / naver / kakao
-    private final String platformName;
-    private final String brandColor;
-    private final String channelName;
-    private final String channelUrl;
-    private final Boolean isConnected;
-    private final String tokenStatus;    // ACTIVE / EXPIRED
-    private final LocalDateTime tokenExpiresAt;
-    private final LocalDateTime connectedAt;
+    private Long brandPlatformId;
+    private String platformCode;
+    private String platformName;
+    private String brandColor;
+    private String channelName;
+    private String channelUrl;
+    private Boolean isConnected;
+    private String tokenStatus;
+    private LocalDateTime tokenExpiresAt;
+    private LocalDateTime connectedAt;
 
     public SnsAccountResponse(BrandPlatform bp) {
         this.brandPlatformId = bp.getBrandPlatformId();
@@ -31,4 +33,15 @@ public class SnsAccountResponse {
         this.tokenExpiresAt  = bp.getTokenExpiresAt();
         this.connectedAt     = bp.getConnectedAt();
     }
+
+    public static SnsAccountResponse notConnected(String platformCode, String platformName) {
+        SnsAccountResponse r = new SnsAccountResponse();
+        r.platformCode = platformCode;
+        r.platformName = platformName;
+        r.isConnected  = false;
+        r.tokenStatus  = "NONE";
+        return r;
+    }
+
+    private SnsAccountResponse() {}
 }

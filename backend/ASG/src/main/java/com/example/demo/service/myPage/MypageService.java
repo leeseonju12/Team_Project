@@ -37,11 +37,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MypageService {
 
-	// 로그인 연동 전까지 brandId 고정
-	// 숫자만 바꾸면 테스트 매장도 바뀜
-	private static final Long BRAND_ID = 1L;
-	private static final Long USER_ID = 1L;  // 추가
-
 	private final BrandRepository brandRepository;
 	private final UserRepository userRepository;
 	private final BrandOperationProfileRepository operationProfileRepository;
@@ -51,86 +46,97 @@ public class MypageService {
 	private final BusinessHoursRepository businessHoursRepository;
 	private final com.example.demo.repository.myPage.InquiryRepository inquiryRepository;
 	private final ContentPostRepository contentPostRepository;
-	
-	
-	
+
 	// ── 가게 정보 조회 ──────────────────────────────────────
 	@Transactional(readOnly = true)
-	public BrandInfoResponse getBrandInfo() {
-		Brand brand = brandRepository.findById(BRAND_ID)
+	public BrandInfoResponse getBrandInfo(Long userId) {
+		Brand brand = brandRepository.findByUser_Id(userId)
 				.orElseThrow(() -> new IllegalArgumentException("브랜드를 찾을 수 없습니다."));
 
-		BrandOperationProfile profile = operationProfileRepository.findByBrand_BrandId(BRAND_ID).orElse(null);
+		BrandOperationProfile profile = operationProfileRepository.findByBrand_BrandId(brand.getBrandId()).orElse(null);
 
+		if (brand.getAddress() != null) {
+			brand.setAddress(stripZipCode(brand.getAddress()));
+		}
 		return new BrandInfoResponse(brand, profile);
 	}
 
 	// ── 가게 정보 수정 ──────────────────────────────────────
 	@Transactional
-	public void updateBrandInfo(BrandInfoRequest request) {
-	    Brand brand = brandRepository.findById(BRAND_ID)
-	            .orElseThrow(() -> new IllegalArgumentException("브랜드를 찾을 수 없습니다."));
+	public void updateBrandInfo(Long userId, BrandInfoRequest request) {
+		Brand brand = brandRepository.findByUser_Id(userId)
+				.orElseThrow(() -> new IllegalArgumentException("브랜드를 찾을 수 없습니다."));
 
-	    brand.setBrandName(request.getBrandName());
-	    brand.setServiceName(request.getServiceName());
-	    brand.setIndustryType(request.getIndustryType());
-	    // address, locationName → User 테이블로 이동
-	    User user = userRepository.findById(USER_ID)
-	            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
-	    user.updateAddress(request.getAddress(), request.getLocationName());
+		brand.setBrandName(request.getBrandName());
+		brand.setServiceName(request.getServiceName());
+		brand.setIndustryType(request.getIndustryType());
 
-	    BrandOperationProfile profile = operationProfileRepository.findByBrand_BrandId(BRAND_ID)
-	            .orElse(new BrandOperationProfile());
-	    
-	    user.updateAddress(request.getAddress(), request.getLocationName());
-	    user.updateStorePhone(request.getPhone());
-	    // brand.address 동기화 (road_addr_part1 만 사용)
-	    brand.setAddress(request.getAddress());
-	    brand.setLocationName(request.getLocationName());
-	    
-	    user.updateStorePhone(request.getPhone());
+		User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+		// ❌ 제거: user.updateAddress(request.getAddress(), request.getLocationName());
+		user.updateStorePhone(request.getPhone());
+		brand.setAddress(stripZipCode(request.getAddress()));
+		brand.setLocationName(request.getLocationName());
 
-	    profile.setBrand(brand);
-	    profile.setOpenTime(request.getOpenTime());
-	    profile.setCloseTime(request.getCloseTime());
-	    profile.setRegularClosedWeekday(request.getRegularClosedWeekday());
+		BrandOperationProfile profile = operationProfileRepository.findByBrand_BrandId(brand.getBrandId())
+				.orElse(new BrandOperationProfile());
+		profile.setBrand(brand);
+		profile.setOpenTime(request.getOpenTime());
+		profile.setCloseTime(request.getCloseTime());
+		profile.setRegularClosedWeekday(request.getRegularClosedWeekday());
+		operationProfileRepository.save(profile);
+	}
 
-	    operationProfileRepository.save(profile);
+	// ── 우편번호 제거 헬퍼 ──────────────────────────────────
+	private String stripZipCode(String address) {
+		if (address == null)
+			return null;
+		return address.replaceAll("^\\[\\d+\\]\\s*", "").trim();
 	}
 
 	// ── 콘텐츠 설정 조회 ────────────────────────────────────
 	@Transactional(readOnly = true)
-	public ContentSettingsResponse getContentSettings() {
-	    return contentSettingsRepository.findByUser_Id(USER_ID)
-	            .map(ContentSettingsResponse::new)
-	            .orElse(null);
+	public ContentSettingsResponse getContentSettings(Long userId) {
+		return contentSettingsRepository.findByUser_Id(userId).map(ContentSettingsResponse::new).orElse(null);
 	}
 
 	// ── 콘텐츠 설정 수정 ────────────────────────────────────
 	@Transactional
-	public void updateContentSettings(ContentSettingsRequest request) {
-	    User user = userRepository.findById(USER_ID)
-	            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+	public void updateContentSettings(Long userId, ContentSettingsRequest request) {
+		User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
-	    ContentSettings settings = contentSettingsRepository.findByUser_Id(USER_ID)
-	            .orElse(ContentSettings.createDefault(user));
+		ContentSettings settings = contentSettingsRepository.findByUser_Id(userId)
+				.orElse(ContentSettings.createDefault(user));
 
-	    settings.update(
-	            request.getIntroTemplate(),
-	            request.getOutroTemplate(),
-	            request.getTone(),
-	            request.getEmojiLevel(),
-	            request.getTargetLength(),
-	            request.getPreferredSns()
-	    );
-	    contentSettingsRepository.save(settings);
-	} 
+		settings.update(request.getIntroTemplate(), request.getOutroTemplate(), request.getTone(),
+				request.getEmojiLevel(), request.getTargetLength(), request.getPreferredSns());
+		contentSettingsRepository.save(settings);
+	}
 
 	// ── SNS 연동 목록 조회 ──────────────────────────────────
 	@Transactional(readOnly = true)
-	public List<SnsAccountResponse> getSnsAccounts() {
-		List<BrandPlatform> list = brandPlatformRepository.findByBrand_BrandId(BRAND_ID);
-		return list.stream().map(SnsAccountResponse::new).collect(Collectors.toList());
+	public List<SnsAccountResponse> getSnsAccounts(Long userId) {
+		Brand brand = brandRepository.findByUser_Id(userId)
+				.orElseThrow(() -> new IllegalArgumentException("브랜드를 찾을 수 없습니다."));
+
+		// DB에 연동된 플랫폼 목록
+		List<BrandPlatform> connected = brandPlatformRepository.findByBrand_BrandId(brand.getBrandId());
+
+		// platformCode 기준으로 Map 변환
+		Map<String, BrandPlatform> connectedMap = connected.stream()
+				.collect(Collectors.toMap(bp -> bp.getPlatform().getPlatformCode(), bp -> bp));
+
+		// 4개 플랫폼 고정 목록
+		List<String[]> fixedPlatforms = List.of(new String[] { "instagram", "Instagram" },
+				new String[] { "facebook", "Facebook" }, new String[] { "naver", "네이버 블로그" },
+				new String[] { "kakao", "카카오채널" });
+
+		return fixedPlatforms.stream().map(p -> {
+			String code = p[0];
+			String name = p[1];
+			BrandPlatform bp = connectedMap.get(code);
+			return bp != null ? new SnsAccountResponse(bp) // 연동 정보 있음
+					: SnsAccountResponse.notConnected(code, name); // 미연동
+		}).collect(Collectors.toList());
 	}
 
 	// ── SNS 연동 해제 ───────────────────────────────────────
@@ -147,145 +153,121 @@ public class MypageService {
 
 	// ── 회원 정보 조회 ──────────────────────────────────────
 	@Transactional(readOnly = true)
-	public User getUserInfo() {
-	    User user = userRepository.findById(USER_ID)
-	            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
-	    return user;
+	public User getUserInfo(Long userId) {
+		return userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 	}
-	
+
 	// ── 회원 탈퇴 ──────────────────────────────────────
 	@Transactional
-	public void withdrawUser() {
-	    User user = userRepository.findById(USER_ID)
-	            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
-	    user.withdraw(); // status = 'INACTIVE'== 탈퇴 상태
+	public void withdrawUser(Long userId) {
+		User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+		user.withdraw();
 	}
-	
+
 	// ── 대표이미지 ──────────────────────────────────────
 	@Transactional
-	public String uploadProfileImage(MultipartFile file) throws IOException {
-	    Map uploadResult = cloudinary.uploader().upload(
-	        file.getBytes(),
-	        ObjectUtils.asMap("public_id", "brand_" + BRAND_ID)
-	    );
-	    String imageUrl = (String) uploadResult.get("secure_url");
+	public String uploadProfileImage(Long userId, MultipartFile file) throws IOException {
+		Brand brand = brandRepository.findByUser_Id(userId)
+				.orElseThrow(() -> new IllegalArgumentException("브랜드를 찾을 수 없습니다."));
 
-	    Brand brand = brandRepository.findById(BRAND_ID)
-	            .orElseThrow(() -> new IllegalArgumentException("브랜드를 찾을 수 없습니다."));
-	    brand.setProfileImageUrl(imageUrl);
-
-	    return imageUrl;
+		Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
+				ObjectUtils.asMap("public_id", "brand_" + brand.getBrandId()));
+		String imageUrl = (String) uploadResult.get("secure_url");
+		brand.setProfileImageUrl(imageUrl);
+		return imageUrl;
 	}
-	
+
 	// ── 주소 업데이트 ──────────────────────────────────────
 	@Transactional
-	public void updateAddress(String roadAddrPart1, String addrDetail) {
-	    User user = userRepository.findById(USER_ID)
-	            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
-	    user.updateAddress(roadAddrPart1, addrDetail);
+	public void updateAddress(Long userId, String roadAddrPart1, String addrDetail) {
+		User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+		user.updateAddress(roadAddrPart1, addrDetail);
 	}
-	
-	/**
-     * 영업시간 저장 (UPSERT 방식: 기존 7행 삭제 후 재삽입)
-     * user_id + day_of_week UNIQUE 제약 조건을 활용하는 replaceBusinessHours 위임
-     *
-     * @param hours  프론트에서 전달된 7개 요일 데이터
-     *               [{dayOfWeek:0, isOpen:true, openTime:"09:00", closeTime:"22:00"}, ...]
-     */
-    @Transactional
-    public void updateBusinessHours(List<Map<String, Object>> hours) {
-        User user = userRepository.findById(USER_ID)
-                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
- 
-        // 기존 데이터 삭제 (orphanRemoval + clear 방식)
-        businessHoursRepository.deleteAllByUserId(USER_ID);
-        businessHoursRepository.flush(); // DELETE 먼저 확정
- 
-        // 새 데이터 생성
-        List<BusinessHours> newHours = hours.stream()
-                .map(h -> {
-                    int day     = toInt(h.get("dayOfWeek"));
-                    boolean open = toBoolean(h.get("isOpen"));
-                    String openT = open ? toString(h.get("openTime"))  : null;
-                    String closeT = open ? toString(h.get("closeTime")) : null;
-                    return open
-                            ? BusinessHours.openDay(user, day, openT, closeT)
-                            : BusinessHours.closedDay(user, day);
-                })
-                .toList();
- 
-        businessHoursRepository.saveAll(newHours);
-    }
- 
-    // ── 타입 변환 헬퍼 ───────────────────────────────────────
-    private int toInt(Object v) {
-        if (v instanceof Integer i) return i;
-        if (v instanceof Number n)  return n.intValue();
-        return Integer.parseInt(v.toString());
-    }
- 
-    private boolean toBoolean(Object v) {
-        if (v instanceof Boolean b) return b;
-        return "true".equalsIgnoreCase(v.toString());
-    }
- 
-    private String toString(Object v) {
-        return v == null ? null : v.toString();
-    }
-    
- // ── 영업시간 조회 ──────────────────────────────────────────
-    @Transactional(readOnly = true)
-    public List<Map<String, Object>> getBusinessHours() {
-        return businessHoursRepository.findByUser_IdOrderByDayOfWeekAsc(USER_ID)
-                .stream()
-                .map(bh -> {
-                    Map<String, Object> m = new java.util.LinkedHashMap<>();
-                    m.put("dayOfWeek", bh.getDayOfWeek());
-                    m.put("isOpen",    bh.isOpen());
-                    m.put("openTime",  bh.getOpenTime()  != null ? bh.getOpenTime()  : "09:00");
-                    m.put("closeTime", bh.getCloseTime() != null ? bh.getCloseTime() : "22:00");
-                    return m;
-                })
-                .toList();
-    }
-    
- // ── 문의 내역 조회 ──────────────────────────────────────
-    @Transactional(readOnly = true)
-    public List<com.example.demo.dto.myPage.InquiryResponse> getInquiries(String email) {
-        return inquiryRepository.findByEmailOrderByCreatedAtDesc(email)
-                .stream()
-                .map(com.example.demo.dto.myPage.InquiryResponse::new)
-                .collect(Collectors.toList());
-    }
-    
- // ── 콘텐츠 히스토리 조회 ────────────────────────────────
-    @Transactional(readOnly = true)
-    public List<ContentHistoryResponse> getContentHistory() {
-        return contentPostRepository.findByBrandIdOrderByPublishedAtDesc(BRAND_ID)
-            .stream()
-            .map(ContentHistoryResponse::new)
-            .collect(Collectors.toList());
-    }
 
-    // ── 히스토리 응답 DTO (inner record) ───────────────────
-    public record ContentHistoryResponse(
-        Long postId,
-        String platformCode,
-        String platformName,
-        String postTitle,
-        String postBody,
-        java.time.LocalDateTime publishedAt
-    ) {
-        public ContentHistoryResponse(com.example.demo.entity.myPage.ContentPost cp) {
-            this(
-                cp.getPostId(),
-                cp.getBrandPlatform().getPlatform().getPlatformCode(),
-                cp.getBrandPlatform().getPlatform().getPlatformName(),
-                cp.getPostTitle(),
-                cp.getPostBody(),
-                cp.getPublishedAt()
-            );
-        }
-    }
-	
+	/**
+	 * 영업시간 저장 (UPSERT 방식: 기존 7행 삭제 후 재삽입) user_id + day_of_week UNIQUE 제약 조건을 활용하는
+	 * replaceBusinessHours 위임
+	 *
+	 * @param hours 프론트에서 전달된 7개 요일 데이터 [{dayOfWeek:0, isOpen:true,
+	 *              openTime:"09:00", closeTime:"22:00"}, ...]
+	 */
+
+	@Transactional
+	public void updateBusinessHours(Long userId, List<Map<String, Object>> hours) {
+		User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+		businessHoursRepository.deleteAllByUserId(userId);
+		businessHoursRepository.flush(); // DELETE 먼저 확정
+
+		List<BusinessHours> newHours = hours.stream().map(h -> {
+			int day = toInt(h.get("dayOfWeek"));
+			boolean open = toBoolean(h.get("isOpen"));
+			String openT = open ? toString(h.get("openTime")) : null;
+			String closeT = open ? toString(h.get("closeTime")) : null;
+			return open ? BusinessHours.openDay(user, day, openT, closeT) : BusinessHours.closedDay(user, day);
+		}).toList();
+
+		businessHoursRepository.saveAll(newHours);
+	}
+
+	// ── 타입 변환 헬퍼 ───────────────────────────────────────
+	private int toInt(Object v) {
+		if (v instanceof Integer i)
+			return i;
+		if (v instanceof Number n)
+			return n.intValue();
+		return Integer.parseInt(v.toString());
+	}
+
+	private boolean toBoolean(Object v) {
+		if (v instanceof Boolean b)
+			return b;
+		return "true".equalsIgnoreCase(v.toString());
+	}
+
+	private String toString(Object v) {
+		return v == null ? null : v.toString();
+	}
+
+	// ── 영업시간 조회 ──────────────────────────────────────────
+	@Transactional(readOnly = true)
+	public List<Map<String, Object>> getBusinessHours(Long userId) {
+		return businessHoursRepository.findByUser_IdOrderByDayOfWeekAsc(userId).stream().map(bh -> {
+			Map<String, Object> m = new java.util.LinkedHashMap<>();
+			m.put("dayOfWeek", bh.getDayOfWeek());
+			m.put("isOpen", bh.isOpen()); // getIsOpen() ❌ → isOpen() ✅
+			m.put("openTime", bh.getOpenTime() != null ? bh.getOpenTime() : "09:00");
+			m.put("closeTime", bh.getCloseTime() != null ? bh.getCloseTime() : "22:00");
+			return m;
+		}).toList();
+	}
+
+	// ── 문의 내역 조회 ──────────────────────────────────────
+	@Transactional(readOnly = true)
+	public List<com.example.demo.dto.myPage.InquiryResponse> getInquiries(String email) {
+		return inquiryRepository.findByEmailOrderByCreatedAtDesc(email).stream()
+				.map(com.example.demo.dto.myPage.InquiryResponse::new).collect(Collectors.toList());
+	}
+
+	// ── 콘텐츠 히스토리 조회 ────────────────────────────────
+	@Transactional(readOnly = true)
+	public List<ContentHistoryResponse> getContentHistory(Long userId) {
+		System.out.println("=== [히스토리 조회] userId=" + userId); // 임시 디버그
+		Brand brand = brandRepository.findByUser_Id(userId)
+				.orElseThrow(() -> new IllegalArgumentException("브랜드를 찾을 수 없습니다."));
+		System.out.println("=== [히스토리 조회] brandId=" + brand.getBrandId()); // 임시 디버그
+		return contentPostRepository.findByBrandIdOrderByPublishedAtDesc(brand.getBrandId()).stream()
+				.map(ContentHistoryResponse::new).collect(Collectors.toList());
+	}
+
+	// ── 히스토리 응답 DTO (inner record) ───────────────────
+	public record ContentHistoryResponse(Long postId, String platformCode, String platformName, String postTitle,
+			String postBody, java.time.LocalDateTime publishedAt) {
+		public ContentHistoryResponse(com.example.demo.entity.myPage.ContentPost cp) {
+			this(cp.getPostId(), cp.getBrandPlatform().getPlatform().getPlatformCode(),
+					cp.getBrandPlatform().getPlatform().getPlatformName(), cp.getPostTitle(), cp.getPostBody(),
+					cp.getPublishedAt());
+		}
+	}
+
 }
