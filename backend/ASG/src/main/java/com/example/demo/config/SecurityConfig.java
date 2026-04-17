@@ -35,11 +35,15 @@ public class SecurityConfig {
 	        // 1. CSRF 설정: API 호출 시 403 에러 방지를 위해 예외 경로 지정
 	        .csrf(csrf -> csrf
 	            .ignoringRequestMatchers(
-	                "/signup/complete",
-	                "/api/feedbacks/**", 
-	                "/api/sns/**", 
-	                "/search-test"
-	                ,"/api/v1/content/generate", "/api/v1/content/**", "/api/posts/**", "/calendar/**"
+	            		"/signup/complete",
+	                    "/api/feedbacks/**",
+	                    "/api/sns/**",
+	                    "/search-test",
+	                    "/api/v1/content/generate",
+	                    "/api/v1/content/**",
+	                    "/api/v1/ai/**",
+	                    "/api/posts/**",
+	                    "/calendar/**"
 	            )
 	        )
 

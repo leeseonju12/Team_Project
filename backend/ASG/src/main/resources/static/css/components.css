@@ -1048,3 +1048,102 @@ input[type=range]::-webkit-slider-thumb {
   transform: translateY(-1px);
   box-shadow: 0 10px 22px rgba(20, 184, 166, 0.28);
 }
+
+/* ✨ AI 이미지 생성 버튼 영역 */
+.ai-image-section {
+  margin-top: 12px;
+  border: 1px solid rgba(99, 102, 241, 0.20);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.04), rgba(20, 184, 166, 0.04));
+  padding: 14px 16px;
+}
+
+.ai-image-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-ai-generate {
+  width: 100%;
+  padding: 11px 16px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(20, 184, 166, 0.10));
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 12px;
+  color: var(--secondary);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all .22s;
+  letter-spacing: 0.1px;
+}
+
+.btn-ai-generate:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(20, 184, 166, 0.14));
+  border-color: rgba(99, 102, 241, 0.38);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.14);
+}
+
+.btn-ai-generate:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-ai-generate .ai-spinner {
+  display: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(99, 102, 241, 0.25);
+  border-top-color: var(--secondary);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+
+.btn-ai-generate.loading .ai-spinner {
+  display: inline-block;
+}
+
+.btn-ai-generate.loading .ai-btn-text {
+  opacity: .65;
+}
+
+.btn-ai-generate.done {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.12), rgba(20, 184, 166, 0.08));
+  border-color: rgba(20, 184, 166, 0.30);
+  color: #0F766E;
+}
+
+.ai-status {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text3);
+  text-align: center;
+  min-height: 16px;
+  transition: color .2s;
+}
+
+.ai-status.error {
+  color: #EF4444;
+}
+
+.ai-status.success {
+  color: #0F766E;
+}
+
+/* 전체 섹션의 너비 제한 */
+.ai-image-section {
+    height: 100px;        /* 고정 높이가 있다면 해제하거나 낮게 설정 */
+    width: auto;
+}
