@@ -3,7 +3,10 @@ from flask_cors import CORS
 from config.settings import Config
 from controller.image_controller import image_bp
 from dotenv import load_dotenv
+import logging
+
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 def create_app():
     app = Flask(__name__)
@@ -21,7 +24,8 @@ def create_app():
 
 if __name__ == "__main__":
     app = create_app()
-    app.run(host="0.0.0.0", port=5000)
+    logger.info("Flask app starting with description prompt support enabled")
+    app.run(host="0.0.0.0", port=5000, debug=True)
     
     
 # .venv\Scripts\Activate

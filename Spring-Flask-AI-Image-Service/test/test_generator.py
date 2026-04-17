@@ -1,7 +1,7 @@
 import os
 import logging
 from dotenv import load_dotenv
-from config.settings import Config, STYLE_TEMPLATES
+from config.settings import Config
 from service.image_service import ImageService
 
 # 로깅 설정 (service에서 사용하는 logger와 동기화)

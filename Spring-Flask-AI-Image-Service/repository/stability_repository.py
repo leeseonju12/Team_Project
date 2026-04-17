@@ -1,18 +1,14 @@
 import requests
 from config.settings import Config, logger
+from dto.image_dto import StabilityImageRequest
 
 class StabilityRepository:
-    def fetch_image(self, prompt: str, negative_prompt: str) -> bytes:
+    def fetch_image(self, request_dto: StabilityImageRequest) -> bytes:
         headers = {
             "Authorization": f"Bearer {Config.STABILITY_API_KEY}",
             "Accept": "image/*"
         }
-        files = {
-            "prompt": (None, prompt),
-            "negative_prompt": (None, negative_prompt),
-            "aspect_ratio": (None, "1:1"),
-            "output_format": (None, "jpeg")
-        }
+        files = request_dto.to_multipart_files()
         
         response = requests.post(Config.STABILITY_API_URL, headers=headers, files=files, timeout=60)
         if response.status_code != 200:
