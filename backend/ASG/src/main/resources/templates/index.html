@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 
 <head>
   <meta charset="UTF-8">
@@ -34,6 +34,8 @@
 </head>
 
 <body>
+	<div th:replace="~{fragments/header :: global-header(currentMenu='index')}"></div>
+	
   <div class="blob blob-1"></div>
   <div class="blob blob-2"></div>
   <div class="blob blob-3"></div>
@@ -372,19 +374,13 @@
   </div>
 
   <div class="wrapper">
-    <header>
-      <div class="logo">
-        <div class="logo-mark">S</div>
-        <div class="logo-text">소셜다모아<span>Intelligence Marketing</span></div>
-      </div>
-      <div class="header-right">
-        <div class="header-badge">AI 자동화 활성</div>
-      </div>
-    </header>
 
     <div class="page-title">
       <h1><em>지능형</em> 마케팅 자동화<br>모든 채널을 한 번에</h1>
       <p>커뮤니티 데이터 기반 톤앤매너 자동 변환 · 플랫폼별 실시간 미리보기 · 드래그 앤 드롭 스케줄링</p>
+	  <div class="header-right">
+	    <div class="header-badge">AI 자동화 활성</div>
+	  </div>
     </div>
 
     <div class="dashboard-grid" id="dashboardGrid">

@@ -1,7 +1,9 @@
 package com.example.demo.controller;
 
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -33,6 +35,12 @@ public class ContentController {
 
 	@GetMapping("/generate")
 	public String showGeneratePage(Model model, Principal principal) {
+		
+	    Map<String, String> fakeUser = new HashMap<>();
+	    fakeUser.put("name", "테스트");
+	    fakeUser.put("email", "test@example.com");
+
+	    model.addAttribute("userInfo", fakeUser);
 		addBusinessCategory(model, principal);
 		return "index";
 	}
