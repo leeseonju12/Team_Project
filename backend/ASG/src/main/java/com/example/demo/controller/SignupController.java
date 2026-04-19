@@ -24,18 +24,18 @@ public class SignupController {
 
     private final UserService userService;
 
-    @GetMapping("/login_test")
+    @GetMapping("/login")
     public String loginPage() {
-        return "login_test";
+        return "login";
     }
 
     @GetMapping("/signup")
     public String signupPage(@AuthenticationPrincipal PrincipalDetails principal,
                              Model model) {
 
-        // 비로그인 상태 → 소셜 로그인 버튼이 있는 회원가입 페``이지 그대로 보여줌
+        // 비로그인 상태 → 소셜 로그인 버튼이 있는 회원가입 페이지 그대로 보여줌
         if (principal == null) {
-            return "signup"; // ← login_test 대신 signup 페이지 반환
+            return "signup"; // 
         }
 
         // 로그인 상태 → DB에서 최신 상태 조회
@@ -61,12 +61,12 @@ public class SignupController {
 
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
-            return "redirect:/login_test";
+            return "redirect:/login";
         }
 
         if (authentication == null || !authentication.isAuthenticated()) {
             log.warn("인증 정보 없음: userId={}", userId);
-            return "redirect:/login_test";
+            return "redirect:/login";
         }
 
         if (!dto.isTermsAgreed() || !dto.isPrivacyAgreed()) {
