@@ -60,6 +60,15 @@ public class MypageService {
 		}
 		return new BrandInfoResponse(brand, profile);
 	}
+	
+	// ── 회원 기본정보 수정 ──────────────────────────────────
+	@Transactional
+	public void updateMemberInfo(Long userId, String name, String contactPhone) {
+	    User user = userRepository.findById(userId)
+	            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+	    user.updateSocialInfo(user.getEmail(), name);
+	    user.updateContactPhone(contactPhone);
+	}
 
 	// ── 가게 정보 수정 ──────────────────────────────────────
 	@Transactional
@@ -74,6 +83,7 @@ public class MypageService {
 		User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 		// ❌ 제거: user.updateAddress(request.getAddress(), request.getLocationName());
 		user.updateStorePhone(request.getPhone());
+		user.updateAddress(request.getAddress(), request.getAddrDetail());  // ✅ 추가
 		brand.setAddress(stripZipCode(request.getAddress()));
 		brand.setLocationName(request.getLocationName());
 

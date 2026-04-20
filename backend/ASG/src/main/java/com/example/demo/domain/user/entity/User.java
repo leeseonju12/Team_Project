@@ -216,4 +216,9 @@ public class User {
             .eventConsent(false)
             .build();
     }
+    
+ // 연락처 업데이트
+    public void updateContactPhone(String contactPhone) {
+        this.contactPhone = contactPhone;
+    }
 }
