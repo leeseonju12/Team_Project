@@ -2,8 +2,11 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.channel.NaverSearchResponseDto;
 import com.example.demo.service.NaverSearchService;
+import com.example.demo.service.myPage.MypageService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -14,24 +17,28 @@ import java.time.LocalDate;
 public class NaverSearchController {
 
     private final NaverSearchService naverSearchService;
+    private final MypageService mypageService;
 
     /**
-     * GET /api/naver-search?brandId=1&period=month&from=2024-12-01&to=2024-12-31
+     * GET /api/naver-search?period=month&from=2024-12-01&to=2024-12-31
+     * brandId는 세션에서 자동 조회
      */
     @GetMapping
-    
-    //TODO - 로그인 된 회원의 브랜드아이디로 변경해야함 
-    public NaverSearchResponseDto getDashboard(
-            @RequestParam(defaultValue = "10")    Long brandId,
+    public ResponseEntity<?> getDashboard(
+            HttpSession session,
             @RequestParam(defaultValue = "month") String period,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) return ResponseEntity.status(401).body("로그인이 필요합니다.");
+
+        Long brandId = mypageService.getBrandId(userId);
         LocalDate endDate   = (to   == null) ? LocalDate.now()       : to;
         LocalDate startDate = (from == null) ? endDate.minusDays(30) : from;
-        return naverSearchService.getDashboard(brandId, startDate, endDate, period);
+        return ResponseEntity.ok(naverSearchService.getDashboard(brandId, startDate, endDate, period));
     }
 }
 

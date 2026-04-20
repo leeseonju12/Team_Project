@@ -2,7 +2,10 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.channel.MindmapSearchResponseDto;
 import com.example.demo.service.MindmapSearchService;
+import com.example.demo.service.myPage.MypageService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -11,29 +14,31 @@ import org.springframework.web.bind.annotation.*;
 public class MindmapController {
 
     private final MindmapSearchService mindmapService;
-    
- // TODO - 로그인 된 회원의 브랜드 아이디로 바꿔야 함
-    
+    private final MypageService mypageService;
+
     /**
      * 연관 키워드 조회
-     * GET /api/mindmap?brandId=??
-     * Redis 캐시 있으면 바로 반환, 없으면 SerpAPI 호출 후 캐시 저장
+     * GET /api/mindmap
+     * brandId는 세션에서 자동 조회
      */
     @GetMapping
-    public MindmapSearchResponseDto getRelatedKeywords(
-            @RequestParam(defaultValue = "10") Long brandId) {
-        return mindmapService.getRelatedKeywords(brandId);
+    public ResponseEntity<?> getRelatedKeywords(HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) return ResponseEntity.status(401).body("로그인이 필요합니다.");
+        Long brandId = mypageService.getBrandId(userId);
+        return ResponseEntity.ok(mindmapService.getRelatedKeywords(brandId));
     }
 
     /**
      * 캐시 강제 갱신 (관리자용)
-     * POST /api/mindmap/refresh?brandId=??
-     * Redis 캐시 삭제 후 SerpAPI 재호출 (6개월마다 또는 수동 갱신 시 사용)
+     * POST /api/mindmap/refresh
      */
     @PostMapping("/refresh")
-    public MindmapSearchResponseDto refreshRelatedKeywords(
-            @RequestParam(defaultValue = "10") Long brandId) {
-        return mindmapService.refreshRelatedKeywords(brandId);
+    public ResponseEntity<?> refreshRelatedKeywords(HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) return ResponseEntity.status(401).body("로그인이 필요합니다.");
+        Long brandId = mypageService.getBrandId(userId);
+        return ResponseEntity.ok(mindmapService.refreshRelatedKeywords(brandId));
     }
 }
 

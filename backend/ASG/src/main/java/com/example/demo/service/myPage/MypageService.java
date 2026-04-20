@@ -269,5 +269,13 @@ public class MypageService {
 					cp.getPublishedAt());
 		}
 	}
+	
+	// ── userId → brandId 조회 (채널 성과 분석 등 타 컨트롤러에서도 사용) ──
+	@Transactional(readOnly = true)
+	public Long getBrandId(Long userId) {
+	    return brandRepository.findByUser_Id(userId)
+	            .map(Brand::getBrandId)
+	            .orElseThrow(() -> new IllegalArgumentException("브랜드를 찾을 수 없습니다."));
+	}
 
 }

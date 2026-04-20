@@ -7,8 +7,20 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import com.example.demo.service.myPage.MypageService;
+import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
+
 @Controller
+@RequiredArgsConstructor
 public class PageController {
+
+    private final MypageService mypageService;
+
+    /** 세션에서 userId 추출 */
+    private Long getSessionUserId(HttpSession session) {
+        return (Long) session.getAttribute("userId");
+    }
 
 	@GetMapping("/feedbacks")
 	public String feedbackPage(Model model) {
@@ -23,9 +35,13 @@ public class PageController {
 	
 
 	@GetMapping("/channel-performance")
-	public String channelPerformancePage() {
-	    // templates/channel-performance.html 을 찾으려면 확장자(.html) 없이 이름만 적습니다.
-	    return "channel-performance"; 
+	public String channelPerformancePage(HttpSession session, Model model) {
+	    Long userId = getSessionUserId(session);
+	    if (userId == null) return "redirect:/login_test";
+
+	    Long brandId = mypageService.getBrandId(userId);
+	    model.addAttribute("brandId", brandId);
+	    return "channel-performance";
 	}
 	
 	@GetMapping("/search-test")

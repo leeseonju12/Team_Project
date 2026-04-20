@@ -559,6 +559,24 @@
       border-color: var(--orange);
       color: #C2410C;
     }
+    
+    .mchip.active[data-metric=google_review] {
+      background: rgba(234, 67, 53, .1);
+      border-color: #EA4335;
+      color: #B91C1C;
+    }
+
+    .mchip.active[data-metric=naver_review] {
+      background: rgba(3, 199, 90, .1);
+      border-color: #03C75A;
+      color: #166534;
+    }
+
+    .mchip.active[data-metric=kakao_review] {
+      background: rgba(249, 192, 0, .15);
+      border-color: #F9C000;
+      color: #92400E;
+    }
 
     .rank-list {
       display: flex;
@@ -1169,6 +1187,9 @@ em {
 </head>
 
 <body>
+<!-- 서버에서 전달된 brandId (Thymeleaf → JS 바인딩용) -->
+<input type="hidden" id="serverBrandId" th:value="${brandId}">
+
   <div class="top-stripe"></div>
 
   <header>
@@ -1208,12 +1229,7 @@ em {
 
   <div class="kpi-strip">
     <div class="kpi-inner">
-      <div class="kpi-item active" onclick="setKpi(this,'views')" data-metric="views">
-        <div class="kpi-label"><span class="kpi-dot" style="background:var(--indigo)"></span>총 조회수</div>
-        <div class="kpi-val" id="kpi-views">284.7K</div>
-        <div class="kpi-change up" id="kpi-views-chg">▲ 12.4%</div>
-      </div>
-      <div class="kpi-item" onclick="setKpi(this,'likes')" data-metric="likes">
+      <div class="kpi-item active" onclick="setKpi(this,'likes')" data-metric="likes">
         <div class="kpi-label"><span class="kpi-dot" style="background:#E1306C"></span>좋아요</div>
         <div class="kpi-val" id="kpi-likes">18.2K</div>
         <div class="kpi-change up" id="kpi-likes-chg">▲ 8.1%</div>
@@ -1251,33 +1267,22 @@ em {
       <div class="card-title">
         <div class="card-icon indigo">📈</div>반응 통합 추이
       </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <select id="trendCategorySel" onchange="onTrendCategoryChange()"
-          style="padding:5px 10px;border-radius:7px;border:1.5px solid var(--border);background:var(--white);font-size:12px;font-family:'Noto Sans KR',sans-serif;outline:none;cursor:pointer;color:var(--text2);">
-          <option value="sns">SNS</option>
-          <option value="review">리뷰</option>
-        </select>
-        <!-- SNS 칩 -->
-        <div class="metric-chips" id="metricChips">
-  <div class="mchip active" data-metric="views"     onclick="selectMetric('views')"><span class="mdot" style="background:var(--indigo)"></span>조회수</div>
-  <div class="mchip"        data-metric="likes"     onclick="selectMetric('likes')"><span class="mdot" style="background:#E1306C"></span>좋아요</div>
-  <div class="mchip"        data-metric="comments"  onclick="selectMetric('comments')"><span class="mdot" style="background:var(--teal)"></span>댓글</div>
-  <div class="mchip"        data-metric="shares"    onclick="selectMetric('shares')"><span class="mdot" style="background:var(--yellow)"></span>공유</div>
-  <div class="mchip"        data-metric="followers" onclick="selectMetric('followers')"><span class="mdot" style="background:var(--orange)"></span>팔로워</div>
-</div>
-        <!-- 리뷰 칩 -->
-        <div class="metric-chips" id="reviewChips" style="display:none;">
-          <div class="mchip active" data-review="google" onclick="toggleReview('google')"><span class="mdot" style="background:#EA4335"></span>구글 리뷰</div>
-          <div class="mchip active" data-review="naver"  onclick="toggleReview('naver')"><span class="mdot" style="background:#03C75A"></span>네이버 리뷰</div>
-          <div class="mchip active" data-review="kakao"  onclick="toggleReview('kakao')"><span class="mdot" style="background:#F9C000"></span>카카오 리뷰</div>
-        </div>
+      <div class="metric-chips" id="metricChips">
+        <div class="mchip active" data-metric="likes"        onclick="toggleMetric('likes')"><span class="mdot" style="background:#E1306C"></span>좋아요</div>
+        <div class="mchip active" data-metric="comments"     onclick="toggleMetric('comments')"><span class="mdot" style="background:var(--teal)"></span>댓글</div>
+        <div class="mchip"        data-metric="shares"       onclick="toggleMetric('shares')"><span class="mdot" style="background:var(--yellow)"></span>공유</div>
+        <div class="mchip"        data-metric="followers"    onclick="toggleMetric('followers')"><span class="mdot" style="background:var(--orange)"></span>팔로워</div>
+        <span style="width:1px;height:20px;background:var(--border);margin:0 2px;align-self:center;flex-shrink:0;"></span>
+        <div class="mchip"        data-metric="google_review" onclick="toggleMetric('google_review')"><span class="mdot" style="background:#EA4335"></span>구글 리뷰</div>
+        <div class="mchip"        data-metric="naver_review"  onclick="toggleMetric('naver_review')"><span class="mdot" style="background:#03C75A"></span>네이버 리뷰</div>
+        <div class="mchip"        data-metric="kakao_review"  onclick="toggleMetric('kakao_review')"><span class="mdot" style="background:#F9C000"></span>카카오 리뷰</div>
       </div>
-    </div>
+    </div><!-- ← card-header 닫기 -->
     <div class="card-body">
       <div class="chart-wrap tall"><canvas id="trendChart"></canvas></div>
     </div>
   </div><!-- ← 트렌드 카드 닫기 -->
-
+  
   <!-- ② 리뷰 순위 카드 -->
   <div class="card">
     <div class="card-header">
@@ -1408,31 +1413,6 @@ em {
         </div>
         <div class="mm-related-body">
           <div class="mm-rel-blocks" id="mm-rel-blocks"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid-2" style="margin-bottom:20px;">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">
-            <div class="">🗂️</div>조회수 채널 비중
-          </div>
-        </div>
-        <div class="card-body" style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
-          <div style="width:200px;height:200px;flex-shrink:0;"><canvas id="donutChart"></canvas></div>
-          <div style="flex:1;min-width:160px;" id="donutLegend"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">
-            <div class="">⏰</div>시간대별 조회율
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="chart-wrap"><canvas id="hourlyChart"></canvas></div>
         </div>
       </div>
     </div>
@@ -1574,200 +1554,184 @@ em {
       },
     };
 
-    // ── 트렌드 카테고리 상태 ─────────────────────────────
-    let trendCategory = 'sns';   // 'sns' | 'review'
-    let activeReviews = new Set(['google','naver','kakao']);
+    // 교체 후
+// ── 통합 트렌드 다중선택 상태 ─────────────────────────────
+let activeMetrics = new Set(['likes', 'comments']);
 
-    const REVIEW_COLORS = { google:'#EA4335', naver:'#03C75A', kakao:'#F9C000' };
-    const REVIEW_LABELS = { google:'구글 리뷰', naver:'네이버 리뷰', kakao:'카카오 리뷰' };
+const REVIEW_COLORS = { google_review:'#EA4335', naver_review:'#03C75A', kakao_review:'#F9C000' };
+const REVIEW_LABELS = { google_review:'구글 리뷰', naver_review:'네이버 리뷰', kakao_review:'카카오 리뷰' };
+//── 통합 메트릭 토글 (SNS + 리뷰 공통) ────────────────
+function toggleMetric(metric) {
+  if (activeMetrics.has(metric)) {
+    if (activeMetrics.size === 1) return; // 최소 1개 유지
+    activeMetrics.delete(metric);
+  } else {
+    activeMetrics.add(metric);
+  }
+  const chip = document.querySelector(`.mchip[data-metric="${metric}"]`);
+  if (chip) chip.classList.toggle('active', activeMetrics.has(metric));
+  updateTrendChart(DATA[currentPeriod]);
+}
 
-    // ── 카테고리 전환 ────────────────────────────────────
-    function onTrendCategoryChange() {
-      trendCategory = document.getElementById('trendCategorySel').value;
-      const isSns = trendCategory === 'sns';
-      document.getElementById('metricChips').style.display  = isSns ? ''     : 'none';
-      document.getElementById('reviewChips').style.display  = isSns ? 'none' : '';
-      updateTrendChart(DATA[currentPeriod]);
-    }
-
-    // ── 리뷰 칩 토글 ─────────────────────────────────────
-    function toggleReview(reviewId) {
-      if (activeReviews.has(reviewId)) {
-        if (activeReviews.size === 1) return; // 최소 1개 유지
-        activeReviews.delete(reviewId);
-      } else {
-        activeReviews.add(reviewId);
-      }
-      const chip = document.querySelector(`.mchip[data-review="${reviewId}"]`);
-      if (chip) chip.classList.toggle('active', activeReviews.has(reviewId));
-      updateTrendChart(DATA[currentPeriod]);
-    }
-
-    // ── 리뷰 순위 렌더링 ──────────────────────────────────
-    function renderReviewRankList() {
-      const rd = REVIEW_DATA[currentPeriod];
-      const el = document.getElementById('rankList');
-      if (!el) return;
-      const numClass = ['gold','silver','bronze'];
-      el.innerHTML = REVIEW_PLATFORMS.map((p, i) => `
-        <div class="rank-item">
-          <div class="rank-num ${numClass[i]}">${i + 1}</div>
-          <div class="rank-platform">
-            <span class="rank-pdot" style="background:${p.color}"></span>
-            <span class="rank-name">${p.name}</span>
-          </div>
-          <div class="rank-bar-wrap">
-            <div class="rank-bar-bg">
-              <div class="rank-bar-fill" style="width:${Math.round(rd.rankScores[i] / rd.rankScores[0] * 100)}%;background:${p.color};transition:width 1s ease;"></div>
-            </div>
-          </div>
-          <span class="rank-score">${rd.rankScores[i].toLocaleString()}</span>
-          <span class="rank-change ${rd.rankUp[i] ? 'up' : 'down'}">${rd.rankChanges[i]}</span>
+// ── 리뷰 순위 렌더링 ──────────────────────────────────
+function renderReviewRankList() {
+  const rd = REVIEW_DATA[currentPeriod];
+  const el = document.getElementById('rankList');
+  if (!el) return;
+  const numClass = ['gold','silver','bronze'];
+  el.innerHTML = REVIEW_PLATFORMS.map((p, i) => `
+    <div class="rank-item">
+      <div class="rank-num ${numClass[i]}">${i + 1}</div>
+      <div class="rank-platform">
+        <span class="rank-pdot" style="background:${p.color}"></span>
+        <span class="rank-name">${p.name}</span>
+      </div>
+      <div class="rank-bar-wrap">
+        <div class="rank-bar-bg">
+          <div class="rank-bar-fill" style="width:${Math.round(rd.rankScores[i] / rd.rankScores[0] * 100)}%;background:${p.color};transition:width 1s ease;"></div>
         </div>
-      `).join('');
-    }
+      </div>
+      <span class="rank-score">${rd.rankScores[i].toLocaleString()}</span>
+      <span class="rank-change ${rd.rankUp[i] ? 'up' : 'down'}">${rd.rankChanges[i]}</span>
+    </div>
+  `).join('');
+}
 
-    const METRIC_COLORS = { views: '#6366F1', likes: '#E1306C', comments: '#14B8A6', shares: '#F59E0B', followers: '#F97316' };
+const METRIC_COLORS = { likes: '#E1306C', comments: '#14B8A6', shares: '#F59E0B', followers: '#F97316' };
 
-    let currentPeriod = 'month';
-    let compareTab = 'sns';   // 'sns' | 'review'
-    let selectedMetric = 'views';   // 단일 선택
-    let trendChart = null;
-    let compareChart = null;
-    let donutChart = null;
-    let hourlyChart = null;
-    let naverTrendChart  = null;
-    let naverAgeChart    = null;
-    let naverGenderChart = null;
-    let currentNaverChart = 'trend';
-    const naverCache = {};
+let currentPeriod = 'month';
+let compareTab = 'sns';
+let trendChart = null;
+let compareChart = null;
+let donutChart = null;
+let hourlyChart = null;
+let naverTrendChart  = null;
+let naverAgeChart    = null;
+let naverGenderChart = null;
+let currentNaverChart = 'trend';
+const naverCache = {};
 
-    window.addEventListener('DOMContentLoaded', () => {
-      safeBuildCharts();
-      renderReviewRankList();
-      renderCompareTable();
-      animateKpis();
-      loadNaverData('month');   // API 호출로 초기화
-    });
+window.addEventListener('DOMContentLoaded', () => {
+  safeBuildCharts();
+  renderReviewRankList();
+  renderCompareTable();
+  animateKpis();
+  loadNaverData('month');
+});
 
-    function safeBuildCharts() {
-      buildTrendChart();
-      buildCompareChart();
-      updateComparisonLabels();
-      buildDonutChart();
-      buildHourlyChart();
-      // naverChart는 loadNaverData() 응답 후 초기화
-    }
+function safeBuildCharts() {
+  buildTrendChart();
+  buildCompareChart();
+  updateComparisonLabels();
+  buildDonutChart();
+  buildHourlyChart();
+}
 
-    function setPeriod(period) {
-      currentPeriod = period;
-      document.querySelectorAll('.period-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.period === period);
+function setPeriod(period) {
+  currentPeriod = period;
+  document.querySelectorAll('.period-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.period === period);
+  });
+  updateAllCharts();
+  renderReviewRankList();
+  renderCompareTable();
+  animateKpis();
+  loadNaverData(period);
+}
+
+function updateAllCharts() {
+  const d = DATA[currentPeriod];
+  updateTrendChart(d);
+  updateComparisonLabels();
+  updateCompareChart();
+  updateDonutChart(d);
+}
+
+function buildTrendDatasets() {
+  const d  = DATA[currentPeriod];
+  const rd = REVIEW_DATA[currentPeriod];
+
+  const SNS_METRICS = {
+    likes:     { label: '좋아요',  color: '#E1306C' },
+    comments:  { label: '댓글',    color: '#14B8A6' },
+    shares:    { label: '공유',    color: '#F59E0B' },
+    followers: { label: '팔로워',  color: '#F97316' },
+  };
+  const REVIEW_METRICS = {
+    google_review: { label: '구글 리뷰',   color: '#EA4335', data: rd.google },
+    naver_review:  { label: '네이버 리뷰', color: '#03C75A', data: rd.naver  },
+    kakao_review:  { label: '카카오 리뷰', color: '#F9C000', data: rd.kakao  },
+  };
+
+  const datasets = [];
+  activeMetrics.forEach(metric => {
+    if (SNS_METRICS[metric]) {
+      const m   = SNS_METRICS[metric];
+      const raw = d[metric]; // [[ig],[fb],[nv],[gm]] 4개 배열
+      const total = raw[0].map((_, i) => raw.reduce((sum, arr) => sum + arr[i], 0));
+      datasets.push({
+        label: m.label,
+        data: total,
+        borderColor: m.color,
+        backgroundColor: m.color + '15',
+        borderWidth: 2.5,
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: m.color,
+        pointRadius: 3,
+        pointHoverRadius: 6,
       });
-      updateAllCharts();
-      renderReviewRankList();
-      renderCompareTable();
-      animateKpis();
-      loadNaverData(period);    // 기간 전환 시 API 재호출
-    }
-
-    function updateAllCharts() {
-      const d = DATA[currentPeriod];
-      updateTrendChart(d);
-      updateComparisonLabels();
-      updateCompareChart();
-      updateDonutChart(d);
-      // 네이버는 loadNaverData()에서 별도 처리
-    }
-
-    function buildTrendDatasets() {
-    	  if (trendCategory === 'review') {
-    	    const rd = REVIEW_DATA[currentPeriod];
-    	    const datasets = [];
-    	    activeReviews.forEach(id => {
-    	      datasets.push({
-    	        label: REVIEW_LABELS[id],
-    	        data: rd[id],
-    	        borderColor: REVIEW_COLORS[id],
-    	        backgroundColor: REVIEW_COLORS[id] + '15',
-    	        borderWidth: 2.5,
-    	        tension: 0.4,
-    	        fill: true,
-    	        pointBackgroundColor: REVIEW_COLORS[id],
-    	        pointRadius: 3,
-    	        pointHoverRadius: 6,
-    	      });
-    	    });
-    	    return datasets;
-    	  }
-
-    	  // SNS (기존 로직)
-    	  const d = DATA[currentPeriod];
-const metricMap = { views: d.views, likes: d.likes, comments: d.comments, shares: d.shares, followers: d.followers };
-const SNS_PLATFORMS = [
-  { idx: 0, name: 'Instagram',    color: '#E1306C' },
-  { idx: 1, name: 'Facebook',     color: '#1877F2' },
-  { idx: 2, name: '네이버 블로그', color: '#03C75A' },
-];
-return SNS_PLATFORMS.map(p => ({
-  label: p.name,
-  data: metricMap[selectedMetric][p.idx],
-  borderColor: p.color,
-  backgroundColor: p.color + '15',
-  borderWidth: 2.5,
-  tension: 0.4,
-  fill: true,
-  pointBackgroundColor: p.color,
-  pointRadius: 3,
-  pointHoverRadius: 6,
-}));
-    	  return datasets;
-    	}
-
-    function buildTrendChart() {
-      const canvas = document.getElementById('trendChart');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      trendChart = new Chart(ctx, {
-    	  type: 'line',
-    	  data: { labels: DATA[currentPeriod].labels, datasets: buildTrendDatasets() },
-    	  options: {
-    	    ...chartOpts(),
-    	    plugins: {
-    	      ...chartOpts().plugins,
-    	      legend: {
-    	        display: true,
-    	        position: 'top',
-    	        labels: {
-    	          font: { size: 11, family: 'Noto Sans KR' },
-    	          boxWidth: 10,
-    	          padding: 12,
-    	        }
-    	      }
-    	    }
-    	  }
-    	});
-    }
-
-    function updateTrendChart(d) {
-    	  if (!trendChart) return;
-    	  trendChart.data.labels   = trendCategory === 'review'
-    	    ? REVIEW_DATA[currentPeriod].labels
-    	    : d.labels;
-    	  trendChart.data.datasets = buildTrendDatasets();
-    	  // SNS: 플랫폼 범례 표시 / 리뷰: 범례 표시 (카카오리뷰 등 구분 필요)
-    	  trendChart.options.plugins.legend.display = true;
-    	  trendChart.update('active');
-    	}
-
- // 기존 toggleMetric() 함수 전체를 아래로 교체
-    function selectMetric(metric) {
-      selectedMetric = metric;
-      document.querySelectorAll('#metricChips .mchip').forEach(chip => {
-        chip.classList.toggle('active', chip.dataset.metric === metric);
+    } else if (REVIEW_METRICS[metric]) {
+      const r = REVIEW_METRICS[metric];
+      datasets.push({
+        label: r.label,
+        data: r.data,
+        borderColor: r.color,
+        backgroundColor: r.color + '15',
+        borderWidth: 2.5,
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: r.color,
+        pointRadius: 3,
+        pointHoverRadius: 6,
       });
-      updateTrendChart(DATA[currentPeriod]);
     }
+  });
+  return datasets;
+}
+
+function buildTrendChart() {
+  const canvas = document.getElementById('trendChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  trendChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: DATA[currentPeriod].labels, datasets: buildTrendDatasets() },
+    options: {
+      ...chartOpts(),
+      plugins: {
+        ...chartOpts().plugins,
+        legend: {
+          display: true,
+          position: 'top',
+          labels: {
+            font: { size: 11, family: 'Noto Sans KR' },
+            boxWidth: 10,
+            padding: 12,
+          }
+        }
+      }
+    }
+  });
+}
+
+function updateTrendChart(d) {
+  if (!trendChart) return;
+  trendChart.data.labels   = d.labels;
+  trendChart.data.datasets = buildTrendDatasets();
+  trendChart.options.plugins.legend.display = true;
+  trendChart.update('active');
+}
 
 
     function getComparisonLabels() {
@@ -2700,5 +2664,6 @@ function renderNaverSummary(summary, period) {
     })();
   </script>
 </body>
+
 
 </html>

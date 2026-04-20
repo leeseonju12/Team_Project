@@ -906,7 +906,7 @@ INSERT INTO inquiry (TYPE, email, title, BODY, content, STATUS, created_at) VALU
 ('시스템오류', 'sundayclothes@kakao.com', '해시태그 추천 기능이 동작하지 않습니다',   '해시태그 자동 추천 버튼 클릭 시 아무 반응이 없습니다.',           '해시태그 자동 추천 버튼 클릭 시 아무 반응이 없습니다.',           '미처리',   NOW() - INTERVAL 2 DAY);
 
 
--- 브랜드 아이디 21번 콘텐츠 히스토리 확인 용 테스트 데이터
+/* -- 브랜드 아이디 21번 콘텐츠 히스토리 확인 용 테스트 데이터
 INSERT INTO brand_platform (brand_id, platform_id, is_connected, token_status, created_at, updated_at)
 VALUES 
 (21, 1, 0, 'ACTIVE', NOW(), NOW()),
@@ -919,6 +919,7 @@ VALUES
 (5, '딸기 크림 라떼', 'AI생성', '🍓 봄의 시작을 알리는 딸기 크림 라떼가 출시되었습니다! 진한 딸기향과 부드러운 크림의 조화를 느껴보세요.', 'published', NOW(), NOW(), NOW()),
 (6, '딸기 크림 라떼', 'AI생성', '봄 신메뉴 딸기 크림 라떼 출시! 매장에서 직접 만나보세요.', 'published', NOW(), NOW(), NOW()),
 (7, '딸기 크림 라떼', 'AI생성', '봄 시즌 한정 딸기 크림 라떼를 소개합니다. 신선한 딸기와 크림의 완벽한 조화입니다.', 'published', NOW(), NOW(), NOW());
+*/
 
 -- ══════════════════════════════════════════════
 -- customerCenter 시드 데이터
