@@ -1,6 +1,4 @@
-
-
-/* ── LAYOUT ── */
+/* LAYOUT */
 .blob {
   position: fixed;
   border-radius: 50%;
@@ -126,7 +124,7 @@
   gap: 5px;
 }
 
-/* ── PAGE TITLE ── */
+/* PAGE TITLE */
 .page-title {
   padding: 36px 0 28px;
 }
@@ -156,11 +154,10 @@
   font-weight: 300;
 }
 
-/* ── MAIN DASHBOARD LAYOUT ── */
-/* --- 기본 대시보드 그리드 설정 --- */
+/* MAIN DASHBOARD LAYOUT */
+/* Default dashboard grid configuration */
 .dashboard-grid {
   display: grid;
-  /* 기본: 좌측 360px, 중앙 가변, 우측 380px */
   grid-template-columns: 360px 1fr 380px;
   gap: 18px;
   align-items: start;
@@ -168,15 +165,13 @@
   width: 100%;
 }
 
-/* --- [중요] 캘린더 확장 모드: 2번 이미지처럼 1:1 매칭 --- */
+/* Calendar expanded mode configuration */
 .dashboard-grid.calendar-expanded {
-  /* 좌측을 0으로 죽이고, 중앙과 우측만 정확히 1:1(1fr 1fr)로 배분 */
   grid-template-columns: 0px 1fr 1fr !important;
-  /* 확장 시 좌측의 불필요한 간격을 없애기 위해 gap 조정 (선택 사항) */
   gap: 24px; 
 }
 
-/* 좌측 컬럼 숨김 처리 최적화 */
+/* Left column hiding optimization */
 .left-col {
   min-width: 0;
   transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
@@ -192,16 +187,63 @@
   pointer-events: none;
 }
 
-/* 센터와 캘린더 컬럼이 찌그러지지 않도록 강제 */
+/* Force center and calendar columns to maintain width */
 .center-col, .calendar-col {
-  min-width: 0; /* 이 설정이 있어야 내부 컨텐츠에 상관없이 1:1이 유지됩니다 */
+  min-width: 0; 
   width: 100%;
 }
 
-/* --- 반응형 보정 --- */
+/* Responsive constraints */
 @media(max-width: 1300px) {
   .dashboard-grid {
     grid-template-columns: 320px 1fr 340px;
   }
-  
 }
+
+/* Small screen stacking logic to prevent layout collapse */
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important; 
+    min-height: 100% !important;
+    overflow-y: visible !important;
+    gap: 30px;
+  }
+  
+  .left-col, .center-col, .calendar-col {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 400px !important; 
+    display: block !important; 
+    overflow: visible !important;
+  }
+  
+  .left-col { order: 1; }
+  .center-col { order: 2; }
+  .calendar-col { order: 3; }
+}
+
+/* Pexels Modal forced z-index and display properties */
+.pexels-modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(3px);
+  z-index: 99999 !important; justify-content: center; align-items: center;
+}
+.pexels-modal-content {
+  background: #fff; border-radius: 12px; width: 90%; max-width: 700px; height: 85vh; 
+  display: flex; flex-direction: column; position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden;
+}
+.pexels-modal-header { padding: 25px 25px 15px 25px; background: #fff; border-bottom: 1px solid #eaeaea; z-index: 10; }
+.pexels-modal-body { padding: 20px 25px; overflow-y: auto; flex: 1; }
+.pexels-close-btn { position: absolute; top: 20px; right: 25px; font-size: 28px; font-weight: bold; cursor: pointer; color: #aaa; transition: 0.2s; }
+.pexels-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.pexels-gallery-grid img { width: 100%; height: 130px; object-fit: cover; border-radius: 8px; cursor: pointer; transition: 0.2s; border: 2px solid transparent; }
+.pexels-gallery-grid img:hover { transform: scale(1.03); border-color: #6366f1; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.btn-pexels {
+  width: 100%; margin-top: 8px; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0;
+  border-radius: 8px; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.2s;
+}
+.btn-pexels:hover { background: #f1f5f9; color: #0f172a; border-color: #cbd5e1; }

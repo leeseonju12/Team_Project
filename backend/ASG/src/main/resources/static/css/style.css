@@ -3284,3 +3284,74 @@ input[type=range]::-webkit-slider-thumb {
 .history-details h4 { font-size: 14px; margin: 0 0 4px; color: #1e293b; }
 .history-details p { font-size: 11px; color: #94a3b8; margin: 0; }
 .platform-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+
+
+
+
+
+
+
+
+
+
+
+/* 반응형 레이아웃 보정 */
+@media screen and (max-width: 1200px) {
+  .dashboard-grid {
+    display: flex !important;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .left-col, .center-col, .calendar-col {
+    width: 100% !important;
+    min-height: auto;
+  }
+  /* flex order를 통한 수직 배치 순서 제어 */
+  .left-col { order: 1; }
+  .center-col { order: 2; }
+  .calendar-col { order: 3; }
+  
+  /* 캘린더 패널 내부 여백 조정 */
+  .calendar-panel {
+    min-height: 500px; 
+  }
+}
+
+/* 반응형 레이아웃 보정 - 강제 높이 해제 및 블록화 */
+@media screen and (max-width: 1200px) {
+  .dashboard-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important; 
+    min-height: 100% !important;
+    overflow-y: visible !important;
+    gap: 30px;
+  }
+  
+  .left-col, .center-col, .calendar-col {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    display: block !important; 
+    overflow: visible !important;
+  }
+  
+  .left-col { order: 1; }
+  .center-col { order: 2; }
+  .calendar-col { order: 3; }
+}
+
+
+
+
+
+
+
+.output-pane {
+    display: none; /* Hide all panes by default */
+}
+.tab-btn.active {
+    background-color: #f1f5f9;
+    font-weight: 700;
+}

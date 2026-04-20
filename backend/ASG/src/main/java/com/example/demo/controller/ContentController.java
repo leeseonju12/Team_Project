@@ -32,18 +32,38 @@ public class ContentController {
 
 	private final ContentService geminiService;
 	private final UserService userService;
+	
+	
+	
+    private Long getSessionUserId(HttpSession session) {
+        return (Long) session.getAttribute("userId");
+    }
 
-	@GetMapping("/generate")
-	public String showGeneratePage(Model model, Principal principal) {
-		
-	    Map<String, String> fakeUser = new HashMap<>();
-	    fakeUser.put("name", "테스트");
-	    fakeUser.put("email", "test@example.com");
+    @GetMapping("/generate")
+    public String showGeneratePage(Model model, Principal principal, HttpSession session) {
+    	
+    	model.addAttribute("defaultTab", "instagram");
+    	
+        // 세션에서 userId 추출
+        Long userId = getSessionUserId(session);
 
-	    model.addAttribute("userInfo", fakeUser);
-		addBusinessCategory(model, principal);
-		return "index";
-	}
+        // 세션 정보가 없을 경우 처리 (예: 로그인 페이지 리다이렉트)
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        // UserService를 통해 DB에서 실제 유저 정보를 조회 (User 엔티티 또는 DTO 반환)
+        // findById 등의 메서드가 구현되어 있다고 가정
+        User user = userService.findById(userId);
+
+        // 모델에 실제 유저 정보 바인딩
+        model.addAttribute("userInfo", user);
+        
+        // 비즈니스 카테고리 로직 수행
+        addBusinessCategory(model, principal);
+        
+        return "index";
+    }
 
 	@PostMapping("/generate")
 	public String generate(HttpSession session, @ModelAttribute ContentRequest request, Model model, Principal principal) {

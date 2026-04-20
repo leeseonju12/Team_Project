@@ -1017,3 +1017,239 @@ function applyUserSettings(settings) {
 document.addEventListener('DOMContentLoaded', () => {
     loadInitialContentSettings();
 });
+
+
+/* Global variables for Pexels state */
+let pexelsCurrentPage = 1;
+let pexelsCurrentQuery = '';
+
+/* Modal Control Functions */
+function openPexelsModal() {
+    document.getElementById('pexelsModal').style.display = 'flex';
+}
+
+function closePexelsModal() {
+    document.getElementById('pexelsModal').style.display = 'none';
+}
+
+/* Close modal on outside click */
+window.addEventListener('click', function(e) {
+    const pexelsModal = document.getElementById('pexelsModal');
+    if (e.target === pexelsModal) {
+        closePexelsModal();
+    }
+});
+
+/* Search execution */
+function executePexelsSearch(isAppend) {
+    const inputPexelsQuery = document.getElementById('pexelsQuery');
+    const pexelsGallery = document.getElementById('pexelsGallery');
+    const btnLoadMorePexels = document.getElementById('btnLoadMorePexels');
+    const modalBodyScroll = document.getElementById('modalBodyScroll');
+
+    if (!isAppend) {
+        const query = inputPexelsQuery.value.trim();
+        if (!query) return;
+        pexelsCurrentQuery = query;
+        pexelsCurrentPage = 1;
+        pexelsGallery.innerHTML = '<p style="grid-column: 1 / -1; text-align:center; color:#94a3b8; font-size:14px; margin-top:20px;">검색 중...</p>';
+        btnLoadMorePexels.style.display = 'none';
+        modalBodyScroll.scrollTop = 0;
+    }
+
+    /* Spring Boot Controller API calling */
+    fetch(`/api/sns/pexels/search?query=${encodeURIComponent(pexelsCurrentQuery)}&page=${pexelsCurrentPage}`)
+        .then(response => {
+            if (!response.ok) throw new Error('API fetch failed');
+            return response.json();
+        })
+        .then(data => {
+            if (!isAppend) pexelsGallery.innerHTML = '';
+
+            if (!data.photos || data.photos.length === 0) {
+                if (!isAppend) pexelsGallery.innerHTML = '<p style="grid-column: 1 / -1; text-align:center; font-size:14px; color:#64748b;">결과가 없습니다.</p>';
+                btnLoadMorePexels.style.display = 'none';
+                return;
+            }
+
+            renderPexelsData(data.photos);
+            btnLoadMorePexels.style.display = 'block';
+        })
+        .catch(error => {
+            if (!isAppend) pexelsGallery.innerHTML = '<p style="color:#ef4444; grid-column: 1 / -1; text-align:center; font-size:14px;">오류가 발생했습니다.</p>';
+            console.error(error);
+        });
+}
+
+function renderPexelsData(photos) {
+    const pexelsGallery = document.getElementById('pexelsGallery');
+    
+    photos.forEach(photo => {
+        const img = document.createElement('img');
+        img.src = photo.src.medium;
+        
+        img.onclick = function() {
+            appendImageToPreview(photo.src.large);
+            closePexelsModal();
+        };
+        
+        pexelsGallery.appendChild(img);
+    });
+}
+
+function appendImageToPreview(imageUrl) {
+    const imgPreviewsContainer = document.getElementById('imgPreviews');
+    
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'relative';
+    wrapper.style.display = 'inline-block';
+    wrapper.style.margin = '4px';
+
+    const imgElement = document.createElement('img');
+    imgElement.src = imageUrl;
+    imgElement.style.width = '70px';
+    imgElement.style.height = '70px';
+    imgElement.style.objectFit = 'cover';
+    imgElement.style.borderRadius = '8px';
+    imgElement.style.border = '1px solid #e2e8f0';
+
+    const delBtn = document.createElement('button');
+    delBtn.innerHTML = '×';
+    delBtn.style.position = 'absolute';
+    delBtn.style.top = '-5px';
+    delBtn.style.right = '-5px';
+    delBtn.style.background = '#ef4444';
+    delBtn.style.color = '#fff';
+    delBtn.style.border = 'none';
+    delBtn.style.borderRadius = '50%';
+    delBtn.style.width = '18px';
+    delBtn.style.height = '18px';
+    delBtn.style.fontSize = '12px';
+    delBtn.style.lineHeight = '1';
+    delBtn.style.cursor = 'pointer';
+    
+    delBtn.onclick = function() {
+        wrapper.remove();
+        removeUrlFromHiddenInput(imageUrl);
+    };
+
+    wrapper.appendChild(imgElement);
+    wrapper.appendChild(delBtn);
+    imgPreviewsContainer.appendChild(wrapper);
+    
+    addUrlToHiddenInput(imageUrl);
+}
+
+/* Logic for maintaining image URLs for Spring Boot submission */
+function addUrlToHiddenInput(url) {
+    let hiddenInput = document.getElementById('pexelsSelectedUrls');
+    if (!hiddenInput) {
+        hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.id = 'pexelsSelectedUrls';
+        hiddenInput.name = 'pexelsImageUrls';
+        document.getElementById('uploadZone').parentNode.appendChild(hiddenInput);
+    }
+    
+    let currentUrls = hiddenInput.value ? hiddenInput.value.split(',') : [];
+    currentUrls.push(url);
+    hiddenInput.value = currentUrls.join(',');
+}
+
+function removeUrlFromHiddenInput(url) {
+    const hiddenInput = document.getElementById('pexelsSelectedUrls');
+    if (hiddenInput) {
+        let currentUrls = hiddenInput.value.split(',');
+        currentUrls = currentUrls.filter(u => u !== url);
+        hiddenInput.value = currentUrls.join(',');
+    }
+}
+
+/* Event binding for Search Button and Enter Key */
+document.addEventListener('DOMContentLoaded', function() {
+    const btnSearchPexels = document.getElementById('btnSearchPexels');
+    const inputPexelsQuery = document.getElementById('pexelsQuery');
+    const btnLoadMorePexels = document.getElementById('btnLoadMorePexels');
+
+    if(btnSearchPexels) {
+        btnSearchPexels.onclick = function() { executePexelsSearch(false); };
+    }
+    
+    if(inputPexelsQuery) {
+        inputPexelsQuery.onkeypress = function(e) {
+            if (e.key === 'Enter') {
+                executePexelsSearch(false);
+            }
+        };
+    }
+    
+    if(btnLoadMorePexels) {
+        btnLoadMorePexels.onclick = function() {
+            pexelsCurrentPage++;
+            const originalText = this.innerText;
+            this.innerText = '불러오는 중...';
+            executePexelsSearch(true);
+            setTimeout(() => { this.innerText = originalText; }, 500);
+        };
+    }
+});
+
+
+
+
+
+
+
+
+
+document.addEventListener("DOMContentLoaded", function() {
+    /* Initialize tab and pane visibility based on requirement */
+    const defaultPlatform = "instagram"; 
+    
+    /* Activate default tab button */
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    tabButtons.forEach(btn => {
+        if(btn.getAttribute('data-tab') === defaultPlatform) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    /* Hide all panes initially */
+    const panes = document.querySelectorAll('.output-pane');
+    panes.forEach(pane => {
+        pane.style.display = 'none'; 
+    });
+    
+    /* Activate default output pane */
+    const activePane = document.getElementById('pane-' + defaultPlatform);
+    if(activePane) {
+        activePane.style.display = 'block';
+        
+        /* Ensure empty state is visible and result state is hidden */
+        const emptyState = activePane.querySelector('.empty-state');
+        const resultState = activePane.querySelector('#result-' + defaultPlatform);
+        
+        if(emptyState) emptyState.style.display = 'block';
+        if(resultState) resultState.style.display = 'none';
+    }
+
+    /* Bind click events for all tab buttons */
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetTab = this.getAttribute('data-tab');
+            
+            /* Remove active class from all tabs and hide all panes */
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            panes.forEach(pane => pane.style.display = 'none');
+            
+            /* Add active class to the clicked tab and show its pane */
+            this.classList.add('active');
+            const targetPane = document.getElementById('pane-' + targetTab);
+            if(targetPane) {
+                targetPane.style.display = 'block';
+            }
+        });
+    });
+});

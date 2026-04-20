@@ -420,6 +420,14 @@
                 <p><span>클릭</span>하거나 드래그하세요</p>
                 <p style="margin-top:3px;font-size:10px;">최대 5장 · JPG, PNG, WEBP</p>
               </div>
+              
+<button type="button" id="btnOpenPexelsModal" class="btn-pexels" onclick="openPexelsModal()">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;">
+    <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+  </svg>
+  무료 스톡 이미지 찾아보기
+</button>
+  
               <div class="img-previews" id="imgPreviews"></div>
               <!-- ✨ AI 이미지 생성 영역 (신규 추가) -->
 			<div class="ai-image-section">
@@ -498,7 +506,7 @@
       </div>
 
 <div class="center-col">
-  <div class="panel" style="min-height:800px;">
+  <div class="panel" style="min-height:360px;">
 
     <!-- 생성 결과 / 기록 불러오기 -->
     <div class="result-header" style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:1px solid #f1f5f9;">
@@ -767,9 +775,54 @@
   </div>
 </div>
 
+
+
+
+
+
+<div id="pexelsModal" class="pexels-modal-overlay">
+  <div class="pexels-modal-content">
+    <span id="btnClosePexelsModal" class="pexels-close-btn">&times;</span>
+    
+    <div class="pexels-modal-header">
+      <h3 style="margin: 0 0 15px 0; color: #0f172a; font-size: 18px; font-weight: 700;">무료 스톡 이미지 검색</h3>
+      <div style="display: flex; gap: 8px;">
+        <input type="text" id="pexelsQuery" placeholder="검색어 (예: 카페, 업무, 코딩)" 
+               style="flex: 1; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; outline: none;">
+        <button type="button" id="btnSearchPexels" 
+                style="padding: 10px 16px; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+          검색
+        </button>
+      </div>
+    </div>
+    
+    <div class="pexels-modal-body" id="modalBodyScroll">
+      <div id="pexelsGallery" class="pexels-gallery-grid"></div>
+      <div style="text-align: center; margin-top: 25px; margin-bottom: 10px;">
+        <button type="button" id="btnLoadMorePexels" 
+                style="display: none; width: 100%; padding: 12px; background: #f1f5f9; color: #475569; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+          결과 더보기
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
   <script src="/js/app4.js" defer></script>
   <script src="/js/calendar-manager.js" defer></script>
   <script src="/js/generate-image.js" defer></script>
+  
+    	<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  
+     <link rel="stylesheet" href="/css/chat-widget.css">
+    <script src="/js/chat-widget.js"></script>
+
+
+
+
 
 </body>
 

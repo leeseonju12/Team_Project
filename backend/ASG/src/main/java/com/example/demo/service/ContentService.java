@@ -48,21 +48,28 @@ public class ContentService {
     private final Random random = new Random();
     
     public ContentInitResponse getInitialData(String industryCode, Long userId) {
-        // 1. 키워드 및 가이드 조회 (빈 리스트라도 허용)
+        // 1. 키워드 조회: 요청된 industryCode로 먼저 조회합니다.
         List<Keyword> rawKeywords = keywordRepository.findByIndustryCode(industryCode);
+        
+        // Rationale: 만약 조회 결과가 없다면(해당하지 않는 업종), 마이그레이션한 'DEFAULT' 키워드 전체를 조회합니다.
+        if (rawKeywords.isEmpty()) {
+            rawKeywords = keywordRepository.findByIndustryCode("DEFAULT");
+        }
+
+        // 2. 가이드 조회 (기존 랜덤 로직 유지)
         List<SnsGuide> rawGuides = snsGuideRepository.findAll();
 
-        // 2. 사용자 설정 조회 - 데이터가 없을 경우 기본값(Default) 객체를 생성하여 대응
+        // 3. 사용자 설정 조회 (기존 로직 유지)
         UserSetting setting = userSettingRepository.findByUserId(userId)
                 .orElseGet(() -> UserSetting.builder()
                         .userId(userId)
-                        .activePlatforms(Arrays.asList("instagram")) // 기본 활성화 플랫폼
+                        .activePlatforms(Arrays.asList("instagram"))
                         .toneStyle("default")
                         .emojiLevel("mid")
                         .maxLength(150)
                         .build());
 
-        // 3. DTO 변환 및 반환
+        // 4. DTO 변환 및 반환
         return ContentInitResponse.builder()
                 .keywords(rawKeywords.stream()
                         .map(k -> ContentInitResponse.KeywordDto.builder()
@@ -70,7 +77,7 @@ public class ContentService {
                                 .category(k.getCategory()).build())
                         .toList())
                 .snsGuides(rawGuides.stream()
-                        .map(this::mapToRandomSnsGuideDto) // 랜덤 추출 헬퍼 메서드 참조
+                        .map(this::mapToRandomSnsGuideDto)
                         .toList())
                 .userSetting(ContentInitResponse.UserSettingDto.builder()
                         .activeSns(setting.getActivePlatforms())
@@ -81,21 +88,24 @@ public class ContentService {
     }
     
     
- // 다중 데이터를 담고 있는 JSON 리스트에서 무작위로 하나의 문구와 시간을 추출합니다.
     private ContentInitResponse.SnsGuideDto mapToRandomSnsGuideDto(SnsGuide guide) {
-        // NullPointerException 및 IndexOutOfBoundsException 방지를 위한 안전한 리스트 검증
-        String randomContent = (guide.getContents() != null && !guide.getContents().isEmpty())
-                ? guide.getContents().get(random.nextInt(guide.getContents().size()))
-                : "";
-                
-        String randomTime = (guide.getBestTimes() != null && !guide.getBestTimes().isEmpty())
-                ? guide.getBestTimes().get(random.nextInt(guide.getBestTimes().size()))
-                : "--:--";
+        // Rationale: 데이터베이스 조회 결과가 비어있을 경우 예외를 방지하고 프론트엔드에 빈 값을 전달합니다.
+        if (guide.getGuideDetails() == null || guide.getGuideDetails().isEmpty()) {
+            return ContentInitResponse.SnsGuideDto.builder()
+                    .platform(guide.getPlatform())
+                    .guideContent("")
+                    .bestTime("--:--")
+                    .build();
+        }
+
+        // Rationale: 동일한 인덱스를 사용하여 1:1로 매핑된 객체를 한 번만 추출합니다.
+        SnsGuide.GuideDetail selectedDetail = guide.getGuideDetails()
+                .get(random.nextInt(guide.getGuideDetails().size()));
 
         return ContentInitResponse.SnsGuideDto.builder()
                 .platform(guide.getPlatform())
-                .guideContent(randomContent)
-                .bestTime(randomTime)
+                .guideContent(selectedDetail.getContent())
+                .bestTime(selectedDetail.getBestTime())
                 .build();
     }
 

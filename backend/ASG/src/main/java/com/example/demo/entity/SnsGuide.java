@@ -1,6 +1,7 @@
 package com.example.demo.entity;
 
 
+import java.io.Serializable;
 import java.util.List;
 
 import org.hibernate.annotations.JdbcTypeCode;
@@ -8,6 +9,7 @@ import org.hibernate.type.SqlTypes;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,20 +27,24 @@ public class SnsGuide {
     @Column(nullable = false, unique = true, length = 50)
     private String platform;
 
-    // 여러 가이드 문구를 JSON 배열로 저장
+ // Rationale: 문구와 시간을 1:1로 강제 매핑하기 위해 단일 JSON 객체 배열로 구조를 변경합니다.
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "contents", columnDefinition = "json")
-    private List<String> contents;
-
-    // 여러 추천 시간을 JSON 배열로 저장
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "best_times", columnDefinition = "json")
-    private List<String> bestTimes;
+    @Column(name = "guide_details", columnDefinition = "json")
+    private List<GuideDetail> guideDetails;
 
     @Builder
-    public SnsGuide(String platform, List<String> contents, List<String> bestTimes) {
+    public SnsGuide(String platform, List<GuideDetail> guideDetails) {
         this.platform = platform;
-        this.contents = contents;
-        this.bestTimes = bestTimes;
+        this.guideDetails = guideDetails;
     }
+
+    // Rationale: JSON 역직렬화를 위해 기본 생성자와 Getter가 필수적으로 요구됩니다.
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GuideDetail implements Serializable {
+        private String content;
+        private String bestTime;
+    }
+
 }
