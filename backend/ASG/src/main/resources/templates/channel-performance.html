@@ -1243,50 +1243,76 @@ em {
 
   <div class="main-wrap">
     <div class="section-label">📈 통합 추이 분석</div>
-    <div class="grid-main" style="margin-bottom:20px;">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">
-            <div class="card-icon indigo">📈</div>SNS 반응 통합 추이
-          </div>
-          <div class="metric-chips">
-            <div class="mchip active" data-metric="views" onclick="toggleMetric('views')"><span class="mdot" style="background:var(--indigo)"></span>조회수</div>
-            <div class="mchip active" data-metric="likes" onclick="toggleMetric('likes')"><span class="mdot" style="background:#E1306C"></span>좋아요</div>
-            <div class="mchip" data-metric="comments" onclick="toggleMetric('comments')"><span class="mdot" style="background:var(--teal)"></span>댓글</div>
-            <div class="mchip" data-metric="shares" onclick="toggleMetric('shares')"><span class="mdot" style="background:var(--yellow)"></span>공유</div>
-            <div class="mchip" data-metric="followers" onclick="toggleMetric('followers')"><span class="mdot" style="background:var(--orange)"></span>팔로워</div>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="chart-wrap tall"><canvas id="trendChart"></canvas></div>
-        </div>
-      </div>
+<div class="grid-main" style="margin-bottom:20px;">
 
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">
-            <div class="">🏆</div>플랫폼 반응 순위
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="rank-list" id="rankList"></div>
+  <!-- ① 반응 통합 추이 카드 -->
+  <div class="card">
+    <div class="card-header" style="flex-wrap:wrap;gap:8px;">
+      <div class="card-title">
+        <div class="card-icon indigo">📈</div>반응 통합 추이
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <select id="trendCategorySel" onchange="onTrendCategoryChange()"
+          style="padding:5px 10px;border-radius:7px;border:1.5px solid var(--border);background:var(--white);font-size:12px;font-family:'Noto Sans KR',sans-serif;outline:none;cursor:pointer;color:var(--text2);">
+          <option value="sns">SNS</option>
+          <option value="review">리뷰</option>
+        </select>
+        <!-- SNS 칩 -->
+        <div class="metric-chips" id="metricChips">
+  <div class="mchip active" data-metric="views"     onclick="selectMetric('views')"><span class="mdot" style="background:var(--indigo)"></span>조회수</div>
+  <div class="mchip"        data-metric="likes"     onclick="selectMetric('likes')"><span class="mdot" style="background:#E1306C"></span>좋아요</div>
+  <div class="mchip"        data-metric="comments"  onclick="selectMetric('comments')"><span class="mdot" style="background:var(--teal)"></span>댓글</div>
+  <div class="mchip"        data-metric="shares"    onclick="selectMetric('shares')"><span class="mdot" style="background:var(--yellow)"></span>공유</div>
+  <div class="mchip"        data-metric="followers" onclick="selectMetric('followers')"><span class="mdot" style="background:var(--orange)"></span>팔로워</div>
+</div>
+        <!-- 리뷰 칩 -->
+        <div class="metric-chips" id="reviewChips" style="display:none;">
+          <div class="mchip active" data-review="google" onclick="toggleReview('google')"><span class="mdot" style="background:#EA4335"></span>구글 리뷰</div>
+          <div class="mchip active" data-review="naver"  onclick="toggleReview('naver')"><span class="mdot" style="background:#03C75A"></span>네이버 리뷰</div>
+          <div class="mchip active" data-review="kakao"  onclick="toggleReview('kakao')"><span class="mdot" style="background:#F9C000"></span>카카오 리뷰</div>
         </div>
       </div>
     </div>
+    <div class="card-body">
+      <div class="chart-wrap tall"><canvas id="trendChart"></canvas></div>
+    </div>
+  </div><!-- ← 트렌드 카드 닫기 -->
+
+  <!-- ② 리뷰 순위 카드 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="">🏆</div>리뷰 순위
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="rank-list" id="rankList"></div>
+    </div>
+  </div><!-- ← 리뷰 순위 카드 닫기 -->
+
+</div><!-- ← grid-main 닫기 -->
 
     <div class="section-label">🔀 플랫폼 비교 분석</div>
     <div class="grid-2" style="margin-bottom:20px;">
       <div class="card">
-        <div class="card-header">
+        <div class="card-header" style="flex-wrap:wrap;gap:8px;">
           <div class="card-title">
             <div class="">📊</div>전월 대비 상승도 비교
           </div>
-          <select id="compareMetricSel" onchange="updateCompareChart()" style="padding:5px 10px;border-radius:7px;border:1.5px solid var(--border);background:var(--white);font-size:12px;font-family:'Noto Sans KR',sans-serif;outline:none;cursor:pointer;color:var(--text2);">
-            <option value="views">조회수</option>
-            <option value="likes">좋아요</option>
-            <option value="comments">댓글</option>
-            <option value="shares">공유</option>
-          </select>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="display:flex;background:var(--slate);border:1.5px solid var(--border);border-radius:100px;padding:3px;gap:2px;">
+              <button id="compareTabSns" onclick="switchCompareTab('sns')"
+                style="padding:4px 12px;border-radius:100px;border:none;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:linear-gradient(135deg,var(--teal),var(--indigo));color:#fff;box-shadow:0 2px 6px rgba(20,184,166,.25);">SNS</button>
+              <button id="compareTabReview" onclick="switchCompareTab('review')"
+                style="padding:4px 12px;border-radius:100px;border:none;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:transparent;color:var(--text3);">리뷰</button>
+            </div>
+            <select id="compareMetricSel" onchange="updateCompareChart()" style="padding:5px 10px;border-radius:7px;border:1.5px solid var(--border);background:var(--white);font-size:12px;font-family:'Noto Sans KR',sans-serif;outline:none;cursor:pointer;color:var(--text2);">
+              <option value="views">조회수</option>
+              <option value="likes">좋아요</option>
+              <option value="comments">댓글</option>
+              <option value="shares">공유</option>
+            </select>
+          </div>
         </div>
         <div class="card-body">
           <div class="chart-wrap"><canvas id="compareChart"></canvas></div>
@@ -1453,52 +1479,159 @@ em {
   </div>
 
   <script th:inline="none">
-    const PLATFORMS = [{ id: 'instagram', name: 'Instagram', color: '#E1306C' },
-      { id: 'facebook', name: 'Facebook', color: '#1877F2' },
-      { id: 'naver', name: '네이버 블로그', color: '#03C75A' },
-      { id: 'google', name: '구글 지도', color: '#EA4335' },
-      { id: 'kakao', name: '카카오 채널', color: '#F9C000' },
-    ];
+  const PLATFORMS = [
+	  { id: 'instagram', name: 'Instagram',    color: '#E1306C' },
+	  { id: 'facebook',  name: 'Facebook',     color: '#1877F2' },
+	  { id: 'naver',     name: '네이버 블로그', color: '#03C75A' },
+	  { id: 'google',    name: '구글 지도',     color: '#EA4335' },
+	];
+  
     const DATA = {
+    		week: {
+    			  labels: ['월','화','수','목','금','토','일'],
+    			  views:    [[3200,4100,3800,5200,4800,6100,5400],[1200,1500,1300,1800,1600,2100,1900],[2100,2400,2200,2800,2500,3200,2900],[800,900,850,1100,1000,1300,1100]],
+    			  likes:    [[320,410,380,520,480,610,540],[120,150,130,180,160,210,190],[210,240,220,280,250,320,290],[80,90,85,110,100,130,110]],
+    			  comments: [[48,62,57,78,72,92,81],[18,23,20,27,24,32,29],[32,36,33,42,38,48,44],[12,14,13,17,15,20,17]],
+    			  shares:   [[24,31,29,39,36,46,41],[9,12,10,14,12,16,15],[16,18,17,21,19,24,22],[6,7,7,9,8,10,9]],
+    			  followers:[[45,58,52,68,63,82,74],[12,15,13,18,16,21,19],[28,32,30,38,34,43,39],[8,9,9,11,10,13,12]],
+    			  rankScores:[128400,62400,94500,38200],
+    			  donut:    [48,23,35,15],
+    			  compare: {
+    			    views:    { cur:[45800,22100,33400,13600], prev:[39200,20400,29800,11800] },
+    			    likes:    { cur:[3780,1830,2760,1120],     prev:[3210,1690,2430,970] },
+    			    comments: { cur:[570,275,415,168],         prev:[510,252,368,148] },
+    			    shares:   { cur:[247,119,180,73],          prev:[262,128,190,78] }
+    			  },
+    			},
+    			month: {
+    			  labels: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],
+    			  views:    [[28000,31000,29000,35000,38000,42000,39000,45000,48000,51000,49000,58000],[10000,11500,10800,13000,14200,15800,14600,16900,18100,19400,18600,22100],[18000,19800,18600,22200,24100,26800,24800,28600,30600,32800,31400,37400],[7200,7900,7400,8800,9600,10700,9900,11400,12200,13100,12500,14900]],
+    			  likes:    [[2800,3100,2900,3500,3800,4200,3900,4500,4800,5100,4900,5800],[1000,1150,1080,1300,1420,1580,1460,1690,1810,1940,1860,2210],[1800,1980,1860,2220,2410,2680,2480,2860,3060,3280,3140,3740],[720,790,740,880,960,1070,990,1140,1220,1310,1250,1490]],
+    			  comments: [[420,465,435,525,570,630,585,675,720,765,735,870],[150,173,162,195,213,237,219,254,272,291,279,332],[270,297,279,333,362,402,372,429,459,492,471,561],[108,119,111,132,144,161,149,171,183,197,188,224]],
+    			  shares:   [[182,201,189,227,247,273,253,292,312,331,318,376],[65,75,70,85,92,103,95,110,118,126,121,144],[117,129,121,145,157,175,162,186,199,214,205,244],[47,51,48,57,62,70,65,75,80,86,82,98]],
+    			  followers:[[380,420,395,475,515,570,525,610,650,695,665,790],[95,105,99,119,129,143,131,153,163,174,167,198],[190,210,198,238,258,285,263,305,325,348,333,396],[48,52,49,59,64,71,66,76,81,87,83,99]],
+    			  rankScores:[284700,108400,215600,84200],
+    			  donut:    [40,15,31,14],
+    			  compare: {
+    			    views:    { cur:[58000,22100,37400,14900], prev:[49000,18600,31400,12500] },
+    			    likes:    { cur:[5800,2210,3740,1490],     prev:[4900,1860,3140,1250] },
+    			    comments: { cur:[870,332,561,224],         prev:[735,279,471,188] },
+    			    shares:   { cur:[376,144,244,98],          prev:[318,121,205,82] }
+    			  },
+    			},
+    			year: {
+    			  labels: ['2023 Q1','2023 Q2','2023 Q3','2023 Q4','2024 Q1','2024 Q2','2024 Q3','2024 Q4'],
+    			  views:    [[88000,105000,132000,162000,195000,228000,261000,284700],[33000,39000,49000,61000,73000,86000,98000,108400],[56000,67000,84000,103000,124000,145000,167000,215600],[22000,26000,33000,40000,48000,57000,65000,84200]],
+    			  likes:    [[8800,10500,13200,16200,19500,22800,26100,28470],[3300,3900,4900,6100,7300,8600,9800,10840],[5600,6700,8400,10300,12400,14500,16700,21560],[2200,2600,3300,4000,4800,5700,6500,8420]],
+    			  comments: [[1320,1575,1980,2430,2925,3420,3915,4270],[495,585,735,915,1095,1290,1470,1626],[840,1005,1260,1545,1860,2175,2505,3234],[330,390,495,600,720,855,975,1263]],
+    			  shares:   [[572,683,858,1053,1267,1482,1696,1849],[215,254,319,397,475,559,638,705],[364,436,547,670,807,943,1085,1401],[143,169,215,260,312,371,423,548]],
+    			  followers:[[1140,1365,1716,2106,2535,2964,3393,3699],[429,508,638,793,949,1117,1275,1411],[726,869,1092,1339,1613,1885,2168,2802],[286,338,429,519,624,742,845,1095]],
+    			  rankScores:[756000,320400,540200,208400],
+    			  donut:    [43,14,31,12],
+    			  compare: {
+    			    views:    { cur:[284700,108400,215600,84200], prev:[220000,82000,165000,62000] },
+    			    likes:    { cur:[28470,10840,21560,8420],     prev:[22000,8200,16500,6200] },
+    			    comments: { cur:[4270,1626,3234,1263],        prev:[3300,1280,2520,960] },
+    			    shares:   { cur:[1849,705,1401,548],          prev:[1430,560,1080,420] }
+    			  },
+    			}
+    };
+    
+ // ── 리뷰 mock 데이터 ──────────────────────────────────
+    const REVIEW_PLATFORMS = [
+      { id: 'google', name: '구글 리뷰',   color: '#EA4335' },
+      { id: 'naver',  name: '네이버 리뷰', color: '#03C75A' },
+      { id: 'kakao',  name: '카카오 리뷰', color: '#F9C000' },
+    ];
+
+    const REVIEW_DATA = {
       week: {
-        labels: ['월', '화', '수', '목', '금', '토', '일'],
-        views: [[3200, 4100, 3800, 5200, 4800, 6100, 5400],[1200, 1500, 1300, 1800, 1600, 2100, 1900],[2100, 2400, 2200, 2800, 2500, 3200, 2900],[800, 900, 850, 1100, 1000, 1300, 1100],[600, 700, 650, 850, 750, 950, 880]],
-        likes: [[320, 410, 380, 520, 480, 610, 540],[120, 150, 130, 180, 160, 210, 190],[210, 240, 220, 280, 250, 320, 290],[80, 90, 85, 110, 100, 130, 110],[60, 70, 65, 85, 75, 95, 88]],
-        comments: [[48, 62, 57, 78, 72, 92, 81],[18, 23, 20, 27, 24, 32, 29],[32, 36, 33, 42, 38, 48, 44],[12, 14, 13, 17, 15, 20, 17],[9, 11, 10, 13, 11, 14, 13]],
-        shares: [[24, 31, 29, 39, 36, 46, 41],[9, 12, 10, 14, 12, 16, 15],[16, 18, 17, 21, 19, 24, 22],[6, 7, 7, 9, 8, 10, 9],[5, 6, 5, 7, 6, 8, 7]],
-        followers: [[45, 58, 52, 68, 63, 82, 74],[12, 15, 13, 18, 16, 21, 19],[28, 32, 30, 38, 34, 43, 39],[8, 9, 9, 11, 10, 13, 12],[6, 7, 7, 9, 8, 10, 9]],
-        rankScores: [128400, 62400, 94500, 38200, 28800],
-        donut: [45, 22, 33, 14, 10],
-        compare: { views: { cur: [45800, 22100, 33400, 13600, 10200], prev: [39200, 20400, 29800, 11800, 9400] }, likes: { cur: [3780, 1830, 2760, 1120, 840], prev: [3210, 1690, 2430, 970, 780] }, comments: { cur: [570, 275, 415, 168, 126], prev: [510, 252, 368, 148, 116] }, shares: { cur: [247, 119, 180, 73, 55], prev: [262, 128, 190, 78, 58] } },
+        labels: ['월','화','수','목','금','토','일'],
+        google: [12,18,15,22,20,28,25],
+        naver:  [8,11,10,14,13,17,16],
+        kakao:  [5,7,6,9,8,11,10],
+        rankScores: [120, 79, 46],
+        rankChanges: ['+9.2%','+5.4%','+3.1%'],
+        rankUp:      [true, true, true],
       },
       month: {
-        labels: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
-        views: [[28000, 31000, 29000, 35000, 38000, 42000, 39000, 45000, 48000, 51000, 49000, 58000],[10000, 11500, 10800, 13000, 14200, 15800, 14600, 16900, 18100, 19400, 18600, 22100],[18000, 19800, 18600, 22200, 24100, 26800, 24800, 28600, 30600, 32800, 31400, 37400],[7200, 7900, 7400, 8800, 9600, 10700, 9900, 11400, 12200, 13100, 12500, 14900],[5400, 5900, 5600, 6600, 7200, 8000, 7400, 8500, 9100, 9800, 9400, 11200]],
-        likes: [[2800, 3100, 2900, 3500, 3800, 4200, 3900, 4500, 4800, 5100, 4900, 5800],[1000, 1150, 1080, 1300, 1420, 1580, 1460, 1690, 1810, 1940, 1860, 2210],[1800, 1980, 1860, 2220, 2410, 2680, 2480, 2860, 3060, 3280, 3140, 3740],[720, 790, 740, 880, 960, 1070, 990, 1140, 1220, 1310, 1250, 1490],[540, 590, 560, 660, 720, 800, 740, 850, 910, 980, 940, 1120]],
-        comments: [[420, 465, 435, 525, 570, 630, 585, 675, 720, 765, 735, 870],[150, 173, 162, 195, 213, 237, 219, 254, 272, 291, 279, 332],[270, 297, 279, 333, 362, 402, 372, 429, 459, 492, 471, 561],[108, 119, 111, 132, 144, 161, 149, 171, 183, 197, 188, 224],[81, 89, 83, 99, 108, 120, 111, 128, 137, 148, 141, 168]],
-        shares: [[182, 201, 189, 227, 247, 273, 253, 292, 312, 331, 318, 376],[65, 75, 70, 85, 92, 103, 95, 110, 118, 126, 121, 144],[117, 129, 121, 145, 157, 175, 162, 186, 199, 214, 205, 244],[47, 51, 48, 57, 62, 70, 65, 75, 80, 86, 82, 98],[35, 38, 36, 43, 47, 52, 48, 56, 60, 64, 61, 73]],
-        followers: [[380, 420, 395, 475, 515, 570, 525, 610, 650, 695, 665, 790],[95, 105, 99, 119, 129, 143, 131, 153, 163, 174, 167, 198],[190, 210, 198, 238, 258, 285, 263, 305, 325, 348, 333, 396],[48, 52, 49, 59, 64, 71, 66, 76, 81, 87, 83, 99],[36, 39, 37, 44, 48, 53, 49, 57, 61, 65, 62, 74]],
-        rankScores: [284700, 108400, 215600, 84200, 63200],
-        donut: [38, 14, 29, 11, 8],
-        compare: { views: { cur: [58000, 22100, 37400, 14900, 11200], prev: [49000, 18600, 31400, 12500, 9400] }, likes: { cur: [5800, 2210, 3740, 1490, 1120], prev: [4900, 1860, 3140, 1250, 940] }, comments: { cur: [870, 332, 561, 224, 168], prev: [735, 279, 471, 188, 141] }, shares: { cur: [376, 144, 244, 98, 73], prev: [318, 121, 205, 82, 61] } },
+        labels: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],
+        google: [88,95,91,108,115,124,118,132,140,149,143,165],
+        naver:  [55,61,58,68,73,80,76,85,91,97,93,109],
+        kakao:  [32,36,34,40,43,48,46,52,56,60,57,67],
+        rankScores: [1468, 927, 571],
+        rankChanges: ['+18.6%','+12.3%','+7.8%'],
+        rankUp:      [true, true, true],
       },
       year: {
-        labels: ['2023 Q1', '2023 Q2', '2023 Q3', '2023 Q4', '2024 Q1', '2024 Q2', '2024 Q3', '2024 Q4'],
-        views: [[88000, 105000, 132000, 162000, 195000, 228000, 261000, 284700],[33000, 39000, 49000, 61000, 73000, 86000, 98000, 108400],[56000, 67000, 84000, 103000, 124000, 145000, 167000, 215600],[22000, 26000, 33000, 40000, 48000, 57000, 65000, 84200],[17000, 20000, 25000, 31000, 37000, 43000, 50000, 63200]],
-        likes: [[8800, 10500, 13200, 16200, 19500, 22800, 26100, 28470],[3300, 3900, 4900, 6100, 7300, 8600, 9800, 10840],[5600, 6700, 8400, 10300, 12400, 14500, 16700, 21560],[2200, 2600, 3300, 4000, 4800, 5700, 6500, 8420],[1700, 2000, 2500, 3100, 3700, 4300, 5000, 6320]],
-        comments: [[1320, 1575, 1980, 2430, 2925, 3420, 3915, 4270],[495, 585, 735, 915, 1095, 1290, 1470, 1626],[840, 1005, 1260, 1545, 1860, 2175, 2505, 3234],[330, 390, 495, 600, 720, 855, 975, 1263],[255, 300, 375, 465, 555, 645, 750, 948]],
-        shares: [[572, 683, 858, 1053, 1267, 1482, 1696, 1849],[215, 254, 319, 397, 475, 559, 638, 705],[364, 436, 547, 670, 807, 943, 1085, 1401],[143, 169, 215, 260, 312, 371, 423, 548],[110, 130, 163, 201, 235, 281, 325, 411]],
-        followers: [[1140, 1365, 1716, 2106, 2535, 2964, 3393, 3699],[429, 508, 638, 793, 949, 1117, 1275, 1411],[726, 869, 1092, 1339, 1613, 1885, 2168, 2802],[286, 338, 429, 519, 624, 742, 845, 1095],[220, 260, 325, 401, 469, 561, 649, 821]],
-        rankScores: [756000, 320400, 540200, 208400, 141200],
-        donut: [40, 13, 29, 11, 7],
-        compare: { views: { cur: [284700, 108400, 215600, 84200, 63200], prev: [220000, 82000, 165000, 62000, 48000] }, likes: { cur: [28470, 10840, 21560, 8420, 6320], prev: [22000, 8200, 16500, 6200, 4800] }, comments: { cur: [4270, 1626, 3234, 1263, 948], prev: [3300, 1280, 2520, 960, 730] }, shares: { cur: [1849, 705, 1401, 548, 411], prev: [1430, 560, 1080, 420, 310] } },
-      }
+        labels: ['2023 Q1','2023 Q2','2023 Q3','2023 Q4','2024 Q1','2024 Q2','2024 Q3','2024 Q4'],
+        google: [210,248,295,340,388,432,478,512],
+        naver:  [130,154,183,211,241,268,296,318],
+        kakao:  [78,93,110,128,146,163,180,193],
+        rankScores: [4712, 2930, 1760],
+        rankChanges: ['+24.1%','+19.6%','+14.2%'],
+        rankUp:      [true, true, true],
+      },
     };
+
+    // ── 트렌드 카테고리 상태 ─────────────────────────────
+    let trendCategory = 'sns';   // 'sns' | 'review'
+    let activeReviews = new Set(['google','naver','kakao']);
+
+    const REVIEW_COLORS = { google:'#EA4335', naver:'#03C75A', kakao:'#F9C000' };
+    const REVIEW_LABELS = { google:'구글 리뷰', naver:'네이버 리뷰', kakao:'카카오 리뷰' };
+
+    // ── 카테고리 전환 ────────────────────────────────────
+    function onTrendCategoryChange() {
+      trendCategory = document.getElementById('trendCategorySel').value;
+      const isSns = trendCategory === 'sns';
+      document.getElementById('metricChips').style.display  = isSns ? ''     : 'none';
+      document.getElementById('reviewChips').style.display  = isSns ? 'none' : '';
+      updateTrendChart(DATA[currentPeriod]);
+    }
+
+    // ── 리뷰 칩 토글 ─────────────────────────────────────
+    function toggleReview(reviewId) {
+      if (activeReviews.has(reviewId)) {
+        if (activeReviews.size === 1) return; // 최소 1개 유지
+        activeReviews.delete(reviewId);
+      } else {
+        activeReviews.add(reviewId);
+      }
+      const chip = document.querySelector(`.mchip[data-review="${reviewId}"]`);
+      if (chip) chip.classList.toggle('active', activeReviews.has(reviewId));
+      updateTrendChart(DATA[currentPeriod]);
+    }
+
+    // ── 리뷰 순위 렌더링 ──────────────────────────────────
+    function renderReviewRankList() {
+      const rd = REVIEW_DATA[currentPeriod];
+      const el = document.getElementById('rankList');
+      if (!el) return;
+      const numClass = ['gold','silver','bronze'];
+      el.innerHTML = REVIEW_PLATFORMS.map((p, i) => `
+        <div class="rank-item">
+          <div class="rank-num ${numClass[i]}">${i + 1}</div>
+          <div class="rank-platform">
+            <span class="rank-pdot" style="background:${p.color}"></span>
+            <span class="rank-name">${p.name}</span>
+          </div>
+          <div class="rank-bar-wrap">
+            <div class="rank-bar-bg">
+              <div class="rank-bar-fill" style="width:${Math.round(rd.rankScores[i] / rd.rankScores[0] * 100)}%;background:${p.color};transition:width 1s ease;"></div>
+            </div>
+          </div>
+          <span class="rank-score">${rd.rankScores[i].toLocaleString()}</span>
+          <span class="rank-change ${rd.rankUp[i] ? 'up' : 'down'}">${rd.rankChanges[i]}</span>
+        </div>
+      `).join('');
+    }
 
     const METRIC_COLORS = { views: '#6366F1', likes: '#E1306C', comments: '#14B8A6', shares: '#F59E0B', followers: '#F97316' };
 
     let currentPeriod = 'month';
-    let activeMetrics = new Set(['views', 'likes']);
+    let compareTab = 'sns';   // 'sns' | 'review'
+    let selectedMetric = 'views';   // 단일 선택
     let trendChart = null;
     let compareChart = null;
     let donutChart = null;
@@ -1511,7 +1644,7 @@ em {
 
     window.addEventListener('DOMContentLoaded', () => {
       safeBuildCharts();
-      renderRankList();
+      renderReviewRankList();
       renderCompareTable();
       animateKpis();
       loadNaverData('month');   // API 호출로 초기화
@@ -1532,7 +1665,7 @@ em {
         btn.classList.toggle('active', btn.dataset.period === period);
       });
       updateAllCharts();
-      renderRankList();
+      renderReviewRankList();
       renderCompareTable();
       animateKpis();
       loadNaverData(period);    // 기간 전환 시 API 재호출
@@ -1548,53 +1681,91 @@ em {
     }
 
     function buildTrendDatasets() {
-      const d = DATA[currentPeriod];
-      const metricMap = { views: d.views, likes: d.likes, comments: d.comments, shares: d.shares, followers: d.followers };
-      const labels = { views: '조회수', likes: '좋아요', comments: '댓글', shares: '공유', followers: '팔로워' };
-      const datasets = [];
+    	  if (trendCategory === 'review') {
+    	    const rd = REVIEW_DATA[currentPeriod];
+    	    const datasets = [];
+    	    activeReviews.forEach(id => {
+    	      datasets.push({
+    	        label: REVIEW_LABELS[id],
+    	        data: rd[id],
+    	        borderColor: REVIEW_COLORS[id],
+    	        backgroundColor: REVIEW_COLORS[id] + '15',
+    	        borderWidth: 2.5,
+    	        tension: 0.4,
+    	        fill: true,
+    	        pointBackgroundColor: REVIEW_COLORS[id],
+    	        pointRadius: 3,
+    	        pointHoverRadius: 6,
+    	      });
+    	    });
+    	    return datasets;
+    	  }
 
-      activeMetrics.forEach(metric => {
-        const total = metricMap[metric][0].map((_, i) => metricMap[metric].reduce((sum, platformRow) => sum + platformRow[i], 0));
-        datasets.push({
-          label: labels[metric],
-          data: total,
-          borderColor: METRIC_COLORS[metric],
-          backgroundColor: METRIC_COLORS[metric] + '15',
-          borderWidth: 2.5,
-          tension: 0.4,
-          fill: true,
-          pointBackgroundColor: METRIC_COLORS[metric],
-          pointRadius: 3,
-          pointHoverRadius: 6,
-        });
-      });
-      return datasets;
-    }
+    	  // SNS (기존 로직)
+    	  const d = DATA[currentPeriod];
+const metricMap = { views: d.views, likes: d.likes, comments: d.comments, shares: d.shares, followers: d.followers };
+const SNS_PLATFORMS = [
+  { idx: 0, name: 'Instagram',    color: '#E1306C' },
+  { idx: 1, name: 'Facebook',     color: '#1877F2' },
+  { idx: 2, name: '네이버 블로그', color: '#03C75A' },
+];
+return SNS_PLATFORMS.map(p => ({
+  label: p.name,
+  data: metricMap[selectedMetric][p.idx],
+  borderColor: p.color,
+  backgroundColor: p.color + '15',
+  borderWidth: 2.5,
+  tension: 0.4,
+  fill: true,
+  pointBackgroundColor: p.color,
+  pointRadius: 3,
+  pointHoverRadius: 6,
+}));
+    	  return datasets;
+    	}
 
     function buildTrendChart() {
       const canvas = document.getElementById('trendChart');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       trendChart = new Chart(ctx, {
-        type: 'line',
-        data: { labels: DATA[currentPeriod].labels, datasets: buildTrendDatasets() },
-        options: chartOpts(),
-      });
+    	  type: 'line',
+    	  data: { labels: DATA[currentPeriod].labels, datasets: buildTrendDatasets() },
+    	  options: {
+    	    ...chartOpts(),
+    	    plugins: {
+    	      ...chartOpts().plugins,
+    	      legend: {
+    	        display: true,
+    	        position: 'top',
+    	        labels: {
+    	          font: { size: 11, family: 'Noto Sans KR' },
+    	          boxWidth: 10,
+    	          padding: 12,
+    	        }
+    	      }
+    	    }
+    	  }
+    	});
     }
 
     function updateTrendChart(d) {
-      if (!trendChart) return;
-      trendChart.data.labels = d.labels;
-      trendChart.data.datasets = buildTrendDatasets();
-      trendChart.update('active');
-    }
+    	  if (!trendChart) return;
+    	  trendChart.data.labels   = trendCategory === 'review'
+    	    ? REVIEW_DATA[currentPeriod].labels
+    	    : d.labels;
+    	  trendChart.data.datasets = buildTrendDatasets();
+    	  // SNS: 플랫폼 범례 표시 / 리뷰: 범례 표시 (카카오리뷰 등 구분 필요)
+    	  trendChart.options.plugins.legend.display = true;
+    	  trendChart.update('active');
+    	}
 
-    function toggleMetric(metric) {
-      if (activeMetrics.has(metric)) activeMetrics.delete(metric);
-      else activeMetrics.add(metric);
-
-      const chip = document.querySelector(`.mchip[data-metric="${metric}"]`);
-      if (chip) chip.classList.toggle('active', activeMetrics.has(metric));
+ // 기존 toggleMetric() 함수 전체를 아래로 교체
+    function selectMetric(metric) {
+      selectedMetric = metric;
+      document.querySelectorAll('#metricChips .mchip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.metric === metric);
+      });
       updateTrendChart(DATA[currentPeriod]);
     }
 
@@ -1617,7 +1788,28 @@ em {
       }
     }
 
-    function compareData(metric) {
+    function switchCompareTab(tab) {
+        compareTab = tab;
+        const snsBtnEl    = document.getElementById('compareTabSns');
+        const reviewBtnEl = document.getElementById('compareTabReview');
+        const metricSelEl = document.getElementById('compareMetricSel');
+
+        const activeStyle   = 'padding:4px 12px;border-radius:100px;border:none;font-size:11px;font-weight:700;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;background:linear-gradient(135deg,var(--teal),var(--indigo));color:#fff;box-shadow:0 2px 6px rgba(20,184,166,.25);';
+        const inactiveStyle = 'padding:4px 12px;border-radius:100px;border:none;font-size:11px;font-weight:700;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;background:transparent;color:var(--text3);';
+
+        if (tab === 'sns') {
+          snsBtnEl.style.cssText    = activeStyle;
+          reviewBtnEl.style.cssText = inactiveStyle;
+          metricSelEl.style.display = '';
+        } else {
+          snsBtnEl.style.cssText    = inactiveStyle;
+          reviewBtnEl.style.cssText = activeStyle;
+          metricSelEl.style.display = 'none';
+        }
+        updateCompareChart();
+      }
+
+      function compareData(metric) {
       return DATA[currentPeriod].compare[metric] || DATA[currentPeriod].compare.views;
     }
 
@@ -1676,15 +1868,40 @@ em {
     }
 
     function updateCompareChart() {
-      if (!compareChart) return;
-      const sel = document.getElementById('compareMetricSel')?.value || 'views';
-      const cd = compareData(sel);
-      updateComparisonLabels();
-      compareChart.data.datasets[0].data = cd.cur;
-      compareChart.data.datasets[1].data = cd.prev;
-      compareChart.update('active');
-      renderCompareTable();
-    }
+        if (!compareChart) return;
+        updateComparisonLabels();
+
+        if (compareTab === 'review') {
+          const rd     = REVIEW_DATA[currentPeriod];
+          const labels = REVIEW_PLATFORMS.map(p => p.name);
+          const colors = REVIEW_PLATFORMS.map(p => p.color);
+          // 리뷰: 당월 마지막값 vs 전월 마지막값으로 비교
+          const cur  = REVIEW_PLATFORMS.map(p => rd[p.id][rd[p.id].length - 1]);
+          const prev = REVIEW_PLATFORMS.map(p => {
+            const arr = rd[p.id];
+            return Math.round(arr[arr.length - 1] / (1 + rd.rankChanges[REVIEW_PLATFORMS.indexOf(p)].replace('%','') / 100));
+          });
+          compareChart.data.labels                        = labels;
+          compareChart.data.datasets[0].data              = cur;
+          compareChart.data.datasets[0].backgroundColor   = colors.map(c => c + 'CC');
+          compareChart.data.datasets[1].data              = prev;
+          compareChart.data.datasets[1].backgroundColor   = colors.map(c => c + '44');
+          compareChart.data.datasets[1].borderColor       = colors;
+        } else {
+          const sel = document.getElementById('compareMetricSel')?.value || 'views';
+          const cd  = compareData(sel);
+          const SNS_COLORS = ['#E1306C','#1877F2','#03C75A'];
+          const SNS_LABELS = ['Instagram','Facebook','네이버 블로그'];
+          compareChart.data.labels                        = SNS_LABELS;
+          compareChart.data.datasets[0].data              = cd.cur.slice(0, 3);
+          compareChart.data.datasets[0].backgroundColor   = SNS_COLORS.map(c => c + 'CC');
+          compareChart.data.datasets[1].data              = cd.prev.slice(0, 3);
+          compareChart.data.datasets[1].backgroundColor   = SNS_COLORS.map(c => c + '44');
+          compareChart.data.datasets[1].borderColor       = SNS_COLORS;
+        }
+        compareChart.update('active');
+        renderCompareTable();
+      }
 
     function buildDonutChart() {
       const canvas = document.getElementById('donutChart');
@@ -2075,65 +2292,48 @@ function renderNaverSummary(summary, period) {
       document.getElementById('naverGenderChart').style.display = currentNaverChart === 'gender' ? 'block' : 'none';
     }
 
-    function renderRankList() {
-      const scores = DATA[currentPeriod].rankScores;
-      const sorted = PLATFORMS.map((p, i) => ({ ...p, score: scores[i] })).sort((a, b) => b.score - a.score);
-      const max = sorted[0].score;
-      const numClass = ['gold', 'silver', 'bronze', 'gray', 'gray'];
-      const changes = ['+12.4%', '+8.1%', '+15.2%', '-3.1%', '+5.7%'];
-      const upDown = [true, true, true, false, true];
-      const el = document.getElementById('rankList');
-      if (!el) return;
-
-      el.innerHTML = sorted.map((p, i) => `
-    <div class="rank-item">
-      <div class="rank-num ${numClass[i]}">${i + 1}</div>
-      <div class="rank-platform">
-        <span class="rank-pdot" style="background:${p.color}"></span>
-        <span class="rank-name">${p.name}</span>
-      </div>
-      <div class="rank-bar-wrap">
-        <div class="rank-bar-bg">
-          <div class="rank-bar-fill" style="width:${Math.round(p.score / max * 100)}%;background:${p.color}"></div>
-        </div>
-      </div>
-      <span class="rank-score">${p.score.toLocaleString()}</span>
-      <span class="rank-change ${upDown[i] ? 'up' : 'down'}">${changes[i]}</span>
-    </div>
-  `).join('');
-
-      setTimeout(() => {
-        document.querySelectorAll('.rank-bar-fill').forEach(bar => {
-          const width = bar.style.width;
-          bar.style.width = '0';
-          setTimeout(() => {
-            bar.style.width = width;
-          }, 100);
-        });
-      }, 100);
-    }
-
     function renderCompareTable() {
-      const sel = document.getElementById('compareMetricSel')?.value || 'views';
-      const cd = compareData(sel);
-      const el = document.getElementById('compareTableBody');
-      if (!el) return;
+        const el = document.getElementById('compareTableBody');
+        if (!el) return;
 
-      el.innerHTML = PLATFORMS.map((p, i) => {
-        const cur = cd.cur[i];
-        const prev = cd.prev[i];
-        const pct = ((cur - prev) / prev * 100).toFixed(1);
-        const up = pct >= 0;
-        return `
-      <tr>
-        <td><div class="plat-cell"><span class="plat-pip" style="background:${p.color}"></span>${p.name}</div></td>
-        <td style="font-weight:700;">${cur.toLocaleString()}</td>
-        <td style="color:var(--text3);">${prev.toLocaleString()}</td>
-        <td><span class="change-pill ${up ? 'up' : 'down'}">${up ? '▲' : '▼'} ${Math.abs(pct)}%</span></td>
-      </tr>
-    `;
-      }).join('');
-    }
+        if (compareTab === 'review') {
+          const rd = REVIEW_DATA[currentPeriod];
+          el.innerHTML = REVIEW_PLATFORMS.map((p, i) => {
+            const cur  = rd[p.id][rd[p.id].length - 1];
+            const pct  = parseFloat(rd.rankChanges[i]);
+            const prev = Math.round(cur / (1 + pct / 100));
+            const up   = pct >= 0;
+            return `
+              <tr>
+                <td><div class="plat-cell"><span class="plat-pip" style="background:${p.color}"></span>${p.name}</div></td>
+                <td style="font-weight:700;">${cur.toLocaleString()}</td>
+                <td style="color:var(--text3);">${prev.toLocaleString()}</td>
+                <td><span class="change-pill ${up ? 'up' : 'down'}">${up ? '▲' : '▼'} ${Math.abs(pct)}%</span></td>
+              </tr>`;
+          }).join('');
+        } else {
+          const sel = document.getElementById('compareMetricSel')?.value || 'views';
+          const cd  = compareData(sel);
+          const SNS = [
+            { name: 'Instagram',    color: '#E1306C' },
+            { name: 'Facebook',     color: '#1877F2' },
+            { name: '네이버 블로그', color: '#03C75A' },
+          ];
+          el.innerHTML = SNS.map((p, i) => {
+            const cur  = cd.cur[i];
+            const prev = cd.prev[i];
+            const pct  = ((cur - prev) / prev * 100).toFixed(1);
+            const up   = pct >= 0;
+            return `
+              <tr>
+                <td><div class="plat-cell"><span class="plat-pip" style="background:${p.color}"></span>${p.name}</div></td>
+                <td style="font-weight:700;">${cur.toLocaleString()}</td>
+                <td style="color:var(--text3);">${prev.toLocaleString()}</td>
+                <td><span class="change-pill ${up ? 'up' : 'down'}">${up ? '▲' : '▼'} ${Math.abs(pct)}%</span></td>
+              </tr>`;
+          }).join('');
+        }
+      }
 
 
 
