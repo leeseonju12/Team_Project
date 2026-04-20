@@ -41,5 +41,14 @@ public class CloudinaryService {
         } catch (IOException e) {
             throw new RuntimeException("Cloudinary 이미지 업로드 실패: " + e.getMessage());
         }
-    }   
+    }
+    
+    /* * Rationale: 
+     * 원격 이미지 URL을 Cloudinary로 직접 전송하여 업로드 처리.
+     * Spring Boot 서버의 메모리 사용량과 네트워크 대역폭을 절약합니다.
+     */
+    public String uploadImageFromUrl(String imageUrl) throws IOException {
+        Map uploadResult = cloudinary.uploader().upload(imageUrl, ObjectUtils.emptyMap());
+        return uploadResult.get("url").toString();
+    }
 }

@@ -73,28 +73,29 @@ const apiService = {
     return response.json();
   },
 
-  async publishContent(sns, text, imageFile) {
-    const formData = new FormData();
-    formData.append('platform', sns);
-    formData.append('text', text);
+    async publishContent(sns, text, imageFile, pexelsUrl) {
+      const formData = new FormData();
+      formData.append('platform', sns);
+      formData.append('text', text);
 
-    if (imageFile) {
-      formData.append('image', imageFile);
+      if (imageFile) {
+        formData.append('image', imageFile);
+      } else if (pexelsUrl) {
+        formData.append('pexelsUrl', pexelsUrl);
+      }
+
+      const response = await fetch('/api/posts/publish', {
+        method: 'POST',
+        body: formData 
+      });
+
+      if (!response.ok) {
+        throw new Error(`발행 서버 통신 오류: ${response.status}`);
+      }
+
+      return response.json();
     }
-
-    const response = await fetch('/api/posts/publish', {
-      method: 'POST',
-      // 브라우저가 Boundary를 자동 설정하도록 Content-Type 헤더 생략
-      body: formData
-    });
-
-    if (!response.ok) {
-      throw new Error(`발행 서버 통신 오류: ${response.status}`);
-    }
-
-    return response.json();
-  }
-};
+  };
 
 /* --------------------------------------------------------------------------
    4. UI Manager
@@ -391,6 +392,10 @@ function updatePublishButtonByPlatform(post) {
        return;
      }
 
+     /* Rationale: hidden input에 저장된 Pexels URL을 읽어와 API 서비스로 전달 */
+     const pexelsUrlInput = document.getElementById('pexels-url-input');
+     const pexelsUrl = pexelsUrlInput ? pexelsUrlInput.value : null;
+
      uiManager.toggleLoading(true);
      uiManager.showToast(`${PLATFORM_CONFIG[sns]?.label || sns}에 게시 중입니다. 잠시만 기다려주세요...`);
 
@@ -398,7 +403,8 @@ function updatePublishButtonByPlatform(post) {
        const result = await apiService.publishContent(
          sns,
          content.text,
-         state.uploadedFiles[0] || null
+         state.uploadedFiles[0] || null,
+         pexelsUrl
        );
 
        if (result.status === 'success') {
@@ -1041,6 +1047,7 @@ window.addEventListener('click', function(e) {
 });
 
 /* Search execution */
+/* Rationale: 검색 API 호출 완료 시 renderPexelsResults를 호출하여 단일 선택 로직으로 파이프라인을 연결 */
 function executePexelsSearch(isAppend) {
     const inputPexelsQuery = document.getElementById('pexelsQuery');
     const pexelsGallery = document.getElementById('pexelsGallery');
@@ -1057,7 +1064,6 @@ function executePexelsSearch(isAppend) {
         modalBodyScroll.scrollTop = 0;
     }
 
-    /* Spring Boot Controller API calling */
     fetch(`/api/sns/pexels/search?query=${encodeURIComponent(pexelsCurrentQuery)}&page=${pexelsCurrentPage}`)
         .then(response => {
             if (!response.ok) throw new Error('API fetch failed');
@@ -1072,13 +1078,92 @@ function executePexelsSearch(isAppend) {
                 return;
             }
 
-            renderPexelsData(data.photos);
+            /* Fix: 올바른 렌더링 함수 호출 */
+            renderPexelsResults(data.photos);
             btnLoadMorePexels.style.display = 'block';
         })
         .catch(error => {
             if (!isAppend) pexelsGallery.innerHTML = '<p style="color:#ef4444; grid-column: 1 / -1; text-align:center; font-size:14px;">오류가 발생했습니다.</p>';
             console.error(error);
         });
+}
+
+function renderPexelsResults(images) {
+    const gallery = document.getElementById('pexelsGallery');
+    
+    images.forEach(image => {
+        const img = document.createElement('img');
+        img.src = image.src.medium;
+        
+        img.onclick = function() {
+            selectPexelsImage(image.src.large2x);
+        };
+        
+        gallery.appendChild(img);
+    });
+}
+
+function selectPexelsImage(imageUrl) {
+    const hiddenInput = document.getElementById('pexels-url-input');
+    const localFileInput = document.getElementById('imgInput');
+    const previewContainer = document.getElementById('imgPreviews');
+
+    if (hiddenInput) {
+        hiddenInput.value = imageUrl;
+    }
+
+    /* Rationale: 로컬 파일 입력 폼 초기화 및 전역 state 객체 동기화. 
+       이를 통해 생성 버튼 클릭 시 state.uploadedImageUrl 값을 읽어 서버로 정상 전송함. */
+    if (localFileInput) localFileInput.value = '';
+    
+    state.uploadedImageUrl = imageUrl;
+    state.uploadedImages = [imageUrl];
+    state.uploadedFiles = [];
+    updateRetouchState(); 
+
+    previewContainer.innerHTML = ''; 
+
+    const previewWrapper = document.createElement('div');
+    previewWrapper.style.position = 'relative';
+    previewWrapper.style.display = 'inline-block';
+    previewWrapper.style.width = '100px'; 
+    previewWrapper.style.height = '100px';
+    previewWrapper.style.marginRight = '10px';
+
+    const imgElement = document.createElement('img');
+    imgElement.src = imageUrl;
+    imgElement.style.width = '100%';
+    imgElement.style.height = '100%';
+    imgElement.style.objectFit = 'cover';
+    imgElement.style.borderRadius = '8px';
+
+    const removeBtn = document.createElement('button');
+    removeBtn.innerText = 'X';
+    removeBtn.style.position = 'absolute';
+    removeBtn.style.top = '4px';
+    removeBtn.style.right = '4px';
+    removeBtn.style.background = 'rgba(0,0,0,0.5)';
+    removeBtn.style.color = '#fff';
+    removeBtn.style.border = 'none';
+    removeBtn.style.borderRadius = '50%';
+    removeBtn.style.width = '20px';
+    removeBtn.style.height = '20px';
+    removeBtn.style.fontSize = '10px';
+    removeBtn.style.cursor = 'pointer';
+
+    removeBtn.onclick = function() {
+        if (hiddenInput) hiddenInput.value = '';
+        state.uploadedImageUrl = null;
+        state.uploadedImages = [];
+        previewContainer.innerHTML = '';
+        updateRetouchState();
+    };
+
+    previewWrapper.appendChild(imgElement);
+    previewWrapper.appendChild(removeBtn);
+    previewContainer.appendChild(previewWrapper);
+
+    closePexelsModal();
 }
 
 function renderPexelsData(photos) {
@@ -1253,3 +1338,98 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 });
+
+
+
+
+
+
+
+
+
+/* * Handles the selection of an image from the Pexels modal.
+ * Updates the hidden input state and dynamically renders the preview.
+ */
+function selectPexelsImage(imageUrl) {
+    const hiddenInput = document.getElementById('pexels-url-input');
+    const localFileInput = document.getElementById('imgInput');
+    const previewContainer = document.getElementById('imgPreviews');
+
+    /* 1. Update state */
+    if (hiddenInput) {
+        hiddenInput.value = imageUrl;
+    }
+
+    /* 2. Enforce mutual exclusivity by clearing local file inputs */
+    if (localFileInput) {
+        localFileInput.value = '';
+    }
+
+    /* 3. Render preview */
+    previewContainer.innerHTML = ''; 
+
+    const previewWrapper = document.createElement('div');
+    previewWrapper.style.position = 'relative';
+    previewWrapper.style.display = 'inline-block';
+    previewWrapper.style.width = '100px'; 
+    previewWrapper.style.height = '100px';
+    previewWrapper.style.marginRight = '10px';
+
+    const imgElement = document.createElement('img');
+    imgElement.src = imageUrl;
+    imgElement.style.width = '100%';
+    imgElement.style.height = '100%';
+    imgElement.style.objectFit = 'cover';
+    imgElement.style.borderRadius = '8px';
+
+    const removeBtn = document.createElement('button');
+    removeBtn.innerText = '✕';
+    removeBtn.style.position = 'absolute';
+    removeBtn.style.top = '4px';
+    removeBtn.style.right = '4px';
+    removeBtn.style.background = 'rgba(0,0,0,0.5)';
+    removeBtn.style.color = '#fff';
+    removeBtn.style.border = 'none';
+    removeBtn.style.borderRadius = '50%';
+    removeBtn.style.width = '20px';
+    removeBtn.style.height = '20px';
+    removeBtn.style.fontSize = '10px';
+    removeBtn.style.cursor = 'pointer';
+
+    /* Clear state and UI on remove */
+    removeBtn.onclick = function() {
+        hiddenInput.value = '';
+        previewContainer.innerHTML = '';
+    };
+
+    previewWrapper.appendChild(imgElement);
+    previewWrapper.appendChild(removeBtn);
+    previewContainer.appendChild(previewWrapper);
+
+    /* 4. Close the modal */
+    const modal = document.getElementById('pexelsModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+
+/* * Example of how the dynamically created Pexels image results 
+ * should be bound to the selection function.
+ */
+function renderPexelsResults(images) {
+    const gallery = document.getElementById('pexelsGallery');
+    gallery.innerHTML = '';
+
+    images.forEach(image => {
+        const img = document.createElement('img');
+        img.src = image.src.medium;
+        
+        /* Bind the click event to trigger the preview logic */
+        img.onclick = function() {
+            selectPexelsImage(image.src.large2x);
+        };
+        
+        gallery.appendChild(img);
+    });
+}
