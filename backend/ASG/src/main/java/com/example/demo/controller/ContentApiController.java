@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import jakarta.servlet.http.HttpSession;
 
+import com.example.demo.dto.ContentInitResponse;
 import com.example.demo.dto.ContentRequest;
 import com.example.demo.dto.ScheduleRequestDto;
 import com.example.demo.dto.SnsResult;
@@ -41,6 +42,14 @@ public class ContentApiController {
     private final CloudinaryService cloudinaryService;
     private final GeneratedContentRepository contentRepository;
 	private final GeneratedContentService generatedContentService;
+	
+	
+	@GetMapping("/init")
+	public ResponseEntity<ContentInitResponse> getInitialData(
+	        @RequestParam String industryCode, 
+	        @RequestParam Long userId) {
+	    return ResponseEntity.ok(contentService.getInitialData(industryCode, userId));
+	}
 
 	/**
 	 * 1. 미배정 컨텐츠 목록 조회

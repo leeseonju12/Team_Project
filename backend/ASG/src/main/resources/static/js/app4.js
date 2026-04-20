@@ -891,3 +891,129 @@ document.addEventListener('DOMContentLoaded', async () => {
   bindAllUIEvents();
   await initializeDashboard();
 });
+
+
+/* --------------------------------------------------------------------------
+   Content Init (DB Integration)
+   -------------------------------------------------------------------------- */
+async function loadInitialContentSettings() {
+    // Thymeleaf hidden input으로부터 업종 코드 추출
+    const industryCode = document.getElementById('businessCategory')?.value || 'DEFAULT';
+    // 유저 식별자 (실제 환경에서는 세션 또는 시큐리티 컨텍스트 사용)
+    const userId = 1; 
+
+    try {
+        const response = await fetch(`/api/posts/init?industryCode=${industryCode}&userId=${userId}`);
+        if (!response.ok) throw new Error('초기 데이터 로드에 실패했습니다.');
+        
+        const data = await response.json();
+        
+        // 1. 업종별 키워드 동적 렌더링
+        renderKeywords(data.keywords);
+        
+        // 2. 플랫폼별 SNS 가이드 업데이트
+        updateSnsGuides(data.snsGuides);
+        
+        // 3. 사용자 환경 설정 적용
+        applyUserSettings(data.userSetting);
+
+    } catch (error) {
+        console.error('[Init Error]:', error);
+    }
+}
+
+function renderKeywords(keywords) {
+    const keywordGroup = document.getElementById('keywordGroup');
+    if (!keywordGroup) return;
+
+    // 데이터가 없거나 배열이 비어있는 경우 빈 화면 방지 (Fallback UI)
+    if (!keywords || keywords.length === 0) {
+        keywordGroup.innerHTML = `
+            <div style="width:100%; padding:10px; font-size:12px; color:#64748b; text-align:center;">
+                현재 업종에 등록된 추천 키워드가 없습니다.
+            </div>
+            `;
+        return;
+    }
+
+    // 정상적으로 데이터가 있을 경우 동적 렌더링
+    keywordGroup.innerHTML = keywords.map((kw, index) => `
+        <div class="keyword-item">
+            <input type="checkbox" id="kw-${index}" value="${kw.keywordName}">
+            <label class="keyword-label" for="kw-${index}">${kw.keywordName}</label>
+        </div>
+    `).join('');
+}
+
+function updateSnsGuides(guides) {
+    const platformMap = {
+        instagram: { selector: '.guide-box.ig', name: 'Instagram', color: 'rgba(225,48,108,0.28)' },
+        facebook: { selector: '.guide-box.fb', name: 'Facebook', color: 'rgba(24,119,242,0.28)' },
+        naver: { selector: '.guide-box.nv', name: '네이버', color: 'rgba(3,199,90,0.28)' },
+        kakao: { selector: '.guide-box.kk', name: '카카오', color: 'rgba(254,229,0,0.24)' },
+        community: { selector: '.guide-box.comm', name: '커뮤니티', color: 'rgba(99,102,241,0.28)' }
+    };
+
+    guides.forEach(guide => {
+        const config = platformMap[guide.platform.toLowerCase()];
+        if (!config) return;
+
+        const container = document.querySelector(config.selector);
+        if (container) {
+            // 하드코딩된 HTML을 제거하고 DB 데이터를 바탕으로 가이드 박스를 완전히 재구성합니다.
+            container.innerHTML = `
+                <strong>📌 ${config.name} 가이드</strong><br>
+                ${guide.guideContent}<br>
+                <span class="time-tip" style="margin-top:7px;display:inline-flex;border-color:${config.color};">
+                    ⏰ 추천 시간: <b style="color:var(--text);margin-left:4px;">${guide.bestTime || '--:--'}</b>
+                </span>
+            `;
+        }
+    });
+}
+
+function applyUserSettings(settings) {
+    // 게시 SNS 활성화 상태 반영
+    const chips = document.querySelectorAll('#snsChips .chip');
+    chips.forEach(chip => {
+        const sns = chip.getAttribute('data-sns');
+        if (settings.activeSns.includes(sns)) {
+            chip.classList.add('active');
+        } else {
+            chip.classList.remove('active');
+        }
+    });
+
+    // 말투 스타일 반영
+    const toneItems = document.querySelectorAll('#toneGroup .tone-item');
+    toneItems.forEach(item => {
+        item.classList.toggle('active', item.getAttribute('data-tone') === settings.toneStyle);
+    });
+
+    // 이모지 사용량 반영
+    const emojiItems = document.querySelectorAll('#emojiGroup .slider-item');
+    emojiItems.forEach(item => {
+        item.classList.toggle('active', item.getAttribute('data-emoji') === settings.emojiLevel);
+    });
+
+    // 글자 수 제한 반영
+    const lengthRange = document.getElementById('lengthRange');
+    const rangeVal = document.getElementById('rangeVal');
+    if (lengthRange && rangeVal) {
+        lengthRange.value = settings.maxLength;
+        rangeVal.textContent = `${settings.maxLength}자`;
+    }
+
+    // 전역 state 객체 동기화 (콘텐츠 생성 시 API 파라미터로 활용)
+    if (typeof state !== 'undefined') {
+        state.platforms = settings.activeSns;
+        state.tones = settings.toneStyle;
+        state.emojiLevel = settings.emojiLevel;
+        state.maxLength = settings.maxLength;
+    }
+}
+
+// DOM 로드 시 실행
+document.addEventListener('DOMContentLoaded', () => {
+    loadInitialContentSettings();
+});

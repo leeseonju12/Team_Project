@@ -1,18 +1,27 @@
 package com.example.demo.service;
 
 import java.util.ArrayList;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 
+import com.example.demo.dto.ContentInitResponse;
 import com.example.demo.dto.ContentRequest;
 import com.example.demo.dto.SnsResult;
 import com.example.demo.entity.GeneratedContent;
+import com.example.demo.entity.Keyword;
+import com.example.demo.entity.SnsGuide;
+import com.example.demo.entity.UserSetting;
 import com.example.demo.repository.GeneratedContentRepository;
+import com.example.demo.repository.KeywordRepository;
+import com.example.demo.repository.SnsGuideRepository;
+import com.example.demo.repository.UserSettingRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -32,6 +41,63 @@ public class ContentService {
 	private final com.example.demo.repository.myPage.BrandPlatformRepository brandPlatformRepository;
 	private final com.example.demo.repository.myPage.BrandRepository brandRepository; // 추가
 	private static final Long BRAND_ID = 1L;
+	
+	private final KeywordRepository keywordRepository;
+    private final SnsGuideRepository snsGuideRepository;
+    private final UserSettingRepository userSettingRepository;
+    private final Random random = new Random();
+    
+    public ContentInitResponse getInitialData(String industryCode, Long userId) {
+        // 1. 키워드 및 가이드 조회 (빈 리스트라도 허용)
+        List<Keyword> rawKeywords = keywordRepository.findByIndustryCode(industryCode);
+        List<SnsGuide> rawGuides = snsGuideRepository.findAll();
+
+        // 2. 사용자 설정 조회 - 데이터가 없을 경우 기본값(Default) 객체를 생성하여 대응
+        UserSetting setting = userSettingRepository.findByUserId(userId)
+                .orElseGet(() -> UserSetting.builder()
+                        .userId(userId)
+                        .activePlatforms(Arrays.asList("instagram")) // 기본 활성화 플랫폼
+                        .toneStyle("default")
+                        .emojiLevel("mid")
+                        .maxLength(150)
+                        .build());
+
+        // 3. DTO 변환 및 반환
+        return ContentInitResponse.builder()
+                .keywords(rawKeywords.stream()
+                        .map(k -> ContentInitResponse.KeywordDto.builder()
+                                .keywordName(k.getName())
+                                .category(k.getCategory()).build())
+                        .toList())
+                .snsGuides(rawGuides.stream()
+                        .map(this::mapToRandomSnsGuideDto) // 랜덤 추출 헬퍼 메서드 참조
+                        .toList())
+                .userSetting(ContentInitResponse.UserSettingDto.builder()
+                        .activeSns(setting.getActivePlatforms())
+                        .toneStyle(setting.getToneStyle())
+                        .emojiLevel(setting.getEmojiLevel())
+                        .maxLength(setting.getMaxLength()).build())
+                .build();
+    }
+    
+    
+ // 다중 데이터를 담고 있는 JSON 리스트에서 무작위로 하나의 문구와 시간을 추출합니다.
+    private ContentInitResponse.SnsGuideDto mapToRandomSnsGuideDto(SnsGuide guide) {
+        // NullPointerException 및 IndexOutOfBoundsException 방지를 위한 안전한 리스트 검증
+        String randomContent = (guide.getContents() != null && !guide.getContents().isEmpty())
+                ? guide.getContents().get(random.nextInt(guide.getContents().size()))
+                : "";
+                
+        String randomTime = (guide.getBestTimes() != null && !guide.getBestTimes().isEmpty())
+                ? guide.getBestTimes().get(random.nextInt(guide.getBestTimes().size()))
+                : "--:--";
+
+        return ContentInitResponse.SnsGuideDto.builder()
+                .platform(guide.getPlatform())
+                .guideContent(randomContent)
+                .bestTime(randomTime)
+                .build();
+    }
 
 	@Transactional
 	public List<SnsResult> generateAllSnsContent(ContentRequest request) {

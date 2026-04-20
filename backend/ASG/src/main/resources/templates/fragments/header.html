@@ -273,7 +273,7 @@
   </div>
 
   <nav class="sidebar-nav">
-    <a th:href="@{/content/generate}" class="snav-item" th:classappend="${currentMenu == 'index'} ? 'active' : ''">✏️ 콘텐츠 생성</a>
+    <a th:href="@{/content/generate}" class="snav-item" th:classappend="${currentMenu == 'content-generate'} ? 'active' : ''">✏️ 콘텐츠 생성</a>
     <a th:href="@{/feedbacks}" class="snav-item" th:classappend="${currentMenu == 'feedback'} ? 'active' : ''">💬 리뷰 관리</a>
     <a th:href="@{/channel-performance}" class="snav-item" th:classappend="${currentMenu == 'performance'} ? 'active' : ''">📊 성과 분석</a>
     <a th:href="@{/mypage}" class="snav-item" th:classappend="${currentMenu == 'mypage'} ? 'active' : ''">👤 마이페이지</a>
@@ -289,7 +289,7 @@
         <span class="logo-sub">All Social Gather</span>
       </a>
       <nav class="nav-pills nav-pills-top">
-        <a th:href="@{/content/generate}" class="nav-pill" th:classappend="${currentMenu == 'index'} ? 'active' : ''">✏️ 콘텐츠 생성</a>
+        <a th:href="@{/content/generate}" class="nav-pill" th:classappend="${currentMenu == 'content-generate'} ? 'active' : ''">✏️ 콘텐츠 생성</a>
         <a th:href="@{/feedbacks}" class="nav-pill" th:classappend="${currentMenu == 'feedback'} ? 'active' : ''">💬 리뷰 관리</a>
         <a th:href="@{/channel-performance}" class="nav-pill" th:classappend="${currentMenu == 'performance'} ? 'active' : ''">📊 성과 분석</a>
         <a th:href="@{/mypage}" class="nav-pill" th:classappend="${currentMenu == 'mypage'} ? 'active' : ''">👤 마이페이지</a>

@@ -34,7 +34,7 @@
 </head>
 
 <body>
-	<div th:replace="~{fragments/header :: global-header(currentMenu='index')}"></div>
+	<div th:replace="~{fragments/header :: global-header(currentMenu='content-generate')}"></div>
 	
   <div class="blob blob-1"></div>
   <div class="blob blob-2"></div>
@@ -48,7 +48,7 @@
       </div>
       <div class="modal-body">
         <div class="filter-bar" id="filterBar">
-          <button class="filter-btn active" data-filter="none" onclick="applyFilter(this,'none')">📷 원본</button>
+          <button class="filter-btn" data-filter="none" onclick="applyFilter(this,'none')">📷 원본</button>
           <button class="filter-btn" data-filter="emotional" onclick="applyFilter(this,'emotional')">🌸 감성</button>
           <button class="filter-btn" data-filter="vivid" onclick="applyFilter(this,'vivid')">✨ 선명하게</button>
           <button class="filter-btn" data-filter="bright" onclick="applyFilter(this,'bright')">☀️ 밝게</button>
@@ -402,18 +402,16 @@
               <textarea id="extraInfo" placeholder="가격, 이벤트, 특징, 할인 기간 등을 자유롭게 작성하세요."></textarea>
             </div>
             
-            <div class="field">
-              <label>키워드 <span class="required">*</span></label>
-              <div class="keyword-grid" id="keywordGroup">
-                <div class="keyword-item"><input type="checkbox" id="kw-food" value="맛집" class="active" checked><label class="keyword-label" for="kw-food">🍽️ 맛집</label></div>
-                <div class="keyword-item"><input type="checkbox" id="kw-clean" value="청결"><label class="keyword-label" for="kw-clean">🧼 청결</label></div>
-                <div class="keyword-item"><input type="checkbox" id="kw-mood" value="분위기"><label class="keyword-label" for="kw-mood">✨ 분위기</label></div>
-                <div class="keyword-item"><input type="checkbox" id="kw-price" value="가성비"><label class="keyword-label" for="kw-price">💸 가성비</label></div>
-                <div class="keyword-item"><input type="checkbox" id="kw-local" value="지역"><label class="keyword-label" for="kw-local">📍 지역</label></div>
-                <div class="keyword-item"><input type="checkbox" id="kw-event" value="이벤트"><label class="keyword-label" for="kw-event">🎁 이벤트</label></div>
-              </div>
-              <div class="field-footer"><span class="field-hint">최소 1개 이상 선택</span><span class="validation-msg" id="keywordValidation">키워드를 1개 이상 선택해 주세요.</span></div>
-            </div>
+<div class="field">
+  <label>키워드 <span class="required">*</span></label>
+  <div class="keyword-grid" id="keywordGroup">
+    <span style="font-size:12px; color:#94a3b8;">키워드 데이터를 불러오는 중...</span>
+  </div>
+  <div class="field-footer">
+    <span class="field-hint">최소 1개 이상 선택</span>
+    <span class="validation-msg" id="keywordValidation">키워드를 1개 이상 선택해 주세요.</span>
+  </div>
+</div>
             <div class="field">
               <label>이미지 업로드</label>
               <div class="img-upload" id="uploadZone">
@@ -440,7 +438,7 @@
             <div class="field">
               <label>게시 SNS</label>
               <div class="chip-group" id="snsChips">
-                <div class="chip chip-ig active" data-sns="instagram">🔴 Instagram</div>
+                <div class="chip chip-ig" data-sns="instagram">🔴 Instagram</div>
                 <div class="chip chip-fb" data-sns="facebook">🔵 Facebook</div>
                 <div class="chip chip-nv" data-sns="naver">🟢 네이버 블로그</div>
                 <div class="chip chip-kk" data-sns="kakao">🟡 카카오</div>
@@ -450,7 +448,7 @@
             <div class="field">
               <label>말투 스타일</label>
               <div class="tone-grid" id="toneGroup">
-                <div class="tone-item active" data-tone="default">
+                <div class="tone-item" data-tone="default">
                   <div class="icon">📝</div>기본
                 </div>
                 <div class="tone-item" data-tone="friendly">
@@ -473,7 +471,7 @@
                 <div class="slider-item" data-emoji="low">
                   <div class="icon">🙂</div>적게
                 </div>
-                <div class="slider-item active" data-emoji="mid">
+                <div class="slider-item" data-emoji="mid">
                   <div class="icon">😄</div>적당히
                 </div>
                 <div class="slider-item" data-emoji="high">
@@ -519,7 +517,7 @@
 
     <!-- 탭바 -->
     <div class="tab-bar" id="tabBar">
-      <button class="tab-btn active" data-tab="instagram"><span class="dot"></span>Instagram</button>
+      <button class="tab-btn" data-tab="instagram"><span class="dot"></span>Instagram</button>
       <button class="tab-btn" data-tab="facebook"><span class="dot"></span>Facebook</button>
       <button class="tab-btn" data-tab="naver"><span class="dot"></span>네이버</button>
       <button class="tab-btn" data-tab="kakao"><span class="dot"></span>카카오</button>
@@ -528,7 +526,7 @@
     
     <div class="panes-container">
       
-      <div class="output-pane active" id="pane-instagram">
+      <div class="output-pane" id="pane-instagram">
         <div class="empty-state" id="empty-instagram">
           <div class="icon">📷</div>
           <p>AI 콘텐츠 생성하기를<br>눌러주세요.</p>
