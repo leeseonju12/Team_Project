@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>소셜다모아 — 로그인</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;1,700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --teal: #14b8a6;
+      --teal-dark: #0f766e;
+      --teal-light: rgba(20, 184, 166, .12);
+      --indigo: #6366f1;
+      --indigo-dark: #4338ca;
+      --indigo-light: rgba(99, 102, 241, .10);
+      --green: #22c55e;
+      --green-light: rgba(34, 197, 94, .12);
+      --red: #ef4444;
+      --brand-grad: linear-gradient(135deg, var(--indigo) 0%, var(--teal) 100%);
+      --brand-grad-soft: linear-gradient(135deg, rgba(99, 102, 241, .06) 0%, rgba(20, 184, 166, .06) 100%);
+      --text: #0f172a;
+      --text2: #475569;
+      --text3: #94a3b8;
+      --border: #e2e8f0;
+      --border2: #cbd5e1;
+      --bg: #f8fafc;
+      --white: #ffffff;
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, .08), 0 1px 2px rgba(15, 23, 42, .04);
+      --shadow-md: 0 4px 16px rgba(15, 23, 42, .10);
+      --radius: 16px;
+      --radius-sm: 10px;
+      /* ── 사이드 패널 텍스트 색 — LAYOUT_CONFIG에서 제어 ── */
+      --ip-kicker-color: #ffffff;
+      /* 상단 부제목: 완전한 흰색 */
+      --ip-headline-color: #ffffff;
+      /* 메인 제목: 기본 완전한 흰색 */
+      --ip-sub-color: rgba(255, 255, 255, .75);
+      /* 하단 설명: 약간 투명한 흰색 (계층 구조) */
+      --ip-headline-em-grad: linear-gradient(135deg, #a5f3fc 0%, #6ee7b7 100%);
+      /* em에 적용할 민트빛 포인트 그라데이션 */
+    }
+
+    html,
+    body {
+      height: 100%;
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Top stripe ── */
+    .top-stripe {
+      height: 3px;
+      background: var(--brand-grad);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-8px);
+      color: #fff;
+      padding: 14px 22px;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s, transform .3s;
+      z-index: 999;
+      min-width: 280px;
+      max-width: 380px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .18);
+    }
+
+    .toast.toast-error {
+      background: #be123c;
+    }
+
+    .toast.toast-success {
+      background: #15803d;
+    }
+
+    .toast.toast-info {
+      background: var(--text);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .toast-content {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .toast-title {
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .toast-body {
+      font-weight: 400;
+      font-size: 12px;
+      opacity: .85;
+      line-height: 1.5;
+    }
+
+    /* ── Header ── */
+    header {
+      position: fixed;
+      top: 3px;
+      left: 0;
+      right: 0;
+      z-index: 90;
+      height: 60px;
+      background: rgba(255, 255, 255, .92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .logo-mark {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: var(--brand-grad);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 900;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(20, 184, 166, .3);
+    }
+
+    .logo-name {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+      color: var(--text);
+    }
+
+    .header-signup-link {
+      font-size: 13px;
+      color: var(--text3);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color .2s;
+    }
+
+    .header-signup-link:hover {
+      color: var(--teal-dark);
+    }
+
+    .header-signup-link strong {
+      color: var(--teal-dark);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       ▼▼▼  크기 직접 수정 — 여기 숫자만 바꾸면 됩니다  ▼▼▼
+       ─────────────────────────────────────────────────────────
+       --login-panel-width     왼쪽 로그인 패널 너비
+                               이미지 패널은 나머지를 자동으로 채웁니다
+                               ex) 400px  /  520px  /  38vw
+
+       --login-inner-max-width 로그인 폼(버튼 묶음)의 최대 너비
+                               ex) 320px  /  400px
+    ══════════════════════════════════════════════════════════ */
+    :root {
+      --login-panel-width: 500px;
+      /* ← 패널 너비 수정 */
+      --login-inner-max-width: 360px;
+      /* ← 폼 너비 수정  */
+    }
+
+    /* ── Layout ── */
+    .page-wrapper {
+      padding-top: 63px;
+      flex: 1;
+      display: flex;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* ══════════════════════════════
+       LOGIN PANEL (LEFT)
+    ══════════════════════════════ */
+    .login-panel {
+      width: var(--login-panel-width);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 48px 80px;
+      min-height: calc(100vh - 63px);
+      background: var(--white);
+      border-right: 1px solid var(--border);
+      position: relative;
+      z-index: 2;
+    }
+
+    .login-inner {
+      width: 100%;
+      max-width: var(--login-inner-max-width);
+    }
+
+    /* Heading */
+    .page-heading {
+      margin-bottom: 36px;
+    }
+
+    .page-heading h1 {
+      font-family: 'Fraunces', serif;
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -.5px;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .page-heading h1 em {
+      font-style: italic;
+      background: var(--brand-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+
+    .page-heading p {
+      font-size: 13px;
+      color: var(--text3);
+      line-height: 1.7;
+    }
+
+    /* Social buttons */
+    .social-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .social-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      height: 52px;
+      padding: 0 20px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      background: white;
+      cursor: pointer;
+      transition: all .2s;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      text-decoration: none;
+      width: 100%;
+    }
+
+    .social-btn:hover {
+      border-color: rgba(99, 102, 241, .25);
+      background: var(--brand-grad-soft);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .social-btn:active {
+      transform: translateY(0);
+    }
+
+    .s-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .s-icon img {
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
+    }
+
+    .s-icon.google-icon {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+    }
+
+    .s-icon.kakao-icon {
+      background: #FEE500;
+    }
+
+    .s-icon.naver-icon {
+      background: #03C75A;
+    }
+
+    .s-label {
+      flex: 1;
+    }
+
+    .s-arrow {
+      color: var(--text3);
+      font-size: 16px;
+    }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 24px 0;
+      color: var(--text3);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Info box */
+    .info-box {
+      background: var(--brand-grad-soft);
+      border: 1px solid rgba(99, 102, 241, .15);
+      border-radius: var(--radius-sm);
+      padding: 16px 18px;
+      font-size: 12px;
+      color: var(--text2);
+      line-height: 1.7;
+    }
+
+    .info-box strong {
+      color: var(--indigo-dark);
+      font-weight: 700;
+    }
+
+    /* Signup prompt */
+    .signup-prompt {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text3);
+    }
+
+    .signup-prompt a {
+      color: var(--indigo-dark);
+      font-weight: 700;
+      text-decoration: none;
+      transition: color .2s;
+    }
+
+    .signup-prompt a:hover {
+      color: var(--teal-dark);
+    }
+
+    /* Error / Message banners (Thymeleaf) */
+    .alert-error {
+      background: #fff1f2;
+      border: 1px solid rgba(239, 68, 68, .2);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #be123c;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Fade-up animation */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .login-inner {
+      animation: fadeUp .35s ease both;
+    }
+
+    /* ══════════════════════════════
+       IMAGE PANEL (RIGHT)
+    ══════════════════════════════ */
+    .image-panel {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      min-height: calc(100vh - 63px);
+    }
+
+    /* 배경 이미지 — 패널 전체를 꽉 채움 */
+    .image-panel>.panel-bg-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      z-index: 0;
+    }
+
+    /* fallback: 이미지 없을 때 */
+    .image-panel.no-image {
+      background: linear-gradient(155deg, #e0f2fe 0%, #f0fdfa 55%, #ecfdf5 100%);
+    }
+
+    /* 텍스트 가독성을 위한 그라데이션 오버레이 */
+    .panel-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom,
+          rgba(10, 20, 40, .25) 0%,
+          rgba(10, 20, 40, .05) 20%,
+          rgba(10, 20, 40, .05) 80%,
+          rgba(10, 20, 40, .60) 100%);
+      z-index: 1;
+    }
+
+    /* 콘텐츠(텍스트+카드)는 오버레이 위에 */
+    .ip-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 2;
+    }
+
+    /* ── 상단 소개 영역 ── */
+    .ip-top {
+      padding: 48px 56px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .ip-kicker {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--ip-kicker-color);
+      /* 흰색 적용 */
+      text-transform: uppercase;
+    }
+
+    .ip-headline {
+      font-family: 'Fraunces', serif;
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--ip-headline-color);
+      /* 흰색 적용 */
+      letter-spacing: -.5px;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, .3);
+      /* 텍스트 그림자 유지 (가독성 보조) */
+    }
+
+    .ip-headline em {
+      font-style: italic;
+      background: var(--ip-headline-em-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .ip-sub {
+      font-size: 14px;
+      color: var(--ip-sub-color);
+      line-height: 1.7;
+      max-width: 440px;
+    }
+
+    /* ── 하단 안내 영역 ── */
+    .ip-bottom {
+      padding: 0 56px 48px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .ip-feature {
+      background: rgba(255, 255, 255, .12);
+      border: 1px solid rgba(255, 255, 255, .25);
+      backdrop-filter: blur(12px);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: transform .2s, background .2s, box-shadow .2s;
+    }
+
+    .ip-feature:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, .2);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .2);
+    }
+
+    .ip-feature-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .ip-feature-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ip-title-color);
+    }
+
+    .ip-feature-desc {
+      font-size: 11px;
+      color: var(--ip-desc-color);
+      line-height: 1.6;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 1024px) {
+      .image-panel {
+        display: none;
+      }
+
+      .login-panel {
+        width: 100% !important;
+        border-right: none;
+        padding: 60px 24px 80px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .login-panel {
+        padding: 40px 20px 60px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="top-stripe"></div>
+
+  <!-- ── Toast ── -->
+  <div class="toast" id="toast">
+    <span class="toast-icon" id="toastIcon"></span>
+    <div class="toast-content">
+      <span class="toast-title" id="toastTitle"></span>
+      <span class="toast-body" id="toastBody"></span>
+    </div>
+  </div>
+
+  <!-- ── Header ── -->
+  <header>
+    <a href="/" class="logo">
+      <div class="logo-mark">S</div>
+      <span class="logo-name">소셜다모아</span>
+    </a>
+    <a href="/signup" class="header-signup-link">계정이 없으신가요? <strong>회원가입 →</strong></a>
+  </header>
+
+  <div class="page-wrapper">
+
+    <!-- ══════════ LEFT: LOGIN PANEL ══════════ -->
+    <section class="login-panel">
+      <div class="login-inner">
+
+        <!-- Thymeleaf 알림 -->
+        <div class="alert-error" th:if="${param.error}">
+          <span>⚠️</span><span>로그인에 실패했습니다. 다시 시도해주세요.</span>
+        </div>
+
+        <!-- Heading -->
+        <div class="page-heading">
+          <h1>소셜 계정으로<br /><em>로그인</em></h1>
+          <p>아래 소셜 계정 중 하나를 선택해 로그인하세요.<br />가입 시 사용한 계정으로 로그인해주세요.</p>
+        </div>
+
+        <!-- Social login buttons -->
+        <div class="social-btns">
+
+          <!-- Google -->
+          <a class="social-btn" href="/oauth2/authorization/google" data-provider="google">
+            <div class="s-icon google-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+              </svg>
+            </div>
+            <span class="s-label">Google로 로그인</span>
+            <span class="s-arrow">›</span>
+          </a>
+
+          <!-- Kakao -->
+          <a class="social-btn" href="/oauth2/authorization/kakao" data-provider="kakao">
+            <div class="s-icon kakao-icon">
+              <svg width="18" height="17" viewBox="0 0 18 17" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M9 0C4.03 0 0 3.13 0 6.99c0 2.45 1.56 4.6 3.91 5.85L2.94 16.1c-.08.28.2.5.44.34L7.1 13.9c.62.09 1.25.14 1.9.14 4.97 0 9-3.13 9-6.99S13.97 0 9 0z" fill="rgba(0,0,0,0.85)" />
+              </svg>
+            </div>
+            <span class="s-label">카카오로 로그인</span>
+            <span class="s-arrow">›</span>
+          </a>
+
+          <!-- Naver -->
+          <a class="social-btn" href="/oauth2/authorization/naver" data-provider="naver">
+            <div class="s-icon naver-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z" fill="white" />
+              </svg>
+            </div>
+            <span class="s-label">네이버로 로그인</span>
+            <span class="s-arrow">›</span>
+          </a>
+
+        </div>
+
+        <div class="divider">소셜 계정으로만 로그인 가능합니다</div>
+
+        <div class="info-box">
+          <strong>💡 처음 방문하셨나요?</strong><br />
+          소셜 계정으로 로그인하면 자동으로 회원가입이 진행됩니다.<br />
+          별도 회원가입 없이 바로 이용하실 수 있어요.
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════ RIGHT: IMAGE PANEL (배경 이미지 전체) ══════════ -->
+    <section class="image-panel" id="imagePanel">
+
+      어두운 오버레이
+      <div class="panel-overlay"></div>
+
+      <!-- 텍스트 & 카드 콘텐츠 -->
+      <div class="ip-content">
+
+        <!-- ── 상단: 서비스 소개 ── -->
+        <div class="ip-top">
+          <h2 class="ip-headline">AI로 편리하게<br /><em>SNS가 채워집니다</em></h2>
+          <p class="ip-sub">
+            업종과 가게 정보만 입력하면 AI가 맞춤 콘텐츠를 자동 생성합니다.<br />
+            네이버 블로그, 카카오 채널, 인스타그램을 한 번에 관리하세요.
+          </p>
+        </div>
+
+        <!-- ── 하단: 기능 안내 카드 ── -->
+        <div class="ip-bottom">
+          <div class="ip-feature">
+            <div class="ip-feature-icon" style="background:rgba(255,255,255,.15);">🤖</div>
+            <span class="ip-feature-title">AI 콘텐츠 자동 생성</span>
+            <p class="ip-feature-desc">업종·메뉴·이벤트만 입력하면 SNS 글을 즉시 완성해드려요.</p>
+          </div>
+          <div class="ip-feature">
+            <div class="ip-feature-icon" style="background:rgba(255,255,255,.15);">📲</div>
+            <span class="ip-feature-title">두개의 채널 자동 발행</span>
+            <p class="ip-feature-desc">페이스북·인스타그램은 버튼 하나로 자동 업로드.</p>
+          </div>
+          <div class="ip-feature">
+            <div class="ip-feature-icon" style="background:rgba(255,255,255,.15);">📊</div>
+            <span class="ip-feature-title">성과 분석 대시보드</span>
+            <p class="ip-feature-desc">채널별 반응·방문자 추이를 한눈에 확인하고 전략을 개선하세요.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+
+  <script>
+    /* ═══════════════════════════════════════
+       TOAST SYSTEM
+    ═══════════════════════════════════════ */
+    function showToast(type, title, body, duration) {
+      duration = duration || 4000;
+      var el = document.getElementById('toast');
+      var icon = document.getElementById('toastIcon');
+      var tit = document.getElementById('toastTitle');
+      var bod = document.getElementById('toastBody');
+      var iconMap = {
+        error: '⚠️',
+        success: '✅',
+        info: 'ℹ️',
+        warning: '🔔'
+      };
+      var classMap = {
+        error: 'toast-error',
+        success: 'toast-success',
+        info: 'toast-info',
+        warning: 'toast-error'
+      };
+      // reset classes
+      el.classList.remove('toast-error', 'toast-success', 'toast-info', 'show');
+      void el.offsetWidth; // reflow
+      el.classList.add(classMap[type] || 'toast-info');
+      icon.textContent = iconMap[type] || 'ℹ️';
+      tit.textContent = title;
+      bod.textContent = body || '';
+      el.classList.add('show');
+      clearTimeout(el._timer);
+      el._timer = setTimeout(function() {
+        el.classList.remove('show');
+      }, duration);
+    }
+    const LAYOUT_CONFIG = {
+      /* ── 이미지 ─────────────────────────────────────────────── */
+      PANEL_IMAGE_URL: 'https://cdn.phototourl.com/free/2026-04-18-db7aafaf-b6d5-49e5-9654-de89125b5e41.png',
+      IP_KICKER_COLOR: '#ffffff', // 소제목
+      IP_HEADLINE_COLOR: '#ffffff', // 메인 헤드라인
+      IP_SUB_COLOR: '#ffffff', // 설명 문구
+      IP_CARD_TITLE: '#ffffff', // 카드 제목
+      IP_CARD_DESC: 'rgba(255,255,255,.75)', // 카드 설명
+    };
+    (function applyLayoutConfig() {
+      var root = document.documentElement;
+      // ── 글씨 색 ──
+      if (LAYOUT_CONFIG.IP_KICKER_COLOR)
+        root.style.setProperty('--ip-kicker-color', LAYOUT_CONFIG.IP_KICKER_COLOR);
+      if (LAYOUT_CONFIG.IP_HEADLINE_COLOR)
+        root.style.setProperty('--ip-headline-color', LAYOUT_CONFIG.IP_HEADLINE_COLOR);
+      if (LAYOUT_CONFIG.IP_SUB_COLOR)
+        root.style.setProperty('--ip-sub-color', LAYOUT_CONFIG.IP_SUB_COLOR);
+      if (LAYOUT_CONFIG.IP_CARD_TITLE)
+        root.style.setProperty('--ip-title-color', LAYOUT_CONFIG.IP_CARD_TITLE);
+      if (LAYOUT_CONFIG.IP_CARD_DESC)
+        root.style.setProperty('--ip-desc-color', LAYOUT_CONFIG.IP_CARD_DESC);
+      // ── 이미지 ──
+      var panel = document.getElementById('imagePanel');
+      if (panel) {
+        if (LAYOUT_CONFIG.PANEL_IMAGE_URL) {
+          var img = document.createElement('img');
+          img.className = 'panel-bg-img';
+          img.id = 'panelBgImg';
+          img.src = LAYOUT_CONFIG.PANEL_IMAGE_URL;
+          img.alt = '서비스 소개 이미지';
+          panel.insertBefore(img, panel.firstChild);
+        } else {
+          panel.classList.add('no-image');
+        }
+      }
+    })();
+    /* ═══════════════════════════════════════
+       URL 파라미터 기반 토스트
+    ═══════════════════════════════════════ */
+    (function handleUrlParams() {
+      var p = new URLSearchParams(window.location.search);
+      if (p.get('error') !== null) {
+        showToast(
+          'error',
+          '로그인에 실패했습니다',
+          '소셜 계정 인증 중 오류가 발생했습니다. 다시 시도해주세요.',
+          5000
+        );
+      }
+    })();
+  </script>
+</body>
+
+</html>

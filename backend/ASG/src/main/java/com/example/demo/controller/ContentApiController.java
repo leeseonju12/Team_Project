@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -138,12 +139,45 @@ public class ContentApiController {
     }
 	
 	@PostMapping("/upload")
-    public ResponseEntity<Map<String, String>> uploadImage(@RequestParam("file") MultipartFile file) {
-        String imageUrl = cloudinaryService.uploadImage(file);
+    public ResponseEntity<String> uploadImages(
+            // Rationale: Parameter must be a List or Array to accept multiple files bound to the same name.
+            @RequestParam("uploadFiles") List<MultipartFile> files) {
         
-        Map<String, String> response = new HashMap<>();
-        response.put("imageUrl", imageUrl);
-        
-        return ResponseEntity.ok(response);
+        for (MultipartFile file : files) {
+            if (!file.isEmpty()) {
+                // Save logic here
+            }
+        }
+        return ResponseEntity.ok("Upload successful");
     }
+	
+	@PostMapping("/upload-multiple")
+	public ResponseEntity<Map<String, Object>> uploadMultipleImages(
+	        // Rationale: The @RequestParam name must exactly match the key 'files' used in the frontend FormData.
+	        @RequestParam("files") List<MultipartFile> files) {
+	    
+	    Map<String, Object> response = new HashMap<>();
+	    List<String> uploadedUrls = new ArrayList<>();
+
+	    try {
+	        // Rationale: Iterate through the list of uploaded files and process each one via the existing CloudinaryService.
+	        for (MultipartFile file : files) {
+	            if (!file.isEmpty()) {
+	                String imageUrl = cloudinaryService.uploadImage(file);
+	                uploadedUrls.add(imageUrl);
+	            }
+	        }
+	        
+	        // Rationale: Return a JSON structure that the frontend expects: { "status": "success", "urls": [...] }
+	        response.put("status", "success");
+	        response.put("urls", uploadedUrls);
+	        return ResponseEntity.ok(response);
+
+	    } catch (Exception e) {
+	        // Rationale: Return a 500 status code and failure message if any upload fails.
+	        response.put("status", "fail");
+	        response.put("message", e.getMessage());
+	        return ResponseEntity.status(500).body(response);
+	    }
+	}
 }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 
 <head>
   <meta charset="UTF-8">
@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="/css/components.css">
   <link rel="stylesheet" href="/css/calendar.css">
   <link rel="stylesheet" href="/css/preview-modal.css">
+  <link rel="stylesheet" href="/css/generate-image.css">
   <style>
     /* FullCalendar 이벤트 드래그 스타일 보정 */
     .fc-event { 
@@ -33,6 +34,8 @@
 </head>
 
 <body>
+	<div th:replace="~{fragments/header :: global-header(currentMenu='index')}"></div>
+	
   <div class="blob blob-1"></div>
   <div class="blob blob-2"></div>
   <div class="blob blob-3"></div>
@@ -371,19 +374,13 @@
   </div>
 
   <div class="wrapper">
-    <header>
-      <div class="logo">
-        <div class="logo-mark">S</div>
-        <div class="logo-text">소셜다모아<span>Intelligence Marketing</span></div>
-      </div>
-      <div class="header-right">
-        <div class="header-badge">AI 자동화 활성</div>
-      </div>
-    </header>
 
     <div class="page-title">
       <h1><em>지능형</em> 마케팅 자동화<br>모든 채널을 한 번에</h1>
       <p>커뮤니티 데이터 기반 톤앤매너 자동 변환 · 플랫폼별 실시간 미리보기 · 드래그 앤 드롭 스케줄링</p>
+	  <div class="header-right">
+	    <div class="header-badge">AI 자동화 활성</div>
+	  </div>
     </div>
 
     <div class="dashboard-grid" id="dashboardGrid">
@@ -404,17 +401,7 @@
               <label>추가 설명</label>
               <textarea id="extraInfo" placeholder="가격, 이벤트, 특징, 할인 기간 등을 자유롭게 작성하세요."></textarea>
             </div>
-            <div class="field">
-              <label>타겟 커뮤니티</label>
-              <div class="tag-input-container">
-                <div class="tag-input-wrap" id="tagInputWrap">
-                  <div id="tagPills" style="display:contents;"></div>
-                  <input type="text" class="tag-input-inner" id="communityTagInput" placeholder="커뮤니티 입력 후 Enter →" autocomplete="off">
-                </div>
-                <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
-              </div>
-              <p class="field-hint">입력 시 연관 커뮤니티가 자동 추천됩니다. 선택한 커뮤니티의 톤앤매너로 글이 자동 변환됩니다.</p>
-            </div>
+            
             <div class="field">
               <label>키워드 <span class="required">*</span></label>
               <div class="keyword-grid" id="keywordGroup">
@@ -436,10 +423,18 @@
                 <p style="margin-top:3px;font-size:10px;">최대 5장 · JPG, PNG, WEBP</p>
               </div>
               <div class="img-previews" id="imgPreviews"></div>
-              <div class="retouch-section">
-                <button class="btn-retouch" id="retouchBtn" disabled onclick="openRetouchModal()">🎨 이미지 스마트 리터칭</button>
-                <p class="retouch-hint" id="retouchHint"><span>ℹ️</span> Instagram 또는 Facebook 선택 시 활성화</p>
-              </div>
+              <!-- ✨ AI 이미지 생성 영역 (신규 추가) -->
+			<div class="ai-image-section">
+				<input type="hidden" id="businessCategory" th:value="${businessCategory}">
+			  <div class="ai-image-section-title">AI 이미지 자동 생성</div>
+			  
+			  <button type="button" class="btn-ai-generate" id="btn-ai-generate" onclick="handleAiImageGenerate()">
+			    <div class="ai-spinner"></div>
+			    <span class="ai-btn-text">🪄 AI로 이미지 생성하기</span>
+			  </button>
+			  <div class="ai-status" id="ai-status">클릭 한 번으로 완성하는 마케팅 이미지</div>
+			  <div id="aiImgPreviews" class="img-previews"></div>
+			</div>
             </div>
             <div class="divider"></div>
             <div class="field">
@@ -776,6 +771,7 @@
 
   <script src="/js/app4.js" defer></script>
   <script src="/js/calendar-manager.js" defer></script>
+  <script src="/js/generate-image.js" defer></script>
 
 </body>
 

@@ -616,69 +616,84 @@ window.removePending = function (id) {
 };
 
 /* --------------------------------------------------------------------------
-   8. Upload / Retouch
+   8. Upload / Retouch & Multi Image Upload
    -------------------------------------------------------------------------- */
-   async function handleFiles(files) {
-     if (!files || files.length === 0) return;
-     const file = files[0];
+let manualUploadedUrls = [];
 
-     /* 용량 제한 체크 (10MB) */
-     if (file.size > 10 * 1024 * 1024) {
-       uiManager.showToast('파일 크기가 너무 큽니다. 5MB 이하의 이미지를 선택해주세요.');
-       return;
-     }
+async function uploadMultipleImagesToServer(files) {
+  const formData = new FormData();
+  for (let i = 0; i < files.length; i++) {
+    formData.append('files', files[i]);
+  }
+  try {
+    const response = await fetch('/api/posts/upload-multiple', {
+      method: 'POST',
+      body: formData
+    });
+    if (!response.ok) throw new Error('서버 업로드 실패');
+    return await response.json();
+  } catch (error) {
+    console.error('[Upload Error]:', error);
+    throw error;
+  }
+}
 
-     try {
-       uiManager.toggleLoading(true);
-       
-       /* 백엔드 CloudinaryService 호출 */
-       const imageUrl = await uploadToCloudinary(file);
-       state.uploadedImageUrl = imageUrl;
+async function handleManualUpload(files) {
+  const previewContainer = document.getElementById('imgPreviews');
+  if (!previewContainer) return;
 
-       /* 기존 미리보기 로직 유지 */
-       const reader = new FileReader();
-       reader.onload = (e) => {
-         state.uploadedImages = [e.target.result]; /* 단일 이미지 관리로 변경 시 */
-         state.uploadedFiles = [file];
-         renderImagePreviews();
-         updateRetouchState();
-       };
-       reader.readAsDataURL(file);
-       
-       uiManager.showToast('이미지가 성공적으로 업로드되었습니다.');
-     } catch (error) {
-       console.error('업로드 실패:', error);
-       uiManager.showToast('이미지 업로드 중 오류가 발생했습니다.');
-     } finally {
-       uiManager.toggleLoading(false);
-     }
-   }
+  if (files.length > 5) {
+    uiManager.showToast('최대 5장까지만 업로드할 수 있습니다.');
+    return;
+  }
+  if (files.length === 0) return;
 
-   /* API 호출 함수: FormData를 사용하여 백엔드 컨트롤러로 전송 */
-   async function uploadToCloudinary(file) {
-     const formData = new FormData();
-     formData.append('file', file);
+  previewContainer.innerHTML = '<span style="font-size:13px; color:#64748b;">이미지 업로드 중...</span>';
 
-     const response = await fetch('/api/images/upload', {
-       method: 'POST',
-       body: formData
-     });
+  try {
+    uiManager.toggleLoading(true);
+    const uploadResult = await uploadMultipleImagesToServer(files);
 
-     if (!response.ok) throw new Error('서버 업로드 실패');
-     const data = await response.json();
-     return data.imageUrl;
-   }
+    if (uploadResult.status === 'success' && uploadResult.urls) {
+      manualUploadedUrls = uploadResult.urls;
+      
+      // 기존 기능들과의 호환성을 위해 전역 상태(state) 업데이트
+      state.uploadedImages = [...uploadResult.urls];
+      state.uploadedFiles = Array.from(files);
+      if (state.uploadedImages.length > 0) {
+        state.uploadedImageUrl = state.uploadedImages[0]; // 백엔드 호환용 첫 번째 이미지
+      }
+
+      renderImagePreviews(); // 통합된 미리보기 함수 호출
+      updateRetouchState();
+      uiManager.showToast('이미지가 성공적으로 업로드되었습니다.');
+    }
+  } catch (e) {
+    previewContainer.innerHTML = '<span style="font-size:13px; color:#ef4444;">업로드에 실패했습니다. 다시 시도해주세요.</span>';
+  } finally {
+    uiManager.toggleLoading(false);
+  }
+}
+
+function handleFiles(files) {
+  handleManualUpload(files);
+}
 
 function renderImagePreviews() {
   const previewContainer = document.getElementById('imgPreviews');
   if (!previewContainer) return;
 
+  previewContainer.style.display = 'flex';
+  previewContainer.style.gap = '10px';
+  previewContainer.style.flexWrap = 'wrap';
+  previewContainer.style.marginTop = '12px';
+
   previewContainer.innerHTML = state.uploadedImages
     .map(
       (src, i) => `
-        <div class="img-thumb-wrap">
-          <img class="img-thumb" src="${src}" alt="">
-          <button class="remove-btn" type="button" onclick="removeImg(${i})">×</button>
+        <div class="img-thumb-wrap" style="position:relative;">
+          <img class="img-thumb" src="${src}" alt="" style="width:80px; height:80px; object-fit:cover; border-radius:8px; border:1px solid #e2e8f0;">
+          <button class="remove-btn" type="button" onclick="removeImg(${i})" style="position:absolute; top:-5px; right:-5px; background:#ef4444; color:#fff; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer; font-size:12px; line-height:1;">×</button>
         </div>
       `
     )
@@ -698,6 +713,12 @@ function updateRetouchState() {
 window.removeImg = function (index) {
   state.uploadedImages.splice(index, 1);
   state.uploadedFiles.splice(index, 1);
+  manualUploadedUrls.splice(index, 1);
+  if (state.uploadedImages.length === 0) {
+    state.uploadedImageUrl = null;
+  } else {
+    state.uploadedImageUrl = state.uploadedImages[0];
+  }
   renderImagePreviews();
   updateRetouchState();
 };
@@ -843,56 +864,30 @@ function bindAllUIEvents() {
 /* --------------------------------------------------------------------------
    10. Dashboard Init
    -------------------------------------------------------------------------- */
-   async function initializeDashboard() {
-     // 1. 캘린더 매니저 초기화 및 즉시 렌더링
-     // 데이터 로드보다 먼저 실행하여 캘린더 '틀'을 먼저 화면에 띄웁니다.
-     if (typeof CalendarManager !== 'undefined') {
-       try {
-         CalendarManager.init({
-           state,
-           uiManager,
-           PLATFORM_CONFIG,
-           PASTEL_PALETTE,
-           renderPendingHTML,
-           publishPost: window.publishPost
-         });
-         CalendarManager.initCalendar();
-         console.log("[Dash] Calendar initialized");
-       } catch (e) {
-         console.error("[Dash] Calendar Init Error:", e);
-       }
-     }
-
-     
-     updateRetouchState();
+async function initializeDashboard() {
+  if (typeof CalendarManager !== 'undefined') {
+    try {
+      CalendarManager.init({
+        state,
+        uiManager,
+        PLATFORM_CONFIG,
+        PASTEL_PALETTE,
+        renderPendingHTML,
+        publishPost: window.publishPost
+      });
+      CalendarManager.initCalendar();
+      console.log("[Dash] Calendar initialized");
+    } catch (e) {
+      console.error("[Dash] Calendar Init Error:", e);
+    }
+  }
+  updateRetouchState();
 }
+
 /* --------------------------------------------------------------------------
    11. Boot
    -------------------------------------------------------------------------- */
-	document.addEventListener('DOMContentLoaded', async () => {
-	  bindAllUIEvents();
-	  await initializeDashboard();
-	});
-	
-	
-	async function uploadToCloudinary(file) {
-	  const formData = new FormData();
-	  formData.append('file', file);
-	
-	  try {
-	    const response = await fetch('/api/posts/upload', {
-	      method: 'POST',
-	      body: formData
-	    });
-	
-	    if (!response.ok) {
-	      throw new Error('서버 이미지 업로드 API 호출 실패');
-	    }
-	
-	    const data = await response.json();
-	    return data.imageUrl;
-	  } catch (error) {
-	    console.error('업로드 중 오류 발생:', error);
-	    throw error;
-		}
-	}
+document.addEventListener('DOMContentLoaded', async () => {
+  bindAllUIEvents();
+  await initializeDashboard();
+});

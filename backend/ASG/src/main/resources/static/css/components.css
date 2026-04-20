@@ -1048,3 +1048,204 @@ input[type=range]::-webkit-slider-thumb {
   transform: translateY(-1px);
   box-shadow: 0 10px 22px rgba(20, 184, 166, 0.28);
 }
+
+/* ── AI 이미지 생성 섹션 (통합 및 레이아웃 고정) ── */
+.ai-image-section {
+  margin-top: 5px;
+  margin-bottom: 20px; /* 아래 SNS 영역과의 확실한 거리 확보 */
+  padding: 18px;
+  border: 1px solid rgba(99, 102, 241, 0.20);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.04), rgba(20, 184, 166, 0.04));
+
+  /* 핵심: 내부 요소를 수직으로 쌓고 높이를 가변적으로 설정 */
+  display: flex !important;
+  flex-direction: column !important;
+  height: auto !important; /* 내부 콘텐츠에 맞춰 늘어남 */
+  min-height: 0 !important;
+  gap: 5px; /* 제목, 이미지, 버튼, 텍스트 사이의 간격 통일 */
+}
+
+/* ── AI 이미지 미리보기 영역 ── */
+#aiImgPreviews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0;
+  width: 100%;
+  /* 이미지가 없을 때도 자리를 차지하지 않도록 설정 */
+}
+
+/* ── 개별 이미지 아이템 (핑크 버튼의 부모) ── */
+.preview-item {
+  position: relative !important;
+  width: 85px;
+  height: 85px;
+  flex-shrink: 0;
+}
+
+.preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* ── 생성 버튼 및 상태 메시지 ── */
+.btn-ai-generate {
+  width: 100% !important;
+  margin: 0 !important; /* 마진 대신 부모의 gap 사용 */
+}
+
+.ai-status {
+  margin: 0 !important;
+  padding: 2px 0 0 0 !important;
+  font-size: 11px;
+  text-align: center;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* ── 선명한 핑크색 삭제 버튼 ── */
+.btn-remove-img {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 22px;
+  height: 22px;
+  background-color: #E1306C;
+  color: white;
+  border: 2px solid white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  z-index: 10;
+}
+
+.preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* 핫핑크 삭제 버튼 */
+.btn-remove-img {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  background-color: #E1306C;
+  color: white;
+  border: 2px solid white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  z-index: 10;
+}
+
+/* 버튼 아래 여백 제어 */
+.ai-status {
+  margin-top: 8px;
+  margin-bottom: 0; /* 마지막 요소이므로 아래 여백 0 */
+}
+
+.ai-image-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-ai-generate {
+  width: 100%;
+  padding: 11px 16px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(20, 184, 166, 0.10));
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 12px;
+  color: var(--secondary);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all .22s;
+  letter-spacing: 0.1px;
+}
+
+.btn-ai-generate:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(20, 184, 166, 0.14));
+  border-color: rgba(99, 102, 241, 0.38);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.14);
+}
+
+.btn-ai-generate:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-ai-generate .ai-spinner {
+  display: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(99, 102, 241, 0.25);
+  border-top-color: var(--secondary);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+
+.btn-ai-generate.loading .ai-spinner {
+  display: inline-block;
+}
+
+.btn-ai-generate.loading .ai-btn-text {
+  opacity: .65;
+}
+
+.btn-ai-generate.done {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.12), rgba(20, 184, 166, 0.08));
+  border-color: rgba(20, 184, 166, 0.30);
+  color: #0F766E;
+}
+
+.ai-status {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text3);
+  text-align: center;
+  min-height: 16px;
+  transition: color .2s;
+}
+
+.ai-status.error {
+  color: #EF4444;
+}
+
+.ai-status.success {
+  color: #0F766E;
+}
+
+/* 전체 섹션의 너비 제한 */
+.ai-image-section {
+    height: 100px;        /* 고정 높이가 있다면 해제하거나 낮게 설정 */
+    width: auto;
+}

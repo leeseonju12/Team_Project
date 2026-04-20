@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 public class AiImageRequestDto {
     private String keyword;
     private String category;
+    private String description;
 }
 
 //=============================================================================
