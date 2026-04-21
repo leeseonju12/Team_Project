@@ -14,6 +14,7 @@ import com.example.demo.dto.SignupRequest;
 import com.example.demo.security.PrincipalDetails;
 import com.example.demo.service.auth.UserService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,28 +38,23 @@ public class SignupController {
 
     @GetMapping("/login")
     public String loginPage(@AuthenticationPrincipal PrincipalDetails principal,
+                            HttpServletRequest request,
                             Model model) {
 
-        log.info("[GET] /login 진입 - principal={}", principal != null ? "존재" : "없음");
+        HttpSession session = request.getSession(false);
 
-        if (principal == null) {
-            log.info("[GET] /login - 비로그인 상태, login 페이지 렌더링");
+        if (principal == null || session == null) {
             return "login";
         }
 
         Long userId = principal.getUser().getId();
         User user = userService.findById(userId);
 
-        log.info("[GET] /login - 로그인 사용자 조회 userId={}, status={}, signupCompleted={}",
-                user.getId(), user.getStatus(), user.isSignupCompleted());
-
         if (user.getStatus() == UserStatus.ACTIVE) {
-            log.info("[GET] /login - 가입 완료 사용자, /mypage 로 리다이렉트");
             return "redirect:/mypage";
         }
 
         model.addAttribute("socialLoginRequired", false);
-        log.info("[GET] /login - 가입 미완료 사용자, /signup 으로 리다이렉트");
         return "redirect:/signup";
     }
 

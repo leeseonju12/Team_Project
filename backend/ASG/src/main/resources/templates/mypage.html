@@ -99,6 +99,26 @@
     .field-msg.err{color:var(--red);}
     .field-msg.info{color:var(--text3);}
 
+	.btn-logout.theme {
+	  width: 100%;
+	  padding: 8px 14px;
+	  border-radius: 6px;
+	  font-size: 13px;
+	  font-weight: 500;
+	  margin-top: 16px;
+	
+	  background-color: #F0FDFA;
+	  border: 1px solid #14B8A6;
+	  color: #0D9488;
+	
+	  cursor: pointer;
+	  transition: all 0.2s ease;
+	}
+	
+	.btn-logout.theme:hover {
+	  background-color: #14B8A6;
+	  color: #FFFFFF;
+	}
     .btn-inline{height:44px;padding:0 14px;border-radius:var(--radius-sm);border:1.5px solid var(--teal);background:var(--teal-light);color:var(--teal-dark);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;transition:all .2s;flex-shrink:0;}
     .btn-inline:hover{background:var(--teal);color:#fff;}
     .btn-save{height:44px;padding:0 24px;border-radius:var(--radius-sm);border:none;background:linear-gradient(135deg,var(--teal),var(--indigo));color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;box-shadow:0 2px 8px rgba(20,184,166,.25);transition:all .2s;display:flex;align-items:center;gap:7px;}
@@ -386,7 +406,7 @@ em {
      th:text="${userInfo.provider == 'kakao' ? '카카오 가입자' :
                userInfo.provider == 'naver' ? '네이버 가입자' :
                userInfo.provider == 'google' ? '구글 가입자' : '소셜 가입자'}">
-</div>
+		</div>
     </div>
     <!-- 네비 — showSection() 호출 후 드로어 닫기 -->
     <nav class="sidebar-nav">
@@ -426,7 +446,13 @@ em {
      th:text="${userInfo.provider == 'kakao' ? '카카오 가입자' :
                userInfo.provider == 'naver' ? '네이버 가입자' :
                userInfo.provider == 'google' ? '구글 가입자' : '소셜 가입자'}">
-</div>
+		</div>
+			<div class="sidebar-logout-wrap">
+		  <form id="logoutForm">
+		    <button type="button" id="logoutBtn" class="btn-logout theme">로그아웃</button>
+		  </form>
+		</div>
+		
       </div>
       <!-- ── mypage Sidebar ── -->
       <nav class="sidebar-nav">
@@ -866,6 +892,28 @@ em {
   <div class="toast" id="toast"></div>
 
   <script>
+  /* ═══ 로그아웃 ═══ */
+  
+	document.getElementById('logoutBtn').addEventListener('click', async function () {
+	    if (!confirm("로그아웃 하시겠습니까?")) return;
+	
+	    try {
+	        await fetch('/api/auth/logout', {
+	            method: 'POST',
+	            credentials: 'include'
+	        });
+	    } catch (e) {
+	        console.error('로그아웃 실패', e);
+	    } finally {
+	        localStorage.removeItem('accessToken');
+	        sessionStorage.removeItem('accessToken');
+	        localStorage.removeItem('refreshToken');
+	        sessionStorage.removeItem('refreshToken');
+	
+	        alert("로그아웃 되었습니다.");
+	        window.location.replace('/landing-page');
+	    }
+	});
   /* ═══ Nav ═══ */
   
   // 페이지 로드 시 ?sec=xxx 파라미터 확인
