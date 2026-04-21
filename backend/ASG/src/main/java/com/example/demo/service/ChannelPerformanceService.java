@@ -13,237 +13,233 @@ import java.util.*;
 @RequiredArgsConstructor
 public class ChannelPerformanceService {
 
-    private final JdbcTemplate jdbcTemplate;
-    private static final DateTimeFormatter DATE_KEY_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
+	private final JdbcTemplate jdbcTemplate;
+	private static final DateTimeFormatter DATE_KEY_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
 
-    public ChannelPerformanceResponseDto getDashboard(Long brandId, LocalDate fromDate, LocalDate toDate) {
-        if (fromDate.isAfter(toDate)) {
-            LocalDate temp = fromDate;
-            fromDate = toDate;
-            toDate = temp;
-        }
+	public ChannelPerformanceResponseDto getDashboard(Long brandId, LocalDate fromDate, LocalDate toDate,
+			LocalDate prevFromDate, LocalDate prevToDate) {
 
-        int fromDateKey = Integer.parseInt(fromDate.format(DATE_KEY_FORMATTER));
-        int toDateKey   = Integer.parseInt(toDate.format(DATE_KEY_FORMATTER));
+		if (fromDate.isAfter(toDate)) {
+			LocalDate temp = fromDate;
+			fromDate = toDate;
+			toDate = temp;
+		}
 
-        return ChannelPerformanceResponseDto.builder()
-                .brandId(brandId)
-                .from(fromDate.toString())
-                .to(toDate.toString())
-                .summaries(findChannelSummaries(brandId, fromDateKey, toDateKey))
-                .trends(findDailyTrends(brandId, fromDateKey, toDateKey))
-                .topPosts(findTopPosts(brandId, fromDateKey, toDateKey))
-                .insight(findLatestInsight(brandId))
-                .reviewTrend(findReviewTrend(brandId, fromDateKey, toDateKey, fromDate, toDate))
-                .build();
-    }
+		int fromDateKey = Integer.parseInt(fromDate.format(DATE_KEY_FORMATTER));
+		int toDateKey = Integer.parseInt(toDate.format(DATE_KEY_FORMATTER));
+		int prevFromDateKey = Integer.parseInt(prevFromDate.format(DATE_KEY_FORMATTER));
+		int prevToDateKey = Integer.parseInt(prevToDate.format(DATE_KEY_FORMATTER));
 
-    // ── 1. 채널별 집계 요약 ──────────────────────────────────────────
-    private List<ChannelPerformanceSummaryDto> findChannelSummaries(Long brandId, int fromDateKey, int toDateKey) {
-        String sql = """
-                SELECT bp.brand_platform_id,
-                       p.platform_code,
-                       p.platform_name,
-                       COALESCE(SUM(pmd.total_likes),    0) AS total_likes,
-                       COALESCE(SUM(pmd.total_comments), 0) AS total_comments,
-                       COALESCE(SUM(pmd.total_shares),   0) AS total_shares,
-                       COALESCE(SUM(pmd.total_reviews),  0) AS total_reviews,
-                       COALESCE(SUM(pmd.follower_growth),0) AS follower_growth,
-                       COALESCE(AVG(pmd.engagement_score), 0) AS engagement_rate
-                FROM brand_platform bp
-                JOIN platform p ON p.platform_id = bp.platform_id
-                LEFT JOIN platform_metric_daily pmd
-                       ON pmd.brand_platform_id = bp.brand_platform_id
-                      AND pmd.date_key BETWEEN ? AND ?
-                WHERE bp.brand_id = ?
-                GROUP BY bp.brand_platform_id, p.platform_code, p.platform_name
-                ORDER BY total_likes DESC
-                """;
+		return ChannelPerformanceResponseDto.builder().brandId(brandId).from(fromDate.toString()).to(toDate.toString())
+				.summaries(findChannelSummaries(brandId, fromDateKey, toDateKey, prevFromDateKey, prevToDateKey))
+				.trends(findDailyTrends(brandId, fromDateKey, toDateKey))
+				.topPosts(findTopPosts(brandId, fromDateKey, toDateKey)).insight(findLatestInsight(brandId))
+				.reviewTrend(findReviewTrend(brandId, fromDateKey, toDateKey, fromDate, toDate)).build();
+	}
 
-        return jdbcTemplate.query(sql,
-                (rs, rowNum) -> ChannelPerformanceSummaryDto.builder()
-                        .brandPlatformId(rs.getLong("brand_platform_id"))
-                        .platformCode(rs.getString("platform_code"))
-                        .platformName(rs.getString("platform_name"))
-                        .totalLikes(rs.getInt("total_likes"))
-                        .totalComments(rs.getInt("total_comments"))
-                        .totalShares(rs.getInt("total_shares"))
-                        .totalReviews(rs.getInt("total_reviews"))
-                        .followerGrowth(rs.getInt("follower_growth"))
-                        .engagementRate(rs.getDouble("engagement_rate"))
-                        .build(),
-                fromDateKey, toDateKey, brandId);
-    }
+	private List<ChannelPerformanceSummaryDto> findChannelSummaries(Long brandId, int fromDateKey, int toDateKey,
+			int prevFromDateKey, int prevToDateKey) {
 
-    // ── 2. 일별 트렌드 ───────────────────────────────────────────────
-    private List<ChannelPerformanceTrendPointDto> findDailyTrends(Long brandId, int fromDateKey, int toDateKey) {
-        String sql = """
-                SELECT pmd.date_key,
-                       COALESCE(SUM(pmd.total_likes),    0) AS likes,
-                       COALESCE(SUM(pmd.total_comments), 0) AS comments,
-                       COALESCE(SUM(pmd.total_shares),   0) AS shares,
-                       COALESCE(SUM(pmd.total_reviews),  0) AS reviews
-                FROM platform_metric_daily pmd
-                JOIN brand_platform bp ON bp.brand_platform_id = pmd.brand_platform_id
-                WHERE bp.brand_id = ?
-                  AND pmd.date_key BETWEEN ? AND ?
-                GROUP BY pmd.date_key
-                ORDER BY pmd.date_key
-                """;
+		String sql = """
+				SELECT bp.brand_platform_id,
+				       p.platform_code,
+				       p.platform_name,
+				       COALESCE(SUM(CASE WHEN pmd.date_key BETWEEN ? AND ? THEN pmd.total_likes    ELSE 0 END), 0) AS total_likes,
+				       COALESCE(SUM(CASE WHEN pmd.date_key BETWEEN ? AND ? THEN pmd.total_comments ELSE 0 END), 0) AS total_comments,
+				       COALESCE(SUM(CASE WHEN pmd.date_key BETWEEN ? AND ? THEN pmd.total_shares   ELSE 0 END), 0) AS total_shares,
+				       COALESCE(SUM(CASE WHEN pmd.date_key BETWEEN ? AND ? THEN pmd.total_reviews  ELSE 0 END), 0) AS total_reviews,
+				       COALESCE(SUM(CASE WHEN pmd.date_key BETWEEN ? AND ? THEN pmd.follower_growth ELSE 0 END), 0) AS follower_growth,
+				       COALESCE(AVG(CASE WHEN pmd.date_key BETWEEN ? AND ? THEN pmd.engagement_score ELSE NULL END), 0) AS engagement_rate,
+				       COALESCE(SUM(CASE WHEN pmd.date_key BETWEEN ? AND ? THEN pmd.total_likes    ELSE 0 END), 0) AS prev_likes,
+				       COALESCE(SUM(CASE WHEN pmd.date_key BETWEEN ? AND ? THEN pmd.total_comments ELSE 0 END), 0) AS prev_comments,
+				       COALESCE(SUM(CASE WHEN pmd.date_key BETWEEN ? AND ? THEN pmd.total_shares   ELSE 0 END), 0) AS prev_shares,
+				       COALESCE(SUM(CASE WHEN pmd.date_key BETWEEN ? AND ? THEN pmd.total_reviews  ELSE 0 END), 0) AS prev_reviews,
+				       COALESCE(SUM(CASE WHEN pmd.date_key BETWEEN ? AND ? THEN pmd.follower_growth ELSE 0 END), 0) AS prev_follower_growth
+				FROM brand_platform bp
+				JOIN platform p ON p.platform_id = bp.platform_id
+				LEFT JOIN platform_metric_daily pmd
+				       ON pmd.brand_platform_id = bp.brand_platform_id
+				      AND (pmd.date_key BETWEEN ? AND ? OR pmd.date_key BETWEEN ? AND ?)
+				WHERE bp.brand_id = ?
+				GROUP BY bp.brand_platform_id, p.platform_code, p.platform_name
+				ORDER BY total_likes DESC
+				""";
 
-        return jdbcTemplate.query(sql,
-                (rs, rowNum) -> ChannelPerformanceTrendPointDto.builder()
-                        .dateKey(rs.getInt("date_key"))
-                        .likes(rs.getInt("likes"))
-                        .comments(rs.getInt("comments"))
-                        .shares(rs.getInt("shares"))
-                        .reviews(rs.getInt("reviews"))
-                        .build(),
-                brandId, fromDateKey, toDateKey);
-    }
+		return jdbcTemplate.query(sql,
+				(rs, rowNum) -> ChannelPerformanceSummaryDto.builder().brandPlatformId(rs.getLong("brand_platform_id"))
+						.platformCode(rs.getString("platform_code")).platformName(rs.getString("platform_name"))
+						.totalLikes(rs.getInt("total_likes")).totalComments(rs.getInt("total_comments"))
+						.totalShares(rs.getInt("total_shares")).totalReviews(rs.getInt("total_reviews"))
+						.followerGrowth(rs.getInt("follower_growth")).engagementRate(rs.getDouble("engagement_rate"))
+						.prevLikes(rs.getInt("prev_likes")).prevComments(rs.getInt("prev_comments"))
+						.prevShares(rs.getInt("prev_shares")).prevReviews(rs.getInt("prev_reviews"))
+						.prevFollowerGrowth(rs.getInt("prev_follower_growth")).build(),
+				// cur BETWEEN 파라미터 (10개 컬럼 × 2)
+				fromDateKey, toDateKey, // likes
+				fromDateKey, toDateKey, // comments
+				fromDateKey, toDateKey, // shares
+				fromDateKey, toDateKey, // reviews
+				fromDateKey, toDateKey, // follower_growth
+				fromDateKey, toDateKey, // engagement_rate
+				// prev BETWEEN 파라미터 (5개 컬럼 × 2)
+				prevFromDateKey, prevToDateKey, // prev_likes
+				prevFromDateKey, prevToDateKey, // prev_comments
+				prevFromDateKey, prevToDateKey, // prev_shares
+				prevFromDateKey, prevToDateKey, // prev_reviews
+				prevFromDateKey, prevToDateKey, // prev_follower_growth
+				// WHERE IN 절 파라미터
+				fromDateKey, toDateKey, prevFromDateKey, prevToDateKey, brandId);
+	}
 
-    // ── 3. 상위 게시물 ───────────────────────────────────────────────
-    private List<ChannelTopPostDto> findTopPosts(Long brandId, int fromDateKey, int toDateKey) {
-        String sql = """
-                SELECT cp.post_id,
-                       COALESCE(cp.post_title, CONCAT('Post #', cp.post_id)) AS post_title,
-                       p.platform_name,
-                       COALESCE(SUM(pmd.like_count),    0) AS likes,
-                       COALESCE(SUM(pmd.comment_count), 0) AS comments,
-                       COALESCE(SUM(pmd.share_count),   0) AS shares,
-                       COALESCE(SUM(pmd.review_count),  0) AS review_count,
-                       COALESCE(SUM(pmd.like_count + pmd.comment_count + pmd.share_count), 0) AS engagement_rate
-                FROM content_post cp
-                JOIN brand_platform bp ON bp.brand_platform_id = cp.brand_platform_id
-                JOIN platform p ON p.platform_id = bp.platform_id
-                LEFT JOIN post_metric_daily pmd
-                       ON pmd.post_id = cp.post_id
-                      AND pmd.date_key BETWEEN ? AND ?
-                WHERE bp.brand_id = ?
-                GROUP BY cp.post_id, cp.post_title, p.platform_name
-                ORDER BY engagement_rate DESC
-                LIMIT 5
-                """;
+	// ── 2. 일별 트렌드 ───────────────────────────────────────────────
+	private List<ChannelPerformanceTrendPointDto> findDailyTrends(Long brandId, int fromDateKey, int toDateKey) {
+		String sql = """
+				SELECT pmd.date_key,
+				       COALESCE(SUM(pmd.total_likes),    0) AS likes,
+				       COALESCE(SUM(pmd.total_comments), 0) AS comments,
+				       COALESCE(SUM(pmd.total_shares),   0) AS shares,
+				       COALESCE(SUM(pmd.total_reviews),  0) AS reviews
+				FROM platform_metric_daily pmd
+				JOIN brand_platform bp ON bp.brand_platform_id = pmd.brand_platform_id
+				WHERE bp.brand_id = ?
+				  AND pmd.date_key BETWEEN ? AND ?
+				GROUP BY pmd.date_key
+				ORDER BY pmd.date_key
+				""";
 
-        return jdbcTemplate.query(sql,
-                (rs, rowNum) -> ChannelTopPostDto.builder()
-                        .postId(rs.getLong("post_id"))
-                        .postTitle(rs.getString("post_title"))
-                        .platformName(rs.getString("platform_name"))
-                        .likes(rs.getInt("likes"))
-                        .comments(rs.getInt("comments"))
-                        .shares(rs.getInt("shares"))
-                        .reviewCount(rs.getInt("review_count"))
-                        .engagementRate(rs.getDouble("engagement_rate"))
-                        .build(),
-                fromDateKey, toDateKey, brandId);
-    }
+		return jdbcTemplate.query(sql,
+				(rs, rowNum) -> ChannelPerformanceTrendPointDto.builder().dateKey(rs.getInt("date_key"))
+						.likes(rs.getInt("likes")).comments(rs.getInt("comments")).shares(rs.getInt("shares"))
+						.reviews(rs.getInt("reviews")).build(),
+				brandId, fromDateKey, toDateKey);
+	}
 
-    // ── 4. 리뷰 트렌드 (플랫폼별 일간 → 집계) ───────────────────────
-    private ReviewTrendDto findReviewTrend(Long brandId, int fromDateKey, int toDateKey,
-                                           LocalDate fromDate, LocalDate toDate) {
-        String sql = """
-                SELECT p.platform_code,
-                       pmd.date_key,
-                       COALESCE(SUM(pmd.total_reviews), 0) AS reviews
-                FROM platform_metric_daily pmd
-                JOIN brand_platform bp ON bp.brand_platform_id = pmd.brand_platform_id
-                JOIN platform p ON p.platform_id = bp.platform_id
-                WHERE bp.brand_id = ?
-                  AND pmd.date_key BETWEEN ? AND ?
-                GROUP BY p.platform_code, pmd.date_key
-                ORDER BY pmd.date_key
-                """;
+	// ── 3. 상위 게시물 ───────────────────────────────────────────────
+	private List<ChannelTopPostDto> findTopPosts(Long brandId, int fromDateKey, int toDateKey) {
+		String sql = """
+				SELECT cp.post_id,
+				       COALESCE(cp.post_title, CONCAT('Post #', cp.post_id)) AS post_title,
+				       p.platform_name,
+				       COALESCE(SUM(pmd.like_count),    0) AS likes,
+				       COALESCE(SUM(pmd.comment_count), 0) AS comments,
+				       COALESCE(SUM(pmd.share_count),   0) AS shares,
+				       COALESCE(SUM(pmd.review_count),  0) AS review_count,
+				       COALESCE(SUM(pmd.like_count + pmd.comment_count + pmd.share_count), 0) AS engagement_rate
+				FROM content_post cp
+				JOIN brand_platform bp ON bp.brand_platform_id = cp.brand_platform_id
+				JOIN platform p ON p.platform_id = bp.platform_id
+				LEFT JOIN post_metric_daily pmd
+				       ON pmd.post_id = cp.post_id
+				      AND pmd.date_key BETWEEN ? AND ?
+				WHERE bp.brand_id = ?
+				GROUP BY cp.post_id, cp.post_title, p.platform_name
+				ORDER BY engagement_rate DESC
+				LIMIT 5
+				""";
 
-        // date_key → platformCode → reviews 맵
-        Map<Integer, Map<String, Integer>> dataMap = new LinkedHashMap<>();
-        Set<String> platforms = new LinkedHashSet<>();
+		return jdbcTemplate.query(sql,
+				(rs, rowNum) -> ChannelTopPostDto.builder().postId(rs.getLong("post_id"))
+						.postTitle(rs.getString("post_title")).platformName(rs.getString("platform_name"))
+						.likes(rs.getInt("likes")).comments(rs.getInt("comments")).shares(rs.getInt("shares"))
+						.reviewCount(rs.getInt("review_count")).engagementRate(rs.getDouble("engagement_rate")).build(),
+				fromDateKey, toDateKey, brandId);
+	}
 
-        jdbcTemplate.query(sql, rs -> {
-            String code   = rs.getString("platform_code");
-            int dateKey   = rs.getInt("date_key");
-            int reviews   = rs.getInt("reviews");
-            platforms.add(code);
-            dataMap.computeIfAbsent(dateKey, k -> new HashMap<>()).put(code, reviews);
-        }, brandId, fromDateKey, toDateKey);
+	// ── 4. 리뷰 트렌드 (플랫폼별 일간 → 집계) ───────────────────────
+	private ReviewTrendDto findReviewTrend(Long brandId, int fromDateKey, int toDateKey, LocalDate fromDate,
+			LocalDate toDate) {
+		String sql = """
+				SELECT p.platform_code,
+				       pmd.date_key,
+				       COALESCE(SUM(pmd.total_reviews), 0) AS reviews
+				FROM platform_metric_daily pmd
+				JOIN brand_platform bp ON bp.brand_platform_id = pmd.brand_platform_id
+				JOIN platform p ON p.platform_id = bp.platform_id
+				WHERE bp.brand_id = ?
+				  AND pmd.date_key BETWEEN ? AND ?
+				GROUP BY p.platform_code, pmd.date_key
+				ORDER BY pmd.date_key
+				""";
 
-        List<String> labels  = new ArrayList<>();
-        List<Integer> google = new ArrayList<>();
-        List<Integer> naver  = new ArrayList<>();
-        List<Integer> kakao  = new ArrayList<>();
-        List<Integer> total  = new ArrayList<>();
+		// date_key → platformCode → reviews 맵
+		Map<Integer, Map<String, Integer>> dataMap = new LinkedHashMap<>();
+		Set<String> platforms = new LinkedHashSet<>();
 
-        for (Map.Entry<Integer, Map<String, Integer>> entry : dataMap.entrySet()) {
-            String dk = String.valueOf(entry.getKey());
-            // date_key(20260301) → "03/01" 형식
-            labels.add(dk.substring(4, 6) + "/" + dk.substring(6, 8));
+		jdbcTemplate.query(sql, rs -> {
+			String code = rs.getString("platform_code");
+			int dateKey = rs.getInt("date_key");
+			int reviews = rs.getInt("reviews");
+			platforms.add(code);
+			dataMap.computeIfAbsent(dateKey, k -> new HashMap<>()).put(code, reviews);
+		}, brandId, fromDateKey, toDateKey);
 
-            Map<String, Integer> row = entry.getValue();
-            int g = row.getOrDefault("google", 0);
-            int n = row.getOrDefault("naver",  0);
-            int k = row.getOrDefault("kakao",  0);
-            google.add(g);
-            naver.add(n);
-            kakao.add(k);
-            total.add(g + n + k);
-        }
+		List<String> labels = new ArrayList<>();
+		List<Integer> google = new ArrayList<>();
+		List<Integer> naver = new ArrayList<>();
+		List<Integer> kakao = new ArrayList<>();
+		List<Integer> total = new ArrayList<>();
 
-        long days = fromDate.until(toDate).getDays() + 1;
-        String period = days <= 7 ? "week" : days <= 31 ? "month" : "year";
+		for (Map.Entry<Integer, Map<String, Integer>> entry : dataMap.entrySet()) {
+			String dk = String.valueOf(entry.getKey());
+			// date_key(20260301) → "03/01" 형식
+			labels.add(dk.substring(4, 6) + "/" + dk.substring(6, 8));
 
-        return ReviewTrendDto.builder()
-                .period(period)
-                .labels(labels)
-                .google(google)
-                .naver(naver)
-                .kakao(kakao)
-                .total(total)
-                .build();
-    }
+			Map<String, Integer> row = entry.getValue();
+			int g = row.getOrDefault("google", 0);
+			int n = row.getOrDefault("naver", 0);
+			int k = row.getOrDefault("kakao", 0);
+			google.add(g);
+			naver.add(n);
+			kakao.add(k);
+			total.add(g + n + k);
+		}
 
-    // ── 5. 인사이트 ─────────────────────────────────────────────────
-    private ChannelPerformanceInsightDto findLatestInsight(Long brandId) {
-        String sql = """
-                SELECT pia.analysis_period_type,
-                       pia.base_year,
-                       pia.base_month,
-                       pia.weekend_effect_score,
-                       pia.holiday_effect_score,
-                       pia.best_day_of_week,
-                       pia.best_hour_range
-                FROM performance_impact_analysis pia
-                JOIN brand_platform bp ON bp.brand_platform_id = pia.brand_platform_id
-                WHERE bp.brand_id = ?
-                ORDER BY pia.base_year DESC, pia.base_month DESC
-                LIMIT 1
-                """;
+		long days = fromDate.until(toDate).getDays() + 1;
+		String period = days <= 7 ? "week" : days <= 31 ? "month" : "year";
 
-        List<ChannelPerformanceInsightDto> results = jdbcTemplate.query(sql,
-                (rs, rowNum) -> ChannelPerformanceInsightDto.builder()
-                        .periodType(rs.getString("analysis_period_type"))
-                        .baseYear((Integer) rs.getObject("base_year"))
-                        .baseMonth((Integer) rs.getObject("base_month"))
-                        .weekendEffectScore(rs.getObject("weekend_effect_score") != null
-                                ? rs.getDouble("weekend_effect_score") : null)
-                        .holidayEffectScore(rs.getObject("holiday_effect_score") != null
-                                ? rs.getDouble("holiday_effect_score") : null)
-                        .bestDayOfWeek((Integer) rs.getObject("best_day_of_week"))
-                        .bestHourRange(rs.getString("best_hour_range"))
-                        .build(),
-                brandId);
+		return ReviewTrendDto.builder().period(period).labels(labels).google(google).naver(naver).kakao(kakao)
+				.total(total).build();
+	}
 
-        if (results.isEmpty()) {
-            return ChannelPerformanceInsightDto.builder()
-                    .periodType("month")
-                    .baseYear(null)
-                    .baseMonth(null)
-                    .weekendEffectScore(0.0)
-                    .holidayEffectScore(0.0)
-                    .bestDayOfWeek(null)
-                    .bestHourRange("데이터 없음")
-                    .build();
-        }
+	// ── 5. 인사이트 ─────────────────────────────────────────────────
+	private ChannelPerformanceInsightDto findLatestInsight(Long brandId) {
+		String sql = """
+				SELECT pia.analysis_period_type,
+				       pia.base_year,
+				       pia.base_month,
+				       pia.weekend_effect_score,
+				       pia.holiday_effect_score,
+				       pia.best_day_of_week,
+				       pia.best_hour_range
+				FROM performance_impact_analysis pia
+				JOIN brand_platform bp ON bp.brand_platform_id = pia.brand_platform_id
+				WHERE bp.brand_id = ?
+				ORDER BY pia.base_year DESC, pia.base_month DESC
+				LIMIT 1
+				""";
 
-        return results.get(0);
-    }
+		List<ChannelPerformanceInsightDto> results = jdbcTemplate
+				.query(sql,
+						(rs, rowNum) -> ChannelPerformanceInsightDto.builder()
+								.periodType(rs.getString("analysis_period_type"))
+								.baseYear((Integer) rs.getObject("base_year"))
+								.baseMonth((Integer) rs.getObject("base_month"))
+								.weekendEffectScore(rs.getObject("weekend_effect_score") != null
+										? rs.getDouble("weekend_effect_score")
+										: null)
+								.holidayEffectScore(rs.getObject("holiday_effect_score") != null
+										? rs.getDouble("holiday_effect_score")
+										: null)
+								.bestDayOfWeek((Integer) rs.getObject("best_day_of_week"))
+								.bestHourRange(rs.getString("best_hour_range")).build(),
+						brandId);
+
+		if (results.isEmpty()) {
+			return ChannelPerformanceInsightDto.builder().periodType("month").baseYear(null).baseMonth(null)
+					.weekendEffectScore(0.0).holidayEffectScore(0.0).bestDayOfWeek(null).bestHourRange("데이터 없음")
+					.build();
+		}
+
+		return results.get(0);
+	}
 }

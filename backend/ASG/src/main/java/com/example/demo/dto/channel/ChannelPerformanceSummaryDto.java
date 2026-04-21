@@ -12,6 +12,10 @@ public record ChannelPerformanceSummaryDto(
         int totalShares,
         int totalReviews,
         int followerGrowth,
-        double engagementRate
-) {
-}
+        double engagementRate,
+        int prevLikes,
+        int prevComments,
+        int prevShares,
+        int prevReviews,
+        int prevFollowerGrowth
+) {}

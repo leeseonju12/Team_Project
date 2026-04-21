@@ -1296,10 +1296,10 @@ em {
                 style="padding:4px 12px;border-radius:100px;border:none;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;background:transparent;color:var(--text3);">리뷰</button>
             </div>
             <select id="compareMetricSel" onchange="updateCompareChart()" style="padding:5px 10px;border-radius:7px;border:1.5px solid var(--border);background:var(--white);font-size:12px;font-family:'Noto Sans KR',sans-serif;outline:none;cursor:pointer;color:var(--text2);">
-              <option value="views">조회수</option>
               <option value="likes">좋아요</option>
               <option value="comments">댓글</option>
               <option value="shares">공유</option>
+              <option value="reviews">리뷰</option>
             </select>
           </div>
         </div>
@@ -1498,11 +1498,11 @@ em {
 
     // compare: 현재 기간 summaries 기준 (prev는 별도 API 없으므로 0으로 처리)
     const compare = {
-      likes:    { cur: summaries.map(s => s.totalLikes    ?? 0), prev: summaries.map(() => 0) },
-      comments: { cur: summaries.map(s => s.totalComments ?? 0), prev: summaries.map(() => 0) },
-      shares:   { cur: summaries.map(s => s.totalShares   ?? 0), prev: summaries.map(() => 0) },
-      reviews:  { cur: summaries.map(s => s.totalReviews  ?? 0), prev: summaries.map(() => 0) },
-    };
+    		  likes:    { cur: summaries.map(s => s.totalLikes    ?? 0), prev: summaries.map(s => s.prevLikes    ?? 0) },
+    		  comments: { cur: summaries.map(s => s.totalComments ?? 0), prev: summaries.map(s => s.prevComments ?? 0) },
+    		  shares:   { cur: summaries.map(s => s.totalShares   ?? 0), prev: summaries.map(s => s.prevShares   ?? 0) },
+    		  reviews:  { cur: summaries.map(s => s.totalReviews  ?? 0), prev: summaries.map(s => s.prevReviews  ?? 0) },
+    		};
 
     // 플랫폼별 배열 (차트용 — 전체합산 1개 배열을 PLATFORMS 수만큼 래핑)
     const wrap = arr => PLATFORMS.map((_, i) =>
@@ -1510,15 +1510,16 @@ em {
     );
 
     DATA[period] = {
-      labels,
-      likes:     PLATFORMS.map((_, i) => trends.map(t => t.likes    ?? 0)),
-      comments:  PLATFORMS.map((_, i) => trends.map(t => t.comments ?? 0)),
-      shares:    PLATFORMS.map((_, i) => trends.map(t => t.shares   ?? 0)),
-      followers: PLATFORMS.map((_, i) => trends.map(t => t.reviews  ?? 0)),
-      rankScores: summaries.map(s => s.totalLikes ?? 0),
-      donut,
-      compare,
-    };
+    		  _summaries: summaries,   // ← 이 줄 추가
+    		  labels,
+    		  likes:     PLATFORMS.map(() => trends.map(t => t.likes    ?? 0)),
+    		  comments:  PLATFORMS.map(() => trends.map(t => t.comments ?? 0)),
+    		  shares:    PLATFORMS.map(() => trends.map(t => t.shares   ?? 0)),
+    		  followers: PLATFORMS.map(() => trends.map(t => t.reviews  ?? 0)),
+    		  rankScores: summaries.map(s => s.totalLikes ?? 0),
+    		  donut,
+    		  compare,
+    		};
   }
     
  // ── 리뷰 mock 데이터 ──────────────────────────────────
@@ -1532,36 +1533,42 @@ em {
     let REVIEW_DATA = {};
 
     function buildReviewDataFromResponse(period, res) {
-      const rt = res.reviewTrend;
-      if (!rt) return;
+    	  const rt = res.reviewTrend;
+    	  if (!rt) return;
 
-      const labels  = rt.labels  ?? [];
-      const google  = rt.google  ?? [];
-      const naver   = rt.naver   ?? [];
-      const kakao   = rt.kakao   ?? [];
-      const total   = rt.total   ?? [];
+    	  const google = rt.google ?? [];
+    	  const naver  = rt.naver  ?? [];
+    	  const kakao  = rt.kakao  ?? [];
 
-      // rankScores: 기간 전체 합산
-      const googleTotal = google.reduce((s, v) => s + v, 0);
-      const naverTotal  = naver.reduce((s, v)  => s + v, 0);
-      const kakaoTotal  = kakao.reduce((s, v)  => s + v, 0);
-      const rankScores  = [googleTotal, naverTotal, kakaoTotal];
+    	  const googleTotal = google.reduce((s, v) => s + v, 0);
+    	  const naverTotal  = naver.reduce((s, v)  => s + v, 0);
+    	  const kakaoTotal  = kakao.reduce((s, v)  => s + v, 0);
+    	  const rankTotals  = [googleTotal, naverTotal, kakaoTotal];
 
-      // rankChanges: prev 데이터 없으므로 '-'로 표시
-      const rankChanges = ['-', '-', '-'];
-      const rankUp      = [false, false, false];
+    	  // 전반부 vs 후반부로 상승도 계산
+    	  const calcChange = arr => {
+    	    if (arr.length < 2) return { pct: '-', up: false };
+    	    const half   = Math.floor(arr.length / 2);
+    	    const first  = arr.slice(0, half).reduce((s, v) => s + v, 0);
+    	    const second = arr.slice(half).reduce((s, v) => s + v, 0);
+    	    if (first === 0) return { pct: '-', up: false };
+    	    const diff = Math.round((second - first) / first * 100);
+    	    return { pct: (diff >= 0 ? '+' : '') + diff + '%', up: diff >= 0 };
+    	  };
 
-      REVIEW_DATA[period] = {
-        labels,
-        google,
-        naver,
-        kakao,
-        reviews: total,
-        rankScores,
-        rankChanges,
-        rankUp,
-      };
-    }
+    	  const changes = [google, naver, kakao].map(calcChange);
+
+    	  REVIEW_DATA[period] = {
+    	    labels:      rt.labels ?? [],
+    	    google,
+    	    naver,
+    	    kakao,
+    	    reviews:     rt.total  ?? [],
+    	    rankScores:  rankTotals,
+    	    rankChanges: changes.map(c => c.pct),
+    	    rankUp:      changes.map(c => c.up),
+    	  };
+    	}
 
     // 교체 후
 // ── 통합 트렌드 다중선택 상태 ─────────────────────────────
@@ -2353,19 +2360,25 @@ function renderNaverSummary(summary, period) {
     }
 
     function animateKpis() {
-      const vals = {
-        week: { views: '28.5K', likes: '1.8K', comments: '439', shares: '210', reviews: '31', followers: '+128' },
-        month: { views: '284.7K', likes: '18.2K', comments: '4,391', shares: '2,104', reviews: '312', followers: '+1,284' },
-        year: { views: '2.84M', likes: '182K', comments: '43.9K', shares: '21.0K', reviews: '3,120', followers: '+12,840' },
-      };
-      const v = vals[currentPeriod];
-      document.getElementById('kpi-views').textContent = v.views;
-      document.getElementById('kpi-likes').textContent = v.likes;
-      document.getElementById('kpi-comments').textContent = v.comments;
-      document.getElementById('kpi-shares').textContent = v.shares;
-      document.getElementById('kpi-reviews').textContent = v.reviews;
-      document.getElementById('kpi-followers').textContent = v.followers;
-    }
+    	  const summaries = (DATA[currentPeriod] && DATA[currentPeriod]._summaries) ?? [];
+    	  if (summaries.length === 0) return;
+
+    	  const totalLikes    = summaries.reduce((s, x) => s + (x.totalLikes    ?? 0), 0);
+    	  const totalComments = summaries.reduce((s, x) => s + (x.totalComments ?? 0), 0);
+    	  const totalShares   = summaries.reduce((s, x) => s + (x.totalShares   ?? 0), 0);
+    	  const totalReviews  = summaries.reduce((s, x) => s + (x.totalReviews  ?? 0), 0);
+    	  const totalFollowers= summaries.reduce((s, x) => s + (x.followerGrowth?? 0), 0);
+
+    	  const fmt = n => n >= 1000000 ? (n/1000000).toFixed(2)+'M'
+    	                 : n >= 1000    ? (n/1000).toFixed(1)+'K'
+    	                 : String(n);
+
+    	  document.getElementById('kpi-likes').textContent     = fmt(totalLikes);
+    	  document.getElementById('kpi-comments').textContent  = fmt(totalComments);
+    	  document.getElementById('kpi-shares').textContent    = fmt(totalShares);
+    	  document.getElementById('kpi-reviews').textContent   = fmt(totalReviews);
+    	  document.getElementById('kpi-followers').textContent = (totalFollowers >= 0 ? '+' : '') + fmt(totalFollowers);
+    	}
 
     function chartOpts() {
       return {
