@@ -884,10 +884,53 @@ async function initializeDashboard() {
   updateRetouchState();
 }
 
+// ── 마이페이지 기본값 pre-select ──────────────────────────
+function applyContentDefaults() {
+  const tone  = document.getElementById('cs_tone')?.value;
+  const emoji = document.getElementById('cs_emoji')?.value;
+  const len   = document.getElementById('cs_length')?.value;
+  const sns   = document.getElementById('cs_sns')?.value;
+
+  // hidden input 없으면(useDefaultMode=OFF 또는 비로그인) 적용 안 함
+  if (!tone && !emoji && !len && !sns) return;
+
+  // 말투: DB값(기본/친근/깔끔/격식/트렌디) → data-tone(default/friendly/clean/formal/trendy)
+  const TONE_MAP = { '기본':'default', '친근':'friendly', '깔끔':'clean', '격식':'formal', '트렌디':'trendy' };
+  if (tone && TONE_MAP[tone]) {
+    document.querySelectorAll('#toneGroup .tone-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.tone === TONE_MAP[tone]);
+    });
+  }
+
+  // 이모지: DB값(적게/적당히/많이) → data-emoji(low/mid/high)
+  const EMOJI_MAP = { '적게':'low', '적당히':'mid', '많이':'high' };
+  if (emoji && EMOJI_MAP[emoji]) {
+    document.querySelectorAll('#emojiGroup .slider-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.emoji === EMOJI_MAP[emoji]);
+    });
+  }
+
+  // 글자수 슬라이더
+  if (len && rangeEl && rangeValEl) {
+    rangeEl.value = len;
+    rangeValEl.textContent = len + '자';
+    updateRange(); // 슬라이더 스타일(--pct) 갱신
+  }
+
+  // SNS 칩: "instagram,naver" → 각 chip active 토글
+  if (sns) {
+    const selected = sns.split(',').map(s => s.trim());
+    document.querySelectorAll('#snsChips .chip').forEach(el => {
+      el.classList.toggle('active', selected.includes(el.dataset.sns));
+    });
+  }
+}
+
 /* --------------------------------------------------------------------------
    11. Boot
    -------------------------------------------------------------------------- */
-document.addEventListener('DOMContentLoaded', async () => {
-  bindAllUIEvents();
-  await initializeDashboard();
-});
+   document.addEventListener('DOMContentLoaded', async () => {
+     bindAllUIEvents();
+     applyContentDefaults(); // ✅ 추가 — bindAllUIEvents 이후 실행해야 이벤트 바인딩과 충돌 없음
+     await initializeDashboard();
+   });

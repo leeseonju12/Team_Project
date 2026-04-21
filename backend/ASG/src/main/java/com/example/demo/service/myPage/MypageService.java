@@ -119,7 +119,8 @@ public class MypageService {
 				.orElse(ContentSettings.createDefault(user));
 
 		settings.update(request.getIntroTemplate(), request.getOutroTemplate(), request.getTone(),
-				request.getEmojiLevel(), request.getTargetLength(), request.getPreferredSns());
+		        request.getEmojiLevel(), request.getTargetLength(), request.getPreferredSns(),
+		        request.getUseDefaultMode());  // ✅ 추가
 		contentSettingsRepository.save(settings);
 	}
 

@@ -33,6 +33,12 @@
   
 </head>
 
+<!-- contentSettings 기본값 hidden inputs -->
+<input type="hidden" id="cs_tone"        th:value="${contentSettings?.tone}">
+<input type="hidden" id="cs_emojiLevel"  th:value="${contentSettings?.emojiLevel}">
+<input type="hidden" id="cs_length"      th:value="${contentSettings?.targetLength}">
+<input type="hidden" id="cs_sns"         th:value="${contentSettings?.preferredSns}">
+
 <body>
 	<div th:replace="~{fragments/header :: global-header(currentMenu='index')}"></div>
 	
