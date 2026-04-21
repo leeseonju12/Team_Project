@@ -62,6 +62,20 @@ CREATE TABLE `users` (
   UNIQUE KEY `uq_users_provider` (`provider`, `provider_id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
 
+-- refresh_token (JWT 인증용)
+CREATE TABLE `refresh_token` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `token` VARCHAR(500) NOT NULL,
+  `user_id` BIGINT NOT NULL,
+  `expires_at` DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_refresh_token` (`token`),
+  KEY `idx_refresh_user` (`user_id`),
+  CONSTRAINT `fk_refresh_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+    ON DELETE CASCADE
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
+
 -- business_hours
 CREATE TABLE `business_hours` (
   `id`          BIGINT     NOT NULL AUTO_INCREMENT,

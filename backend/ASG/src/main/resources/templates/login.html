@@ -40,15 +40,11 @@
       --shadow-md: 0 4px 16px rgba(15, 23, 42, .10);
       --radius: 16px;
       --radius-sm: 10px;
-      /* ── 사이드 패널 텍스트 색 — LAYOUT_CONFIG에서 제어 ── */
       --ip-kicker-color: #ffffff;
-      /* 상단 부제목: 완전한 흰색 */
       --ip-headline-color: #ffffff;
-      /* 메인 제목: 기본 완전한 흰색 */
       --ip-sub-color: rgba(255, 255, 255, .75);
-      /* 하단 설명: 약간 투명한 흰색 (계층 구조) */
       --ip-headline-em-grad: linear-gradient(135deg, #a5f3fc 0%, #6ee7b7 100%);
-      /* em에 적용할 민트빛 포인트 그라데이션 */
+      --login-panel-bg: #F8FAFC;
     }
 
     html,
@@ -239,7 +235,7 @@
       justify-content: center;
       padding: 60px 48px 80px;
       min-height: calc(100vh - 63px);
-      background: var(--white);
+      background: var(--login-panel-bg);
       border-right: 1px solid var(--border);
       position: relative;
       z-index: 2;
@@ -716,7 +712,7 @@
           <div class="ip-feature">
             <div class="ip-feature-icon" style="background:rgba(255,255,255,.15);">🤖</div>
             <span class="ip-feature-title">AI 콘텐츠 자동 생성</span>
-            <p class="ip-feature-desc">업종·메뉴·이벤트만 입력하면 SNS 글을 즉시 완성해드려요.</p>
+            <p class="ip-feature-desc">업종·상품명·이벤트만 입력하면 SNS 글을 즉시 완성해드려요.</p>
           </div>
           <div class="ip-feature">
             <div class="ip-feature-icon" style="background:rgba(255,255,255,.15);">📲</div>
@@ -772,6 +768,7 @@
     const LAYOUT_CONFIG = {
       /* ── 이미지 ─────────────────────────────────────────────── */
       PANEL_IMAGE_URL: 'https://cdn.phototourl.com/free/2026-04-18-db7aafaf-b6d5-49e5-9654-de89125b5e41.png',
+      LOGIN_PANEL_BG: '#F8FAFC',
       IP_KICKER_COLOR: '#ffffff', // 소제목
       IP_HEADLINE_COLOR: '#ffffff', // 메인 헤드라인
       IP_SUB_COLOR: '#ffffff', // 설명 문구
@@ -780,7 +777,8 @@
     };
     (function applyLayoutConfig() {
       var root = document.documentElement;
-      // ── 글씨 색 ──
+      if (LAYOUT_CONFIG.LOGIN_PANEL_BG)
+	 	root.style.setProperty('--login-panel-bg', LAYOUT_CONFIG.LOGIN_PANEL_BG);
       if (LAYOUT_CONFIG.IP_KICKER_COLOR)
         root.style.setProperty('--ip-kicker-color', LAYOUT_CONFIG.IP_KICKER_COLOR);
       if (LAYOUT_CONFIG.IP_HEADLINE_COLOR)
