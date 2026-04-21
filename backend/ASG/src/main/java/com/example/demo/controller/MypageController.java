@@ -1,8 +1,10 @@
 package com.example.demo.controller;
 
+import com.example.demo.domain.user.entity.User;
 import com.example.demo.dto.myPage.BrandInfoRequest;
 import com.example.demo.dto.myPage.ContentSettingsRequest;
 import com.example.demo.dto.myPage.ContentSettingsResponse;
+import com.example.demo.service.auth.UserService;
 import com.example.demo.service.myPage.MypageService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +35,7 @@ public class MypageController {
     @GetMapping
     public String mypage(HttpSession session, Model model) {
         Long userId = getSessionUserId(session);
-        if (userId == null) return "redirect:/login_test";
+        if (userId == null) return "redirect:/login";
 
         model.addAttribute("brandInfo",   mypageService.getBrandInfo(userId));
         model.addAttribute("snsAccounts", mypageService.getSnsAccounts(userId));
