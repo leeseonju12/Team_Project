@@ -532,7 +532,7 @@ VALUES
 (3, 'naver',     '네이버',     '#03C75A', TRUE),
 (4, 'kakao',     '카카오채널', '#FEE500', TRUE);
 
--- 2. 브랜드
+/*-- 2. 브랜드
 INSERT IGNORE INTO brand (brand_id, user_id, brand_name, service_name, industry_type, location_name, address, phone, profile_image_url, created_at, updated_at) VALUES
 (1,  NULL, '어글리베이커리',     'uglybakery',             '카페 / 베이커리',           '망원본점',   '서울 마포구 월드컵로13길 73',           '023382018',   NULL, NOW(), NOW()),
 (2,  NULL, '을밀대',             'eulmildae',              '음식점 / 식당',       '염리동본점', '서울 마포구 숭문길 24',                 '027171922',   NULL, NOW(), NOW()),
@@ -562,7 +562,7 @@ VALUES
 (2, 1, 2, 'uglybakery',       'https://www.facebook.com/uglybakery',   FALSE, 'EXPIRED', NULL,  NOW(), NOW()),
 (3, 1, 3, 'uglybakery_naver', 'https://blog.naver.com/uglybakery',     FALSE, 'EXPIRED', NULL,  NOW(), NOW()),
 (4, 1, 4, '@어글리베이커리',   'https://pf.kakao.com/_uglybakery',      FALSE, 'EXPIRED', NULL,  NOW(), NOW());
-
+*/
 -- 4. 피드백
 INSERT IGNORE INTO `feedback_source` (`source_id`, `author_name`, `created_at`, `original_text`, `platform`) VALUES
 (1, '김철수', NOW(), '퇴근길에 들러서 포장했는데 식어도 바삭하고 맛있네요.', 'NAVER'),
@@ -573,6 +573,20 @@ INSERT IGNORE INTO `customer_feedback` (`feedback_id`, `source_id`, `type`, `sta
 (1, 1, 'REVIEW',  'UNRESOLVED', 'IDLE', NOW(), NOW()),
 (2, 2, 'REVIEW',  'UNRESOLVED', 'IDLE', NOW(), NOW()),
 (3, 3, 'COMMENT', 'UNCHECKED',  'IDLE', NOW(), NOW());
+
+-- 5-0. 채널 성과 더미용 brand_platform 선행 데이터 (brand/user 주석 유지 대응)
+-- brand_id=1 은 brand 테이블에 없으므로 FK 체크 우회: brand FK 일시 해제 후 삽입
+SET FOREIGN_KEY_CHECKS = 0;
+
+INSERT IGNORE INTO brand (brand_id, brand_name, industry_type, created_at, updated_at)
+VALUES (1, '채널성과더미브랜드', '카페 / 베이커리', NOW(), NOW());
+
+INSERT IGNORE INTO brand_platform (brand_platform_id, brand_id, platform_id, is_connected, token_status, created_at, updated_at)
+VALUES
+(1, 1, 1, FALSE, 'EXPIRED', NOW(), NOW()),
+(2, 1, 2, FALSE, 'EXPIRED', NOW(), NOW());
+
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- 5. 채널 성과 분석 더미
 -- date_dimension → content_post → platform_metric_daily → post_metric_daily → performance_impact_analysis
@@ -646,6 +660,7 @@ VALUES
 (1, 'month', YEAR(CURDATE()), MONTH(CURDATE()), 12.3, 8.5, 6, 2, '18:00-21:00', NOW()),
 (2, 'month', YEAR(CURDATE()), MONTH(CURDATE()),  8.1, 6.2, 5, 2, '12:00-14:00', NOW());
 
+/*
 -- ===== users, brand 데이터 =====
 -- [1] 구글 유저 - 어글리 베이커리 (카페 / 베이커리)
 INSERT INTO `users` (
@@ -906,7 +921,7 @@ INSERT INTO inquiry (TYPE, email, title, BODY, content, STATUS, created_at) VALU
 ('시스템오류', 'sundayclothes@kakao.com', '해시태그 추천 기능이 동작하지 않습니다',   '해시태그 자동 추천 버튼 클릭 시 아무 반응이 없습니다.',           '해시태그 자동 추천 버튼 클릭 시 아무 반응이 없습니다.',           '미처리',   NOW() - INTERVAL 2 DAY);
 
 
-/* -- 브랜드 아이디 21번 콘텐츠 히스토리 확인 용 테스트 데이터
+-- 브랜드 아이디 21번 콘텐츠 히스토리 확인 용 테스트 데이터
 INSERT INTO brand_platform (brand_id, platform_id, is_connected, token_status, created_at, updated_at)
 VALUES 
 (21, 1, 0, 'ACTIVE', NOW(), NOW()),

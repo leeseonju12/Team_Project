@@ -14,6 +14,11 @@ import com.example.demo.dto.SignupRequest;
 import com.example.demo.repository.auth.UserRepository;
 import com.example.demo.entity.myPage.Brand;
 import com.example.demo.repository.myPage.BrandRepository;
+import com.example.demo.entity.myPage.BrandPlatform;
+import com.example.demo.entity.myPage.Platform;
+import com.example.demo.repository.myPage.BrandPlatformRepository;
+import com.example.demo.repository.myPage.PlatformRepository;
+import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +30,8 @@ public class UserService {
 
 	private final UserRepository userRepository;
 	private final BrandRepository brandRepository;
+	private final BrandPlatformRepository brandPlatformRepository;
+	private final PlatformRepository platformRepository;
 
 	@Transactional(readOnly = true)
 	public User findById(Long userId) {
@@ -81,7 +88,26 @@ public class UserService {
 		brandRepository.save(brand);
 
 		log.info("회원가입 온보딩 완료 - userId={}, nickname={}", userId, user.getNickname());
+		
+		// ── 7. brand_platform 4개 자동 생성 ─────────────────  ← 추가
+		List<String> defaultCodes = List.of("instagram", "facebook", "naver", "kakao");
+		List<Platform> platforms = platformRepository.findByPlatformCodeIn(defaultCodes);
+
+		for (Platform platform : platforms) {
+		    BrandPlatform bp = new BrandPlatform();
+		    bp.setBrand(brand);
+		    bp.setPlatform(platform);
+		    bp.setIsConnected(false);
+		    bp.setTokenStatus("ACTIVE");
+		    brandPlatformRepository.save(bp);
+		}
+
+		log.info("brand_platform 생성 완료 - brandId={}, count={}", brand.getBrandId(), platforms.size());
+		log.info("회원가입 온보딩 완료 - userId={}, nickname={}", userId, user.getNickname());
+	
 	}
+	
+	
 
 	// ── private helpers (변경 없음) ──────────────────────────────
 

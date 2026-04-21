@@ -83,6 +83,7 @@ public class MypageService {
 		User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 		// ❌ 제거: user.updateAddress(request.getAddress(), request.getLocationName());
 		user.updateStorePhone(request.getPhone());
+		user.updateCompanyInfo(request.getBrandName(), request.getIndustryType());
 		user.updateAddress(request.getAddress(), request.getAddrDetail());  // ✅ 추가
 		brand.setAddress(stripZipCode(request.getAddress()));
 		brand.setLocationName(request.getLocationName());
