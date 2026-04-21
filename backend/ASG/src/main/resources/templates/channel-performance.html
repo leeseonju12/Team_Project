@@ -1299,7 +1299,6 @@ em {
               <option value="likes">좋아요</option>
               <option value="comments">댓글</option>
               <option value="shares">공유</option>
-              <option value="reviews">리뷰</option>
             </select>
           </div>
         </div>
@@ -1593,9 +1592,15 @@ function toggleMetric(metric) {
 function renderReviewRankList() {
   const rd = REVIEW_DATA[currentPeriod];
   const el = document.getElementById('rankList');
-  if (!el) return;
-  const numClass = ['gold','silver','bronze'];
-  el.innerHTML = REVIEW_PLATFORMS.map((p, i) => `
+  if (!el || !rd) return;
+
+  // rankScores 기준 내림차순 정렬
+  const sorted = REVIEW_PLATFORMS
+    .map((p, i) => ({ ...p, score: rd.rankScores[i] ?? 0, up: rd.rankUp[i], change: rd.rankChanges[i] }))
+    .sort((a, b) => b.score - a.score);
+
+  const numClass = ['gold', 'silver', 'bronze'];
+  el.innerHTML = sorted.map((p, i) => `
     <div class="rank-item">
       <div class="rank-num ${numClass[i]}">${i + 1}</div>
       <div class="rank-platform">
@@ -1604,11 +1609,11 @@ function renderReviewRankList() {
       </div>
       <div class="rank-bar-wrap">
         <div class="rank-bar-bg">
-          <div class="rank-bar-fill" style="width:${Math.round(rd.rankScores[i] / rd.rankScores[0] * 100)}%;background:${p.color};transition:width 1s ease;"></div>
+          <div class="rank-bar-fill" style="width:${sorted[0].score > 0 ? Math.round(p.score / sorted[0].score * 100) : 0}%;background:${p.color};transition:width 1s ease;"></div>
         </div>
       </div>
-      <span class="rank-score">${rd.rankScores[i].toLocaleString()}</span>
-      <span class="rank-change ${rd.rankUp[i] ? 'up' : 'down'}">${rd.rankChanges[i]}</span>
+      <span class="rank-score">${p.score.toLocaleString()}</span>
+      <span class="rank-change ${p.up ? 'up' : 'down'}">${p.change}</span>
     </div>
   `).join('');
 }
@@ -1833,92 +1838,99 @@ function renderDashboard(period) {
 	}
 
 	function buildCompareChart() {
-	  const canvas = document.getElementById('compareChart');
-	  if (!canvas) return;
-	  const ctx = canvas.getContext('2d');
-	  const sel = document.getElementById('compareMetricSel')?.value || 'likes';
-	  const cd  = compareData(sel);
+		  const canvas = document.getElementById('compareChart');
+		  if (!canvas) return;
+		  const ctx = canvas.getContext('2d');
+		  const sel = document.getElementById('compareMetricSel')?.value || 'likes';
+		  const cd  = compareData(sel);
+		  const SNS_PLATFORMS = PLATFORMS.filter(p => p.id !== 'google');
 
-	  compareChart = new Chart(ctx, {
-	    type: 'bar',
-	    data: {
-	      labels: PLATFORMS.map(p => p.name),
-	      datasets: [
-	        {
-	          label: getComparisonLabels().current,
-	          data: cd.cur,
-	          backgroundColor: PLATFORMS.map(p => p.color + 'CC'),
-	          borderRadius: 6,
-	          borderSkipped: false,
-	        },
-	        {
-	          label: getComparisonLabels().previous,
-	          data: cd.prev,
-	          backgroundColor: PLATFORMS.map(p => p.color + '44'),
-	          borderRadius: 6,
-	          borderSkipped: false,
-	          borderWidth: 1.5,
-	          borderColor: PLATFORMS.map(p => p.color),
-	        }
-	      ]
-	    },
-	    options: {
-	      ...chartOpts(),
-	      plugins: {
-	        legend: {
-	          display: true,
-	          position: 'top',
-	          labels: {
-	            font: { size: 11, family: 'Noto Sans KR' },
-	            boxWidth: 10,
-	            padding: 14
-	          }
-	        },
-	        tooltip: {
-	          backgroundColor: 'rgba(15,23,42,.92)',
-	          titleFont: { size: 11, family: 'Noto Sans KR' },
-	          bodyFont:  { size: 11, family: 'Noto Sans KR' },
-	          padding: 10,
-	          cornerRadius: 8,
-	        }
-	      }
-	    }
-	  });
-	}
+		  compareChart = new Chart(ctx, {
+		    type: 'bar',
+		    data: {
+		      labels: SNS_PLATFORMS.map(p => p.name),
+		      datasets: [
+		        {
+		          label: getComparisonLabels().current,
+		          data: cd.cur.filter((_, i) => PLATFORMS[i]?.id !== 'google'),
+		          backgroundColor: SNS_PLATFORMS.map(p => p.color + 'CC'),
+		          borderRadius: 6,
+		          borderSkipped: false,
+		        },
+		        {
+		          label: getComparisonLabels().previous,
+		          data: cd.prev.filter((_, i) => PLATFORMS[i]?.id !== 'google'),
+		          backgroundColor: SNS_PLATFORMS.map(p => p.color + '44'),
+		          borderRadius: 6,
+		          borderSkipped: false,
+		          borderWidth: 1.5,
+		          borderColor: SNS_PLATFORMS.map(p => p.color),
+		        }
+		      ]
+		    },
+		    options: {
+		      ...chartOpts(),
+		      plugins: {
+		        legend: {
+		          display: true,
+		          position: 'top',
+		          labels: {
+		            font: { size: 11, family: 'Noto Sans KR' },
+		            boxWidth: 10,
+		            padding: 14
+		          }
+		        },
+		        tooltip: {
+		          backgroundColor: 'rgba(15,23,42,.92)',
+		          titleFont: { size: 11, family: 'Noto Sans KR' },
+		          bodyFont:  { size: 11, family: 'Noto Sans KR' },
+		          padding: 10,
+		          cornerRadius: 8,
+		        }
+		      }
+		    }
+		  });
+		}
 
 	function updateCompareChart() {
-	  if (!compareChart) return;
-	  updateComparisonLabels();
+		  if (!compareChart) return;
+		  updateComparisonLabels();
 
-	  if (compareTab === 'review') {
-	    const rd     = REVIEW_DATA[currentPeriod] ?? {};
-	    const labels = REVIEW_PLATFORMS.map(p => p.name);
-	    const colors = REVIEW_PLATFORMS.map(p => p.color);
-	    const cur    = REVIEW_PLATFORMS.map(p => {
-	      const arr = rd[p.id] ?? [];
-	      return arr.length > 0 ? arr[arr.length - 1] : 0;
-	    });
-	    const prev = REVIEW_PLATFORMS.map(() => 0);
+		  if (compareTab === 'review') {
+		    const rd     = REVIEW_DATA[currentPeriod] ?? {};
+		    const labels = REVIEW_PLATFORMS.map(p => p.name);
+		    const colors = REVIEW_PLATFORMS.map(p => p.color);
+		    const cur    = REVIEW_PLATFORMS.map(p => {
+		      const arr = rd[p.id] ?? [];
+		      const half = Math.floor(arr.length / 2);
+		      return arr.slice(half).reduce((s, v) => s + v, 0);
+		    });
+		    const prev = REVIEW_PLATFORMS.map(p => {
+		      const arr = rd[p.id] ?? [];
+		      const half = Math.floor(arr.length / 2);
+		      return arr.slice(0, half).reduce((s, v) => s + v, 0);
+		    });
 
-	    compareChart.data.labels                      = labels;
-	    compareChart.data.datasets[0].data            = cur;
-	    compareChart.data.datasets[0].backgroundColor = colors.map(c => c + 'CC');
-	    compareChart.data.datasets[1].data            = prev;
-	    compareChart.data.datasets[1].backgroundColor = colors.map(c => c + '44');
-	    compareChart.data.datasets[1].borderColor     = colors;
-	  } else {
-	    const sel = document.getElementById('compareMetricSel')?.value || 'likes';
-	    const cd  = compareData(sel);
-	    compareChart.data.labels                      = PLATFORMS.map(p => p.name);
-	    compareChart.data.datasets[0].data            = cd.cur;
-	    compareChart.data.datasets[0].backgroundColor = PLATFORMS.map(p => p.color + 'CC');
-	    compareChart.data.datasets[1].data            = cd.prev;
-	    compareChart.data.datasets[1].backgroundColor = PLATFORMS.map(p => p.color + '44');
-	    compareChart.data.datasets[1].borderColor     = PLATFORMS.map(p => p.color);
-	  }
-	  compareChart.update('active');
-	  renderCompareTable();
-	}
+		    compareChart.data.labels                      = labels;
+		    compareChart.data.datasets[0].data            = cur;
+		    compareChart.data.datasets[0].backgroundColor = colors.map(c => c + 'CC');
+		    compareChart.data.datasets[1].data            = prev;
+		    compareChart.data.datasets[1].backgroundColor = colors.map(c => c + '44');
+		    compareChart.data.datasets[1].borderColor     = colors;
+		  } else {
+		    const sel = document.getElementById('compareMetricSel')?.value || 'likes';
+		    const cd  = compareData(sel);
+		    const SNS_PLATFORMS = PLATFORMS.filter(p => p.id !== 'google');
+		    compareChart.data.labels                      = SNS_PLATFORMS.map(p => p.name);
+		    compareChart.data.datasets[0].data            = cd.cur.filter((_, i) => PLATFORMS[i]?.id !== 'google');
+		    compareChart.data.datasets[0].backgroundColor = SNS_PLATFORMS.map(p => p.color + 'CC');
+		    compareChart.data.datasets[1].data            = cd.prev.filter((_, i) => PLATFORMS[i]?.id !== 'google');
+		    compareChart.data.datasets[1].backgroundColor = SNS_PLATFORMS.map(p => p.color + '44');
+		    compareChart.data.datasets[1].borderColor     = SNS_PLATFORMS.map(p => p.color);
+		  }
+		  compareChart.update('active');
+		  renderCompareTable();
+		}
 
 	function buildDonutChart() {
 	  const canvas = document.getElementById('donutChart');
@@ -2314,39 +2326,38 @@ function renderNaverSummary(summary, period) {
         if (!el) return;
 
         if (compareTab === 'review') {
-          const rd = REVIEW_DATA[currentPeriod];
+          const rd = REVIEW_DATA[currentPeriod] ?? {};
           el.innerHTML = REVIEW_PLATFORMS.map((p, i) => {
-            const cur  = rd[p.id][rd[p.id].length - 1];
-            const pct  = parseFloat(rd.rankChanges[i]);
-            const prev = Math.round(cur / (1 + pct / 100));
-            const up   = pct >= 0;
+            const arr  = rd[p.id] ?? [];
+            const half = Math.floor(arr.length / 2);
+            const cur  = arr.slice(half).reduce((s, v) => s + v, 0);
+            const prev = arr.slice(0, half).reduce((s, v) => s + v, 0);
+            const pct  = prev > 0 ? ((cur - prev) / prev * 100).toFixed(1) : '-';
+            const up   = pct !== '-' && parseFloat(pct) >= 0;
             return `
               <tr>
                 <td><div class="plat-cell"><span class="plat-pip" style="background:${p.color}"></span>${p.name}</div></td>
                 <td style="font-weight:700;">${cur.toLocaleString()}</td>
                 <td style="color:var(--text3);">${prev.toLocaleString()}</td>
-                <td><span class="change-pill ${up ? 'up' : 'down'}">${up ? '▲' : '▼'} ${Math.abs(pct)}%</span></td>
+                <td><span class="change-pill ${pct === '-' ? '' : up ? 'up' : 'down'}">${pct === '-' ? '-' : (up ? '▲' : '▼') + ' ' + Math.abs(pct) + '%'}</span></td>
               </tr>`;
           }).join('');
         } else {
-          const sel = document.getElementById('compareMetricSel')?.value || 'views';
+          const sel = document.getElementById('compareMetricSel')?.value || 'likes';
           const cd  = compareData(sel);
-          const SNS = [
-            { name: 'Instagram',    color: '#E1306C' },
-            { name: 'Facebook',     color: '#1877F2' },
-            { name: '네이버 블로그', color: '#03C75A' },
-          ];
-          el.innerHTML = SNS.map((p, i) => {
-            const cur  = cd.cur[i];
-            const prev = cd.prev[i];
-            const pct  = ((cur - prev) / prev * 100).toFixed(1);
-            const up   = pct >= 0;
+          const SNS_PLATFORMS = PLATFORMS.filter(p => p.id !== 'google');
+          el.innerHTML = SNS_PLATFORMS.map((p, i) => {
+            const platIdx = PLATFORMS.findIndex(pl => pl.id === p.id);
+            const cur  = cd.cur[platIdx]  ?? 0;
+            const prev = cd.prev[platIdx] ?? 0;
+            const pct  = prev > 0 ? ((cur - prev) / prev * 100).toFixed(1) : '-';
+            const up   = pct !== '-' && parseFloat(pct) >= 0;
             return `
               <tr>
                 <td><div class="plat-cell"><span class="plat-pip" style="background:${p.color}"></span>${p.name}</div></td>
                 <td style="font-weight:700;">${cur.toLocaleString()}</td>
                 <td style="color:var(--text3);">${prev.toLocaleString()}</td>
-                <td><span class="change-pill ${up ? 'up' : 'down'}">${up ? '▲' : '▼'} ${Math.abs(pct)}%</span></td>
+                <td><span class="change-pill ${pct === '-' ? '' : up ? 'up' : 'down'}">${pct === '-' ? '-' : (up ? '▲' : '▼') + ' ' + Math.abs(pct) + '%'}</span></td>
               </tr>`;
           }).join('');
         }
