@@ -1671,6 +1671,10 @@ async function loadDashboard(period) {
 }
 
 function renderDashboard(period) {
+	  if (trendChart)   { trendChart.destroy();   trendChart   = null; }
+	  if (compareChart) { compareChart.destroy();  compareChart = null; }
+	  if (donutChart)   { donutChart.destroy();    donutChart   = null; }
+	  if (hourlyChart)  { hourlyChart.destroy();   hourlyChart  = null; }
 	  safeBuildCharts();
 	  renderReviewRankList();
 	  renderCompareTable();
@@ -1701,13 +1705,13 @@ function renderDashboard(period) {
 	}
 
 	function safeBuildCharts() {
-	  if (!DATA[currentPeriod]) return;
-	  buildTrendChart();
-	  buildCompareChart();
-	  updateComparisonLabels();
-	  buildDonutChart();
-	  buildHourlyChart();
-	}
+		  if (!DATA[currentPeriod]) return;
+		  buildTrendChart();
+		  buildCompareChart();
+		  updateComparisonLabels();
+		  buildDonutChart();
+		  buildHourlyChart();
+		}
 
 	function buildTrendChart() {
 	  const canvas = document.getElementById('trendChart');
@@ -2371,25 +2375,55 @@ function renderNaverSummary(summary, period) {
     }
 
     function animateKpis() {
-    	  const summaries = (DATA[currentPeriod] && DATA[currentPeriod]._summaries) ?? [];
-    	  if (summaries.length === 0) return;
+        const summaries = (DATA[currentPeriod] && DATA[currentPeriod]._summaries) ?? [];
+        if (summaries.length === 0) return;
 
-    	  const totalLikes    = summaries.reduce((s, x) => s + (x.totalLikes    ?? 0), 0);
-    	  const totalComments = summaries.reduce((s, x) => s + (x.totalComments ?? 0), 0);
-    	  const totalShares   = summaries.reduce((s, x) => s + (x.totalShares   ?? 0), 0);
-    	  const totalReviews  = summaries.reduce((s, x) => s + (x.totalReviews  ?? 0), 0);
-    	  const totalFollowers= summaries.reduce((s, x) => s + (x.followerGrowth?? 0), 0);
+        const totalLikes         = summaries.reduce((s, x) => s + (x.totalLikes        ?? 0), 0);
+        const totalComments      = summaries.reduce((s, x) => s + (x.totalComments     ?? 0), 0);
+        const totalShares        = summaries.reduce((s, x) => s + (x.totalShares       ?? 0), 0);
+        const totalReviews       = summaries.reduce((s, x) => s + (x.totalReviews      ?? 0), 0);
+        const totalFollowers     = summaries.reduce((s, x) => s + (x.followerGrowth    ?? 0), 0);
+        const prevLikes          = summaries.reduce((s, x) => s + (x.prevLikes         ?? 0), 0);
+        const prevComments       = summaries.reduce((s, x) => s + (x.prevComments      ?? 0), 0);
+        const prevShares         = summaries.reduce((s, x) => s + (x.prevShares        ?? 0), 0);
+        const prevReviews        = summaries.reduce((s, x) => s + (x.prevReviews       ?? 0), 0);
+        const prevFollowers      = summaries.reduce((s, x) => s + (x.prevFollowerGrowth?? 0), 0);
 
-    	  const fmt = n => n >= 1000000 ? (n/1000000).toFixed(2)+'M'
-    	                 : n >= 1000    ? (n/1000).toFixed(1)+'K'
-    	                 : String(n);
+        const fmt = n => n >= 1000000 ? (n/1000000).toFixed(2)+'M'
+                       : n >= 1000    ? (n/1000).toFixed(1)+'K'
+                       : String(n);
 
-    	  document.getElementById('kpi-likes').textContent     = fmt(totalLikes);
-    	  document.getElementById('kpi-comments').textContent  = fmt(totalComments);
-    	  document.getElementById('kpi-shares').textContent    = fmt(totalShares);
-    	  document.getElementById('kpi-reviews').textContent   = fmt(totalReviews);
-    	  document.getElementById('kpi-followers').textContent = (totalFollowers >= 0 ? '+' : '') + fmt(totalFollowers);
-    	}
+        const fmtChg = (cur, prev) => {
+          if (prev === 0) return { text: '-', up: true };
+          const pct = ((cur - prev) / prev * 100).toFixed(1);
+          return { text: (pct >= 0 ? '▲' : '▼') + ' ' + Math.abs(pct) + '%', up: parseFloat(pct) >= 0 };
+        };
+
+        document.getElementById('kpi-likes').textContent     = fmt(totalLikes);
+        document.getElementById('kpi-comments').textContent  = fmt(totalComments);
+        document.getElementById('kpi-shares').textContent    = fmt(totalShares);
+        document.getElementById('kpi-reviews').textContent   = fmt(totalReviews);
+        document.getElementById('kpi-followers').textContent = (totalFollowers >= 0 ? '+' : '') + fmt(totalFollowers);
+
+        const chgLikes     = fmtChg(totalLikes,     prevLikes);
+        const chgComments  = fmtChg(totalComments,  prevComments);
+        const chgShares    = fmtChg(totalShares,     prevShares);
+        const chgReviews   = fmtChg(totalReviews,    prevReviews);
+        const chgFollowers = fmtChg(totalFollowers,  prevFollowers);
+
+        const setChg = (id, chg) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.textContent = chg.text;
+          el.className = 'kpi-change ' + (chg.up ? 'up' : 'down');
+        };
+
+        setChg('kpi-likes-chg',     chgLikes);
+        setChg('kpi-comments-chg',  chgComments);
+        setChg('kpi-shares-chg',    chgShares);
+        setChg('kpi-reviews-chg',   chgReviews);
+        setChg('kpi-followers-chg', chgFollowers);
+      }
 
     function chartOpts() {
       return {
