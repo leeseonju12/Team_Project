@@ -82,6 +82,12 @@ public class ContentSettings {
     @Column(name = "preferred_sns", length = 100)
     private String preferredSns;  // "instagram,naver" 형태로 저장
  
+    // 기본 세팅 저장
+    @Column(name = "use_default_mode", nullable = false)
+    @Builder.Default
+    private Boolean useDefaultMode = true;
+    
+    
     // ── 정적 팩토리 ──────────────────────────────────────────
  
     /**
@@ -93,6 +99,7 @@ public class ContentSettings {
                 .tone("기본")
                 .emojiLevel("적당히")
                 .targetLength(300)
+                .useDefaultMode(true)  // ✅ 추가
                 .build();
     }
  
@@ -126,7 +133,8 @@ public class ContentSettings {
             String tone,
             String emojiLevel,
             Integer targetLength,
-            String preferredSns
+            String preferredSns,
+            Boolean useDefaultMode
     ) {
         if (introTemplate != null) this.introTemplate = introTemplate;
         if (outroTemplate != null) this.outroTemplate = outroTemplate;
@@ -134,5 +142,6 @@ public class ContentSettings {
         if (emojiLevel != null) this.emojiLevel = emojiLevel;
         if (targetLength != null) this.targetLength = targetLength;
         if (preferredSns != null) this.preferredSns = preferredSns;
+        if (useDefaultMode != null) this.useDefaultMode = useDefaultMode;
     }
 }

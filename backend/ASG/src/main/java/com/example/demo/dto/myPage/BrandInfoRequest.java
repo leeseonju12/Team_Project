@@ -9,12 +9,13 @@ import java.time.LocalTime;
 @Setter
 public class BrandInfoRequest {
 
-    private String brandName;
-    private String serviceName;
-    private String industryType;
-    private String locationName;
-    private String address;
-    private String phone;
+	private String brandName;
+	private String serviceName;
+	private String industryType;
+	private String locationName;
+	private String address;
+	private String addrDetail;  // ✅ 추가
+	private String phone;
 
     // 영업시간
     private LocalTime openTime;

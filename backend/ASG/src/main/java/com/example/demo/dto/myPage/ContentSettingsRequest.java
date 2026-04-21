@@ -13,4 +13,5 @@ public class ContentSettingsRequest {
     private String introTemplate;
     private String outroTemplate;
     private String preferredSns;
+    private Boolean useDefaultMode;  // ✅ 추가
 }

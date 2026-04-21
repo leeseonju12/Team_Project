@@ -11,6 +11,7 @@ import com.example.demo.domain.user.entity.User;
 import com.example.demo.service.ContentService;
 import com.example.demo.service.auth.UserService;
 
+import com.example.demo.service.myPage.MypageService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
@@ -19,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 public class PageController {
 	
 	private final UserService userService;
-
+    private final MypageService mypageService;
 	
     private Long getSessionUserId(HttpSession session) {
         return (Long) session.getAttribute("userId");
@@ -29,6 +30,7 @@ public class PageController {
     public String feedbackPage(Model model, HttpSession session) {
         // 세션에서 userId 추출
         Long userId = getSessionUserId(session);
+
 
         // 세션 정보가 없는 경우 로그인 페이지로 리다이렉트
         if (userId == null) {
@@ -44,9 +46,13 @@ public class PageController {
 	
 
 	@GetMapping("/channel-performance")
-	public String channelPerformancePage() {
-	    // templates/channel-performance.html 을 찾으려면 확장자(.html) 없이 이름만 적습니다.
-	    return "channel-performance"; 
+	public String channelPerformancePage(HttpSession session, Model model) {
+	    Long userId = getSessionUserId(session);
+	    if (userId == null) return "redirect:/login_test";
+
+	    Long brandId = mypageService.getBrandId(userId);
+	    model.addAttribute("brandId", brandId);
+	    return "channel-performance";
 	}
 	
 	@GetMapping("/search-test")

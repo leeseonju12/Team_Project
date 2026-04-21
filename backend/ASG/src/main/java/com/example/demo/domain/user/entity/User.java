@@ -199,6 +199,12 @@ public class User {
         this.storePhoneNumber = storePhoneNumber;
     }
 
+    // 가게명·업종 업데이트
+    public void updateCompanyInfo(String companyName, String businessCategory) {
+        this.companyName = companyName;
+        this.businessCategory = businessCategory;
+    }
+    
     public static User createSocialUser(String provider, String providerId,
                                          String email, String name) {
         return User.builder()
@@ -215,5 +221,10 @@ public class User {
             .marketingConsent(false)
             .eventConsent(false)
             .build();
+    }
+    
+ // 연락처 업데이트
+    public void updateContactPhone(String contactPhone) {
+        this.contactPhone = contactPhone;
     }
 }

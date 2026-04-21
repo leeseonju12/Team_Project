@@ -1,22 +1,434 @@
+<!-- login_test.html 전체 교체 -->
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>ASG 소셜 로그인</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 2rem auto; max-width: 420px; }
-        a.btn { display: inline-block; width: 100%; margin-top: 10px; padding: 10px; box-sizing: border-box; text-align: center; text-decoration: none; border: 1px solid #ddd; }
-        .error { color: #c0392b; }
-        .message { color: #2980b9; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>소셜다모아 — 로그인</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;1,700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal:            #14b8a6;
+      --teal-dark:       #0f766e;
+      --teal-light:      rgba(20,184,166,.12);
+      --indigo:          #6366f1;
+      --indigo-dark:     #4338ca;
+      --indigo-light:    rgba(99,102,241,.10);
+      --green:           #22c55e;
+      --green-light:     rgba(34,197,94,.12);
+      --red:             #ef4444;
+      --brand-grad:      linear-gradient(135deg, var(--indigo) 0%, var(--teal) 100%);
+      --brand-grad-soft: linear-gradient(135deg, rgba(99,102,241,.06) 0%, rgba(20,184,166,.06) 100%);
+      --text:            #0f172a;
+      --text2:           #475569;
+      --text3:           #94a3b8;
+      --border:          #e2e8f0;
+      --border2:         #cbd5e1;
+      --bg:              #f8fafc;
+      --white:           #ffffff;
+      --shadow-sm:       0 1px 3px rgba(15,23,42,.08), 0 1px 2px rgba(15,23,42,.04);
+      --shadow-md:       0 4px 16px rgba(15,23,42,.10);
+      --radius:          16px;
+      --radius-sm:       10px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body { display: flex; flex-direction: column; }
+
+    /* ── Top stripe ── */
+    .top-stripe {
+      height: 3px;
+      background: var(--brand-grad);
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-8px);
+      background: var(--text); color: #fff;
+      padding: 12px 20px; border-radius: 999px;
+      font-size: 13px; font-weight: 600;
+      display: flex; align-items: center; gap: 8px;
+      opacity: 0; pointer-events: none;
+      transition: opacity .3s, transform .3s; z-index: 999;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
+
+    /* ── Header ── */
+    header {
+      position: fixed; top: 3px; left: 0; right: 0; z-index: 90;
+      height: 60px;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px;
+    }
+
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-mark {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: var(--brand-grad);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 900; color: #fff;
+      box-shadow: 0 2px 8px rgba(20,184,166,.3);
+    }
+    .logo-name { font-size: 15px; font-weight: 700; letter-spacing: -.3px; color: var(--text); }
+
+    .header-signup-link {
+      font-size: 13px; color: var(--text3); text-decoration: none;
+      font-weight: 500; transition: color .2s;
+    }
+    .header-signup-link:hover { color: var(--teal-dark); }
+    .header-signup-link strong { color: var(--teal-dark); }
+
+    /* ── Layout ── */
+    .page-wrapper {
+      padding-top: 63px;
+      flex: 1;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 500px; flex-shrink: 0;
+      position: fixed; top: 63px; left: 0; bottom: 0;
+      background: white;
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      padding: 48px 36px;
+      overflow-y: auto;
+    }
+
+    .sidebar-logo-section { margin-bottom: 48px; }
+    .sidebar-tagline {
+      font-family: 'Fraunces', serif;
+      font-size: 26px; font-weight: 700;
+      line-height: 1.25; letter-spacing: -.5px;
+      color: var(--text); margin-bottom: 10px;
+    }
+    .sidebar-tagline em {
+      font-style: italic;
+      background: var(--brand-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+    .sidebar-sub { font-size: 13px; color: var(--text3); line-height: 1.7; }
+
+    .sidebar-features {
+      margin-top: auto;
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .sf-item { display: flex; align-items: center; gap: 10px; }
+    .sf-icon {
+      width: 30px; height: 30px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; flex-shrink: 0;
+    }
+    .sf-icon.teal   { background: var(--teal-light); }
+    .sf-icon.indigo { background: var(--indigo-light); }
+    .sf-icon.green  { background: var(--green-light); }
+    .sf-text { font-size: 12px; color: var(--text2); line-height: 1.4; }
+    .sf-text strong { display: block; font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 1px; }
+
+    /* ── Main content ── */
+    .main-content {
+      margin-left: 500px; flex: 1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 60px 48px 80px;
+      min-height: calc(100vh - 63px);
+    }
+
+    .content-inner { width: 100%; max-width: 440px; }
+
+    /* ── Page heading ── */
+    .page-heading { margin-bottom: 36px; }
+    .page-heading h1 {
+      font-family: 'Fraunces', serif;
+      font-size: 30px; font-weight: 700;
+      line-height: 1.2; letter-spacing: -.5px;
+      color: var(--text); margin-bottom: 8px;
+    }
+    .page-heading h1 em {
+      font-style: italic;
+      background: var(--brand-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+    .page-heading p { font-size: 13px; color: var(--text3); line-height: 1.7; }
+
+    /* ── Social login buttons ── */
+    .social-btns { display: flex; flex-direction: column; gap: 10px; }
+
+    .social-btn {
+      display: flex; align-items: center; gap: 12px;
+      height: 52px; padding: 0 20px;
+      border-radius: var(--radius-sm); border: 1.5px solid var(--border);
+      background: white; cursor: pointer; transition: all .2s;
+      font-family: 'Noto Sans KR', sans-serif; font-size: 14px; font-weight: 600;
+      color: var(--text); text-decoration: none; width: 100%;
+    }
+    .social-btn:hover {
+      border-color: rgba(99,102,241,.25);
+      background: var(--brand-grad-soft);
+      transform: translateY(-1px); box-shadow: var(--shadow-sm);
+    }
+    .social-btn:active { transform: translateY(0); }
+
+    .s-icon {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; overflow: hidden;
+    }
+    .s-icon img { width: 20px; height: 20px; object-fit: contain; }
+    .s-icon.google-icon { background: #fff; border: 1px solid #e2e8f0; }
+    .s-icon.kakao-icon  { background: #FEE500; }
+    .s-icon.naver-icon  { background: #03C75A; }
+
+    .s-label { flex: 1; }
+    .s-arrow { color: var(--text3); font-size: 16px; }
+
+    /* ── Divider ── */
+    .divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 28px 0; color: var(--text3);
+      font-size: 12px; font-weight: 600;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ── Info box ── */
+    .info-box {
+      background: var(--brand-grad-soft);
+      border: 1px solid rgba(99,102,241,.15);
+      border-radius: var(--radius-sm);
+      padding: 16px 18px;
+      font-size: 12px; color: var(--text2); line-height: 1.7;
+    }
+    .info-box strong { color: var(--indigo-dark); font-weight: 700; }
+
+    /* ── Signup prompt ── */
+    .signup-prompt {
+      margin-top: 28px;
+      text-align: center;
+      font-size: 13px; color: var(--text3);
+    }
+    .signup-prompt a {
+      color: var(--indigo-dark); font-weight: 700;
+      text-decoration: none; transition: color .2s;
+    }
+    .signup-prompt a:hover { color: var(--teal-dark); }
+
+    /* ── Alert messages ── */
+    .alert-error {
+      background: #fff1f2;
+      border: 1px solid rgba(239,68,68,.2);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 13px; color: #be123c; font-weight: 600;
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .alert-message {
+      background: #f0fdf4;
+      border: 1px solid rgba(34,197,94,.2);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 13px; color: #15803d; font-weight: 600;
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .content-inner { animation: fadeUp .35s ease both; }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main-content { margin-left: 0; padding: 40px 24px 60px; justify-content: flex-start; padding-top: 80px; }
+      .content-inner { max-width: 100%; }
+    }
+  </style>
 </head>
 <body>
-<h2>소셜다모아 로그인</h2>
-<p class="error" th:if="${param.error}" th:text="${param.error}"></p>
-<p class="message" th:if="${param.logout}">로그아웃 되었습니다.</p>
+  <div class="top-stripe"></div>
 
-<a class="btn" href="/oauth2/authorization/google">Google 로그인</a>
-<a class="btn" href="/oauth2/authorization/kakao">Kakao 로그인</a>
-<a class="btn" href="/oauth2/authorization/naver">Naver 로그인</a>
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <span class="toast-dot"></span>
+    <span id="toastMsg"></span>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <a href="/" class="logo">
+      <div class="logo-mark">S</div>
+      <span class="logo-name">소셜다모아</span>
+    </a>
+    <a href="/signup" class="header-signup-link">계정이 없으신가요? <strong>회원가입 →</strong></a>
+  </header>
+
+  <div class="page-wrapper">
+
+    <!-- ══════════ SIDEBAR ══════════ -->
+    <aside class="sidebar">
+      <div class="sidebar-logo-section">
+        <div class="sidebar-tagline">다시 만나서<br /><em>반갑습니다</em></div>
+        <p class="sidebar-sub">소셜 계정으로 빠르게 로그인하고<br />SNS 마케팅을 이어가세요.</p>
+      </div>
+      <div class="sidebar-features">
+        <div class="sf-item">
+          <div class="sf-icon teal">🔒</div>
+          <div class="sf-text"><strong>안전한 소셜 로그인</strong>비밀번호 없이 간편하게 인증</div>
+        </div>
+        <div class="sf-item">
+          <div class="sf-icon indigo">✨</div>
+          <div class="sf-text"><strong>AI 콘텐츠 자동 생성</strong>클릭 한 번으로 SNS 글 완성</div>
+        </div>
+        <div class="sf-item">
+          <div class="sf-icon green">📊</div>
+          <div class="sf-text"><strong>5개 채널 통합 관리</strong>네이버·카카오·구글·인스타·페이스북</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ══════════ MAIN CONTENT ══════════ -->
+    <main class="main-content">
+      <div class="content-inner">
+
+        <!-- 에러/메시지 -->
+        <div class="alert-error" th:if="${param.error}">
+          <span>⚠️</span>
+          <span>로그인에 실패했습니다. 다시 시도해주세요.</span>
+        </div>
+        <div class="alert-message" th:if="${param.logout}">
+          <span>✅</span>
+          <span>정상적으로 로그아웃되었습니다.</span>
+        </div>
+        <div class="alert-message" th:if="${param.withdrawn}">
+          <span>👋</span>
+          <span>회원 탈퇴가 완료되었습니다. 이용해주셔서 감사합니다.</span>
+        </div>
+
+        <!-- Heading -->
+        <div class="page-heading">
+          <h1>소셜 계정으로<br /><em>로그인</em></h1>
+          <p>아래 소셜 계정 중 하나를 선택해 로그인하세요.<br />가입 시 사용한 계정으로 로그인해주세요.</p>
+        </div>
+
+        <!-- Social login buttons -->
+        <div class="social-btns">
+
+          <!-- Google -->
+          <a class="social-btn" href="/oauth2/authorization/google">
+            <div class="s-icon google-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
+            </div>
+            <span class="s-label">Google로 로그인</span>
+            <span class="s-arrow">›</span>
+          </a>
+
+          <!-- Kakao -->
+          <a class="social-btn" href="/oauth2/authorization/kakao">
+            <div class="s-icon kakao-icon">
+              <svg width="18" height="17" viewBox="0 0 18 17" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                  d="M9 0C4.03 0 0 3.13 0 6.99c0 2.45 1.56 4.6 3.91 5.85L2.94 16.1c-.08.28.2.5.44.34L7.1 13.9c.62.09 1.25.14 1.9.14 4.97 0 9-3.13 9-6.99S13.97 0 9 0z"
+                  fill="rgba(0,0,0,0.85)"/>
+              </svg>
+            </div>
+            <span class="s-label">카카오로 로그인</span>
+            <span class="s-arrow">›</span>
+          </a>
+
+          <!-- Naver -->
+          <a class="social-btn" href="/oauth2/authorization/naver">
+            <div class="s-icon naver-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z" fill="white"/>
+              </svg>
+            </div>
+            <span class="s-label">네이버로 로그인</span>
+            <span class="s-arrow">›</span>
+          </a>
+
+        </div>
+
+        <div class="divider">소셜 계정으로만 로그인 가능합니다</div>
+
+        <!-- Info box -->
+        <div class="info-box">
+          <strong>💡 처음 방문하셨나요?</strong><br />
+          소셜 계정으로 로그인하면 자동으로 회원가입이 진행됩니다.<br />
+          별도 회원가입 없이 바로 이용하실 수 있어요.
+        </div>
+
+        <!-- Signup prompt -->
+        <div class="signup-prompt">
+          가게 정보를 먼저 등록하고 싶으신가요?
+          <a href="/signup">회원가입 바로가기 →</a>
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    // Toast helper
+    function showToast(msg, duration = 2800) {
+      const el = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), duration);
+    }
+
+    // Sidebar background image (Signup.html과 동일한 패턴)
+    const SIDEBAR_IMAGE_URL = '';
+    (function applySidebarBg() {
+      if (!SIDEBAR_IMAGE_URL) return;
+      const sidebar = document.querySelector('.sidebar');
+      sidebar.style.backgroundImage = `url('${SIDEBAR_IMAGE_URL}')`;
+      sidebar.style.backgroundSize = 'cover';
+      sidebar.style.backgroundPosition = 'center';
+      sidebar.style.backgroundRepeat = 'no-repeat';
+    })();
+
+    // URL 파라미터 기반 토스트
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('withdrawn') === 'true') {
+      showToast('회원 탈퇴가 완료되었습니다. 이용해주셔서 감사합니다.');
+    }
+  </script>
 </body>
 </html>

@@ -60,6 +60,15 @@ public class MypageService {
 		}
 		return new BrandInfoResponse(brand, profile);
 	}
+	
+	// ── 회원 기본정보 수정 ──────────────────────────────────
+	@Transactional
+	public void updateMemberInfo(Long userId, String name, String contactPhone) {
+	    User user = userRepository.findById(userId)
+	            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+	    user.updateSocialInfo(user.getEmail(), name);
+	    user.updateContactPhone(contactPhone);
+	}
 
 	// ── 가게 정보 수정 ──────────────────────────────────────
 	@Transactional
@@ -74,6 +83,8 @@ public class MypageService {
 		User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 		// ❌ 제거: user.updateAddress(request.getAddress(), request.getLocationName());
 		user.updateStorePhone(request.getPhone());
+		user.updateCompanyInfo(request.getBrandName(), request.getIndustryType());
+		user.updateAddress(request.getAddress(), request.getAddrDetail());  // ✅ 추가
 		brand.setAddress(stripZipCode(request.getAddress()));
 		brand.setLocationName(request.getLocationName());
 
@@ -108,7 +119,8 @@ public class MypageService {
 				.orElse(ContentSettings.createDefault(user));
 
 		settings.update(request.getIntroTemplate(), request.getOutroTemplate(), request.getTone(),
-				request.getEmojiLevel(), request.getTargetLength(), request.getPreferredSns());
+		        request.getEmojiLevel(), request.getTargetLength(), request.getPreferredSns(),
+		        request.getUseDefaultMode());  // ✅ 추가
 		contentSettingsRepository.save(settings);
 	}
 
@@ -268,6 +280,14 @@ public class MypageService {
 					cp.getBrandPlatform().getPlatform().getPlatformName(), cp.getPostTitle(), cp.getPostBody(),
 					cp.getPublishedAt());
 		}
+	}
+	
+	// ── userId → brandId 조회 (채널 성과 분석 등 타 컨트롤러에서도 사용) ──
+	@Transactional(readOnly = true)
+	public Long getBrandId(Long userId) {
+	    return brandRepository.findByUser_Id(userId)
+	            .map(Brand::getBrandId)
+	            .orElseThrow(() -> new IllegalArgumentException("브랜드를 찾을 수 없습니다."));
 	}
 
 }
