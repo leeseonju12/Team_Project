@@ -31,27 +31,47 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ContentController {
 
-    private final ContentService geminiService;
+	private final ContentService geminiService;
     private final UserService userService;
-    private final MypageService mypageService;  // ✅ 추가
+    private final MypageService mypageService;
+
+    private Long getSessionUserId(HttpSession session) {
+        return (Long) session.getAttribute("userId");
+    }
 
     @GetMapping("/generate")
     public String showGeneratePage(HttpSession session, Model model, Principal principal) {
+        Long userId = getSessionUserId(session);
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        // HEAD branch specific view state
+        model.addAttribute("defaultTab", "instagram");
+        
+        // Refactored common attributes method from the incoming branch
         addCommonAttributes(session, model, principal);
+        
         return "index";
     }
 
     @PostMapping("/generate")
     public String generate(HttpSession session, @ModelAttribute ContentRequest request,
                            Model model, Principal principal) {
-        Long userId = (Long) session.getAttribute("userId");
+        Long userId = getSessionUserId(session);
+        if (userId == null) {
+            return "redirect:/login";
+        }
+        
         request.setUserId(userId);
 
         List<SnsResult> results = geminiService.generateAllSnsContent(request);
 
         model.addAttribute("results", results);
         model.addAttribute("req", request);
+        
         addCommonAttributes(session, model, principal);
+        
         return "index";
     }
 

@@ -40,7 +40,7 @@
 <input type="hidden" id="cs_sns"         th:value="${contentSettings?.preferredSns}">
 
 <body>
-	<div th:replace="~{fragments/header :: global-header(currentMenu='index')}"></div>
+	<div th:replace="~{fragments/header :: global-header(currentMenu='content-generate')}"></div>
 	
   <div class="blob blob-1"></div>
   <div class="blob blob-2"></div>
@@ -54,7 +54,7 @@
       </div>
       <div class="modal-body">
         <div class="filter-bar" id="filterBar">
-          <button class="filter-btn active" data-filter="none" onclick="applyFilter(this,'none')">📷 원본</button>
+          <button class="filter-btn" data-filter="none" onclick="applyFilter(this,'none')">📷 원본</button>
           <button class="filter-btn" data-filter="emotional" onclick="applyFilter(this,'emotional')">🌸 감성</button>
           <button class="filter-btn" data-filter="vivid" onclick="applyFilter(this,'vivid')">✨ 선명하게</button>
           <button class="filter-btn" data-filter="bright" onclick="applyFilter(this,'bright')">☀️ 밝게</button>
@@ -408,18 +408,16 @@
               <textarea id="extraInfo" placeholder="가격, 이벤트, 특징, 할인 기간 등을 자유롭게 작성하세요."></textarea>
             </div>
             
-            <div class="field">
-              <label>키워드 <span class="required">*</span></label>
-              <div class="keyword-grid" id="keywordGroup">
-                <div class="keyword-item"><input type="checkbox" id="kw-food" value="맛집" class="active" checked><label class="keyword-label" for="kw-food">🍽️ 맛집</label></div>
-                <div class="keyword-item"><input type="checkbox" id="kw-clean" value="청결"><label class="keyword-label" for="kw-clean">🧼 청결</label></div>
-                <div class="keyword-item"><input type="checkbox" id="kw-mood" value="분위기"><label class="keyword-label" for="kw-mood">✨ 분위기</label></div>
-                <div class="keyword-item"><input type="checkbox" id="kw-price" value="가성비"><label class="keyword-label" for="kw-price">💸 가성비</label></div>
-                <div class="keyword-item"><input type="checkbox" id="kw-local" value="지역"><label class="keyword-label" for="kw-local">📍 지역</label></div>
-                <div class="keyword-item"><input type="checkbox" id="kw-event" value="이벤트"><label class="keyword-label" for="kw-event">🎁 이벤트</label></div>
-              </div>
-              <div class="field-footer"><span class="field-hint">최소 1개 이상 선택</span><span class="validation-msg" id="keywordValidation">키워드를 1개 이상 선택해 주세요.</span></div>
-            </div>
+<div class="field">
+  <label>키워드 <span class="required">*</span></label>
+  <div class="keyword-grid" id="keywordGroup">
+    <span style="font-size:12px; color:#94a3b8;">키워드 데이터를 불러오는 중...</span>
+  </div>
+  <div class="field-footer">
+    <span class="field-hint">최소 1개 이상 선택</span>
+    <span class="validation-msg" id="keywordValidation">키워드를 1개 이상 선택해 주세요.</span>
+  </div>
+</div>
             <div class="field">
               <label>이미지 업로드</label>
               <div class="img-upload" id="uploadZone">
@@ -428,7 +426,17 @@
                 <p><span>클릭</span>하거나 드래그하세요</p>
                 <p style="margin-top:3px;font-size:10px;">최대 5장 · JPG, PNG, WEBP</p>
               </div>
+              
+<button type="button" id="btnOpenPexelsModal" class="btn-pexels" onclick="openPexelsModal()">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;">
+    <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+  </svg>
+  무료 스톡 이미지 찾아보기
+</button>
+
+  
               <div class="img-previews" id="imgPreviews"></div>
+              <input type="hidden" id="pexels-url-input" value="" />
               <!-- ✨ AI 이미지 생성 영역 (신규 추가) -->
 			<div class="ai-image-section">
 				<input type="hidden" id="businessCategory" th:value="${businessCategory}">
@@ -446,7 +454,7 @@
             <div class="field">
               <label>게시 SNS</label>
               <div class="chip-group" id="snsChips">
-                <div class="chip chip-ig active" data-sns="instagram">🔴 Instagram</div>
+                <div class="chip chip-ig" data-sns="instagram">🔴 Instagram</div>
                 <div class="chip chip-fb" data-sns="facebook">🔵 Facebook</div>
                 <div class="chip chip-nv" data-sns="naver">🟢 네이버 블로그</div>
                 <div class="chip chip-kk" data-sns="kakao">🟡 카카오</div>
@@ -456,7 +464,7 @@
             <div class="field">
               <label>말투 스타일</label>
               <div class="tone-grid" id="toneGroup">
-                <div class="tone-item active" data-tone="default">
+                <div class="tone-item" data-tone="default">
                   <div class="icon">📝</div>기본
                 </div>
                 <div class="tone-item" data-tone="friendly">
@@ -479,7 +487,7 @@
                 <div class="slider-item" data-emoji="low">
                   <div class="icon">🙂</div>적게
                 </div>
-                <div class="slider-item active" data-emoji="mid">
+                <div class="slider-item" data-emoji="mid">
                   <div class="icon">😄</div>적당히
                 </div>
                 <div class="slider-item" data-emoji="high">
@@ -506,7 +514,7 @@
       </div>
 
 <div class="center-col">
-  <div class="panel" style="min-height:800px;">
+  <div class="panel" style="min-height:360px;">
 
     <!-- 생성 결과 / 기록 불러오기 -->
     <div class="result-header" style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:1px solid #f1f5f9;">
@@ -525,7 +533,7 @@
 
     <!-- 탭바 -->
     <div class="tab-bar" id="tabBar">
-      <button class="tab-btn active" data-tab="instagram"><span class="dot"></span>Instagram</button>
+      <button class="tab-btn" data-tab="instagram"><span class="dot"></span>Instagram</button>
       <button class="tab-btn" data-tab="facebook"><span class="dot"></span>Facebook</button>
       <button class="tab-btn" data-tab="naver"><span class="dot"></span>네이버</button>
       <button class="tab-btn" data-tab="kakao"><span class="dot"></span>카카오</button>
@@ -534,7 +542,7 @@
     
     <div class="panes-container">
       
-      <div class="output-pane active" id="pane-instagram">
+      <div class="output-pane" id="pane-instagram">
         <div class="empty-state" id="empty-instagram">
           <div class="icon">📷</div>
           <p>AI 콘텐츠 생성하기를<br>눌러주세요.</p>
@@ -775,9 +783,54 @@
   </div>
 </div>
 
+
+
+
+
+
+<div id="pexelsModal" class="pexels-modal-overlay">
+  <div class="pexels-modal-content">
+    <span id="btnClosePexelsModal" class="pexels-close-btn">&times;</span>
+    
+    <div class="pexels-modal-header">
+      <h3 style="margin: 0 0 15px 0; color: #0f172a; font-size: 18px; font-weight: 700;">무료 스톡 이미지 검색</h3>
+      <div style="display: flex; gap: 8px;">
+        <input type="text" id="pexelsQuery" placeholder="검색어 (예: 카페, 업무, 코딩)" 
+               style="flex: 1; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; outline: none;">
+        <button type="button" id="btnSearchPexels" 
+                style="padding: 10px 16px; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+          검색
+        </button>
+      </div>
+    </div>
+    
+    <div class="pexels-modal-body" id="modalBodyScroll">
+      <div id="pexelsGallery" class="pexels-gallery-grid"></div>
+      <div style="text-align: center; margin-top: 25px; margin-bottom: 10px;">
+        <button type="button" id="btnLoadMorePexels" 
+                style="display: none; width: 100%; padding: 12px; background: #f1f5f9; color: #475569; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+          결과 더보기
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
   <script src="/js/app4.js" defer></script>
   <script src="/js/calendar-manager.js" defer></script>
   <script src="/js/generate-image.js" defer></script>
+  
+    	<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  
+     <link rel="stylesheet" href="/css/chat-widget.css">
+    <script src="/js/chat-widget.js"></script>
+
+
+
+
 
 </body>
 

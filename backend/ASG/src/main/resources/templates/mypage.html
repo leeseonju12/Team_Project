@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- 임시 페이지 -->
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -28,44 +28,18 @@
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
     body{background:var(--slate);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;}
 
-    .top-stripe{height:4px;background:linear-gradient(90deg,var(--teal) 0%,var(--indigo) 60%,var(--teal-mid) 100%);}
-    header{background:var(--white);border-bottom:1px solid var(--border);box-shadow:var(--shadow-sm);flex-shrink:0;position:sticky;top:0;z-index:200;display:flex;flex-direction:column;}
-    .header-row1{display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:64px;flex-shrink:0;}
-    .header-row2{display:flex;border-top:1px solid var(--border);padding:4px 8px;background:var(--white);}
-
-	@media(min-width:901px){
-      .header-row2{display:none;}
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
     }
-    
-    .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;flex-shrink:0;}
-    .logo-mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--indigo));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;box-shadow:0 2px 8px rgba(20,184,166,.35);flex-shrink:0;}
-    .logo-name{font-size:15px;font-weight:700;letter-spacing:-.3px;}
-    .logo-sub{font-size:11px;color:var(--text3);margin-left:6px;}
-    .nav-pills{display:flex;gap:4px;}
-    .nav-pill{padding:6px 14px;border-radius:100px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid transparent;color:var(--text2);background:transparent;transition:all .2s;font-family:'Noto Sans KR',sans-serif;text-decoration:none;display:flex;align-items:center;gap:5px;}
-    .nav-pill:hover{background:var(--slate);color:var(--text);}
-    .nav-pill.active{background:var(--indigo-light);border-color:#C7D2FE;color:var(--indigo-dark);font-weight:600;}
-    .header-user{display:flex;align-items:center;gap:10px;flex-shrink:0;}
-    .user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--indigo));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;cursor:pointer;flex-shrink:0;}
-    .user-name{font-size:13px;font-weight:600;color:var(--text2);}
-    /* 햄버거 */
-    .hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:38px;height:38px;border-radius:9px;background:transparent;border:1.5px solid var(--border);cursor:pointer;padding:0;flex-shrink:0;transition:background .15s;}
-    .hamburger:hover{background:var(--slate);}
-    .hamburger span{display:block;width:18px;height:2px;background:var(--text2);border-radius:2px;}
-    
-    /* 반응형 */
-    @media(max-width:900px){
-      .hamburger{display:flex;}
-      .sidebar{display:none;}
-      /* 탑바 2줄 전환 */
-      .header-row1{padding:0 16px;height:56px;}
-      .header-row2{display:flex;}
-      .nav-pills-top{display:none;}
-      .nav-pills-bottom{width:100%;gap:2px;}
-      .nav-pills-bottom .nav-pill{flex:1;justify-content:center;padding:6px 4px;font-size:11px;}
-      .logo-sub{display:none;}
-      .user-name{display:none;}
-      .page-wrap{padding:16px 12px 60px;}
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(71, 85, 105, 0.20);
+      border-radius: 999px;
     }
 
     .page-wrap{flex:1;display:flex;max-width:1280px;margin:0 auto;width:100%;padding:28px 40px 80px;gap:24px;}
@@ -393,6 +367,8 @@ em {
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 
 <body>
+<div th:replace="~{fragments/header :: global-header(currentMenu='mypage')}"></div>
+
   <!-- ══ 드로어 (모바일 사이드바) ══ -->
   <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
   <div class="drawer" id="drawer">
@@ -436,40 +412,6 @@ em {
     </nav>
   </div>
 
-  <div class="top-stripe"></div>
-  <header>
-    <!-- 1행: 항상 표시 -->
-    <div class="header-row1">
-      <a href="#" class="logo">
-        <div class="logo-mark">S</div>
-        <span class="logo-name">소셜다모아</span>
-        <span class="logo-sub">All Social Gather</span>
-      </a>
-      <!-- 600px 초과: nav-pills 1행에 표시 -->
-      <nav class="nav-pills nav-pills-top">
-        <a href="content-generate" class="nav-pill">✏️ 콘텐츠 생성</a>
-        <a href="feedback.html" class="nav-pill">💬 리뷰 관리</a>
-        <a href="channel-performance" class="nav-pill">📊 성과 분석</a>
-        <a href="mypage" class="nav-pill active">👤 마이페이지</a>
-      </nav>
-      <div class="header-user">
-        <button class="hamburger" onclick="openDrawer()" aria-label="메뉴 열기">
-          <span></span><span></span><span></span>
-        </button>
-        <div class="user-avatar" th:text="${userInfo.name != null ? userInfo.name.substring(0,1) : '?'}"></div>
-        <span class="user-name" th:text="${userInfo.name + ' 님'}"></span>
-      </div>
-    </div>
-    <!-- 2행: 600px 이하에서만 표시 -->
-    <div class="header-row2">
-      <nav class="nav-pills nav-pills-bottom">
-        <a href="content-generate" class="nav-pill">✏️ 콘텐츠 생성</a>
-        <a href="feedback.html" class="nav-pill">💬 리뷰 관리</a>
-        <a href="channel-performance" class="nav-pill">📊 성과 분석</a>
-        <a href="mypage" class="nav-pill active">👤 마이페이지</a>
-      </nav>
-    </div>
-  </header>
 
 <!-- ── Sidebar ── -->
   <div class="page-wrap">

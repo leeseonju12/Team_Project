@@ -1,18 +1,27 @@
 package com.example.demo.service;
 
 import java.util.ArrayList;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 
+import com.example.demo.dto.ContentInitResponse;
 import com.example.demo.dto.ContentRequest;
 import com.example.demo.dto.SnsResult;
 import com.example.demo.entity.GeneratedContent;
+import com.example.demo.entity.Keyword;
+import com.example.demo.entity.SnsGuide;
+import com.example.demo.entity.UserSetting;
 import com.example.demo.repository.GeneratedContentRepository;
+import com.example.demo.repository.KeywordRepository;
+import com.example.demo.repository.SnsGuideRepository;
+import com.example.demo.repository.UserSettingRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -32,6 +41,73 @@ public class ContentService {
 	private final com.example.demo.repository.myPage.BrandPlatformRepository brandPlatformRepository;
 	private final com.example.demo.repository.myPage.BrandRepository brandRepository; // 추가
 	private static final Long BRAND_ID = 1L;
+	
+	private final KeywordRepository keywordRepository;
+    private final SnsGuideRepository snsGuideRepository;
+    private final UserSettingRepository userSettingRepository;
+    private final Random random = new Random();
+    
+    public ContentInitResponse getInitialData(String industryCode, Long userId) {
+        // 1. 키워드 조회: 요청된 industryCode로 먼저 조회합니다.
+        List<Keyword> rawKeywords = keywordRepository.findByIndustryCode(industryCode);
+        
+        // Rationale: 만약 조회 결과가 없다면(해당하지 않는 업종), 마이그레이션한 'DEFAULT' 키워드 전체를 조회합니다.
+        if (rawKeywords.isEmpty()) {
+            rawKeywords = keywordRepository.findByIndustryCode("DEFAULT");
+        }
+
+        // 2. 가이드 조회 (기존 랜덤 로직 유지)
+        List<SnsGuide> rawGuides = snsGuideRepository.findAll();
+
+        // 3. 사용자 설정 조회 (기존 로직 유지)
+        UserSetting setting = userSettingRepository.findByUserId(userId)
+                .orElseGet(() -> UserSetting.builder()
+                        .userId(userId)
+                        .activePlatforms(Arrays.asList("instagram"))
+                        .toneStyle("default")
+                        .emojiLevel("mid")
+                        .maxLength(150)
+                        .build());
+
+        // 4. DTO 변환 및 반환
+        return ContentInitResponse.builder()
+                .keywords(rawKeywords.stream()
+                        .map(k -> ContentInitResponse.KeywordDto.builder()
+                                .keywordName(k.getName())
+                                .category(k.getCategory()).build())
+                        .toList())
+                .snsGuides(rawGuides.stream()
+                        .map(this::mapToRandomSnsGuideDto)
+                        .toList())
+                .userSetting(ContentInitResponse.UserSettingDto.builder()
+                        .activeSns(setting.getActivePlatforms())
+                        .toneStyle(setting.getToneStyle())
+                        .emojiLevel(setting.getEmojiLevel())
+                        .maxLength(setting.getMaxLength()).build())
+                .build();
+    }
+    
+    
+    private ContentInitResponse.SnsGuideDto mapToRandomSnsGuideDto(SnsGuide guide) {
+        // Rationale: 데이터베이스 조회 결과가 비어있을 경우 예외를 방지하고 프론트엔드에 빈 값을 전달합니다.
+        if (guide.getGuideDetails() == null || guide.getGuideDetails().isEmpty()) {
+            return ContentInitResponse.SnsGuideDto.builder()
+                    .platform(guide.getPlatform())
+                    .guideContent("")
+                    .bestTime("--:--")
+                    .build();
+        }
+
+        // Rationale: 동일한 인덱스를 사용하여 1:1로 매핑된 객체를 한 번만 추출합니다.
+        SnsGuide.GuideDetail selectedDetail = guide.getGuideDetails()
+                .get(random.nextInt(guide.getGuideDetails().size()));
+
+        return ContentInitResponse.SnsGuideDto.builder()
+                .platform(guide.getPlatform())
+                .guideContent(selectedDetail.getContent())
+                .bestTime(selectedDetail.getBestTime())
+                .build();
+    }
 
 	@Transactional
 	public List<SnsResult> generateAllSnsContent(ContentRequest request) {

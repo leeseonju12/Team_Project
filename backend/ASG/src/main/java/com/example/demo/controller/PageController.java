@@ -7,6 +7,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import com.example.demo.domain.user.entity.User;
+import com.example.demo.service.ContentService;
+import com.example.demo.service.auth.UserService;
+
 import com.example.demo.service.myPage.MypageService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -14,24 +18,31 @@ import lombok.RequiredArgsConstructor;
 @Controller
 @RequiredArgsConstructor
 public class PageController {
-
+	
+	private final UserService userService;
     private final MypageService mypageService;
-
-    /** 세션에서 userId 추출 */
+	
     private Long getSessionUserId(HttpSession session) {
         return (Long) session.getAttribute("userId");
     }
+    
+    @GetMapping("/feedbacks")
+    public String feedbackPage(Model model, HttpSession session) {
+        // 세션에서 userId 추출
+        Long userId = getSessionUserId(session);
 
-	@GetMapping("/feedbacks")
-	public String feedbackPage(Model model) {
-		
-	    Map<String, String> fakeUser = new HashMap<>();
-	    fakeUser.put("name", "테스트");
-	    fakeUser.put("email", "test@example.com");
 
-	    model.addAttribute("userInfo", fakeUser);
-		return "feedback";
-	}
+        // 세션 정보가 없는 경우 로그인 페이지로 리다이렉트
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        // 실제 DB에서 유저 정보 조회
+        User user = userService.findById(userId);
+        model.addAttribute("userInfo", user);
+        
+        return "feedback";
+    }
 	
 
 	@GetMapping("/channel-performance")
@@ -56,13 +67,20 @@ public class PageController {
 	
 
 	@GetMapping("/temp3")
-	public String temp3Page(Model model) {
-	    // 헤더에서 userInfo를 참조하므로, 에러 방지를 위해 가짜 데이터를 넣어줍니다.
-	    Map<String, String> fakeUser = new HashMap<>();
-	    fakeUser.put("name", "테스트");
-	    fakeUser.put("email", "test@example.com");
+	public String temp3Page(Model model, HttpSession session) {
+	    // 세션에서 userId 추출
+	    Long userId = getSessionUserId(session);
+
+	    // 헤더 등 공통 레이아웃에서 userInfo를 참조하므로 
+	    // 로그인하지 않은 사용자에 대한 예외 처리가 필요합니다.
+	    if (userId == null) {
+	        return "redirect:/login";
+	    }
+
+	    // 가짜 데이터 대신 실제 유저 정보를 조회하여 바인딩
+	    User user = userService.findById(userId);
+	    model.addAttribute("userInfo", user);
 	    
-	    model.addAttribute("userInfo", fakeUser);
 	    return "temp3";
 	}
 }
