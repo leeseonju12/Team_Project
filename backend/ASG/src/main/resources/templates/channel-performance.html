@@ -1469,13 +1469,13 @@ em {
     const trends    = res.trends    ?? [];
 
     // PLATFORMS 동적 생성 (최초 1회)
-    if (PLATFORMS.length === 0) {
-      PLATFORMS = summaries.map(s => ({
-        id:    s.platformCode,
-        name:  PLATFORM_NAME_MAP[s.platformCode] ?? s.platformName,
-        color: PLATFORM_COLOR_MAP[s.platformCode] ?? '#999',
-      }));
-    }
+    if (summaries.length > 0) {
+  PLATFORMS = summaries.map(s => ({
+    id:    s.platformCode,
+    name:  PLATFORM_NAME_MAP[s.platformCode] ?? s.platformName,
+    color: PLATFORM_COLOR_MAP[s.platformCode] ?? '#999',
+  }));
+}
 
     const labels = trends.map(t => {
       const dk = String(t.dateKey);
@@ -1650,25 +1650,28 @@ function getDashboardDateRange(period) {
 }
 
 async function loadDashboard(period) {
-  currentPeriod = period;
-  if (dashboardCache[period]) {
-    renderDashboard(period);
-    return;
-  }
-  const { from, to } = getDashboardDateRange(period);
-  try {
-    const res = await fetch(`/api/channel-performance?from=${from}&to=${to}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    buildDataFromResponse(period, data);
-    buildReviewDataFromResponse(period, data);
-    dashboardCache[period] = true;
-    renderDashboard(period);
-  } catch (err) {
-    console.error('대시보드 로드 실패:', err);
-    showToast('데이터를 불러오는데 실패했습니다.', 'error');
-  }
-}
+	  currentPeriod = period;
+	  if (dashboardCache[period]) {
+	    renderDashboard(period);
+	    return;
+	  }
+	  const { from, to } = getDashboardDateRange(period);
+	  try {
+	    const res = await fetch(`/api/channel-performance?from=${from}&to=${to}`);
+	    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+	    const data = await res.json();
+	    buildDataFromResponse(period, data);
+	    buildReviewDataFromResponse(period, data);
+	    // 데이터가 실제로 있을 때만 캐싱
+	    if (data.summaries && data.summaries.length > 0) {
+	      dashboardCache[period] = true;
+	    }
+	    renderDashboard(period);
+	  } catch (err) {
+	    console.error('대시보드 로드 실패:', err);
+	    showToast('데이터를 불러오는데 실패했습니다.', 'error');
+	  }
+	}
 
 function renderDashboard(period) {
 	  if (trendChart)   { trendChart.destroy();   trendChart   = null; }

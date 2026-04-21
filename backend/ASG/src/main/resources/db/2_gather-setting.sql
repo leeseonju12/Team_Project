@@ -82,7 +82,7 @@ UPDATE brand SET user_id = @SANJEONG_USER_ID WHERE brand_id = 2;
 -- ══════════════════════════════════════════════
 
 UPDATE users SET
-  name               = '카페디아즈',
+  NAME               = '카페디아즈',
   nickname           = '카페디아즈',
   contact_phone      = '01012341234',
   company_name       = '카페 디아즈',
@@ -97,11 +97,11 @@ UPDATE users SET
   marketing_consent  = 1,
   event_consent      = 1,
   signup_completed   = 1,
-  status             = 'ACTIVE'
+  STATUS             = 'ACTIVE'
 WHERE id = @DIAZ_USER_ID;
 
 UPDATE users SET
-  name               = '카페산정',
+  NAME               = '카페산정',
   nickname           = '카페산정',
   contact_phone      = '01056785678',
   company_name       = '카페 산정',
@@ -116,7 +116,7 @@ UPDATE users SET
   marketing_consent  = 0,
   event_consent      = 0,
   signup_completed   = 1,
-  status             = 'ACTIVE'
+  STATUS             = 'ACTIVE'
 WHERE id = @SANJEONG_USER_ID;
 
 
@@ -171,7 +171,7 @@ VALUES
 --    email 은 users 테이블에서 실제 값을 가져와서 INSERT
 -- ══════════════════════════════════════════════
 
-INSERT INTO inquiry (type, email, title, body, content, status, created_at)
+INSERT INTO inquiry (TYPE, email, title, BODY, content, STATUS, created_at)
 SELECT '가입·연동', email,
   '인스타그램 연동 후 게시물 업로드가 되지 않아요',
   '인스타그램 연동은 완료됐는데 게시물 업로드 버튼을 누르면 아무 반응이 없습니다.',
@@ -179,7 +179,7 @@ SELECT '가입·연동', email,
   '처리완료', '2026-03-05 10:22:00'
 FROM users WHERE id = @DIAZ_USER_ID;
 
-INSERT INTO inquiry (type, email, title, body, content, status, created_at)
+INSERT INTO inquiry (TYPE, email, title, BODY, content, STATUS, created_at)
 SELECT '콘텐츠 생성', email,
   'AI 콘텐츠 생성 시 업종이 반영이 안 됩니다',
   '카페 업종으로 설정했는데 생성된 내용이 식당 느낌으로 나옵니다.',
@@ -187,7 +187,7 @@ SELECT '콘텐츠 생성', email,
   '처리중', '2026-03-18 14:35:00'
 FROM users WHERE id = @DIAZ_USER_ID;
 
-INSERT INTO inquiry (type, email, title, body, content, status, created_at)
+INSERT INTO inquiry (TYPE, email, title, BODY, content, STATUS, created_at)
 SELECT '시스템오류', email,
   '채널 성과 분석 페이지가 로딩이 안 돼요',
   '채널 성과 분석 메뉴 클릭 시 흰 화면만 나타납니다. 다른 메뉴는 정상입니다.',
@@ -195,7 +195,7 @@ SELECT '시스템오류', email,
   '미처리', '2026-03-28 09:11:00'
 FROM users WHERE id = @DIAZ_USER_ID;
 
-INSERT INTO inquiry (type, email, title, body, content, status, created_at)
+INSERT INTO inquiry (TYPE, email, title, BODY, content, STATUS, created_at)
 SELECT '가입·연동', email,
   '네이버 블로그 연동이 계속 실패합니다',
   '네이버로 로그인 후 블로그 연동을 시도하면 "연동에 실패했습니다" 오류가 납니다.',
@@ -203,7 +203,7 @@ SELECT '가입·연동', email,
   '미처리', '2026-03-12 11:40:00'
 FROM users WHERE id = @SANJEONG_USER_ID;
 
-INSERT INTO inquiry (type, email, title, body, content, status, created_at)
+INSERT INTO inquiry (TYPE, email, title, BODY, content, STATUS, created_at)
 SELECT '계정', email,
   '가게 정보 수정 후 저장이 안 됩니다',
   '마이페이지에서 가게 주소를 수정하고 저장 버튼을 눌러도 변경이 안 됩니다.',
