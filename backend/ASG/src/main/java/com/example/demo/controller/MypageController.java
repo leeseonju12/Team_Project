@@ -29,12 +29,11 @@ public class MypageController {
 		return (Long) session.getAttribute("userId");
 	}
 
-	// ── 마이페이지 메인 ─────────────────────────────────────
-	@GetMapping
-	public String mypage(HttpSession session, Model model) {
-		Long userId = getSessionUserId(session);
-		if (userId == null)
-			return "redirect:/login_test";
+    // ── 마이페이지 메인 ─────────────────────────────────────
+    @GetMapping
+    public String mypage(HttpSession session, Model model) {
+        Long userId = getSessionUserId(session);
+        if (userId == null) return "redirect:/login";
 
 		model.addAttribute("brandInfo", mypageService.getBrandInfo(userId));
 		model.addAttribute("snsAccounts", mypageService.getSnsAccounts(userId));
