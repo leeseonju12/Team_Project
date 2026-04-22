@@ -18,7 +18,6 @@ image_bp = Blueprint('image', __name__)
 image_service = ImageService()
 logger = logging.getLogger(__name__)
 
-
 DESCRIPTION_FIELD_NAMES = (
     "description",
     "additionalDescription",
