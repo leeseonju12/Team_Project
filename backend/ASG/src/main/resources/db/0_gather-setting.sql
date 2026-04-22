@@ -1,27 +1,26 @@
 /* 
-260421 마지막 수정
+  0_gather-setting.sql : DB, table 생성 및 최소한의 seed data insert
 
-정렬 및 실행 순서
-create > index > alter > insert(seed only)
+  정렬 및 실행 순서
+  create > index > alter > 최소한의 seed
 
-[실행 순서 보장 근거]
-  platform       : brand_platform 의 platform_id FK 선행 필요
-  brand          : brand_platform 의 brand_id FK 선행 필요
-  brand_platform : content_post / platform_metric_daily / performance_impact_analysis 의 brand_platform_id FK 선행 필요
-  feedback_source: customer_feedback 의 source_id FK 선행 필요
-  date_dimension : content_post(published_date_key) / *_metric_daily 의 date_key FK 선행 필요
-  content_post   : post_metric_daily 의 post_id FK 선행 필요
-  users          : brand UPDATE(user_id) 는 users INSERT 이후 → 마지막 블록
+  [실행 순서 보장 근거]
+  platform          : brand_platform 의 platform_id FK 선행 필요
+  brand             : brand_platform 의 brand_id FK 선행 필요
+  brand_platform    : content_post / platform_metric_daily / performance_impact_analysis 의 brand_platform_id FK 선행 필요
+  date_dimension    : content_post(published_date_key) / *_metric_daily 의 date_key FK 선행 필요
+  content_post      : post_metric_daily 의 post_id FK 선행 필요
+  users             : brand UPDATE(user_id) 는 users INSERT 이후 → 마지막 블록
+  customer_feedback : FK 없음 (독립 테이블) — 실행 순서 무관
+  sns_guides        : FK 없음 (독립 테이블) — 실행 순서 무관
+  keywords          : FK 없음 (독립 테이블) — 실행 순서 무관
 
-[customerCenter 관련 테이블]
+  [customerCenter 관련 테이블]
   inquiry        : type / body / attachment_names / attachment_saved_names 컬럼 포함, status 기본값 '미처리'
   notice         : 공지사항 (독립 테이블, FK 없음)
   faq            : 자주묻는질문 (독립 테이블, FK 없음)
   reply          : inquiry_id 논리적 참조 (물리 FK 없음 — cascade 충돌 방지)
   admin_user     : 고객센터 관리자 계정 (독립 테이블, FK 없음)
-
-[채널 성과 분석 더미]
-  → 1_gather-setting.sql 에서 별도 실행
 */
 
 DROP DATABASE IF EXISTS gather;
@@ -165,33 +164,25 @@ CREATE TABLE `brand_platform` (
   PRIMARY KEY (`brand_platform_id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COMMENT='브랜드별 운영 채널 정보';
 
--- feedback_source
-CREATE TABLE `feedback_source` (
-  `source_id`     BIGINT       NOT NULL AUTO_INCREMENT,
-  `author_name`   VARCHAR(255) NULL,
-  `created_at`    DATETIME(6)  NULL,
-  `original_text` TEXT         NULL,
-  `platform`      ENUM('FACEBOOK','GOOGLE','INSTAGRAM','KAKAO','NAVER') NULL,
-  `origin_url`    VARCHAR(500) NULL,
-  PRIMARY KEY (`source_id`)
-) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
-
 -- customer_feedback
 CREATE TABLE `customer_feedback` (
-  `feedback_id` BIGINT NOT NULL AUTO_INCREMENT,
-  `ai_reply`    TEXT   NULL,
-  `ai_status`   ENUM('DONE','IDLE') NULL,
-  `created_at`  DATETIME(6) NULL,
-  `sent_reply`  TEXT   NULL,
-  `status`      ENUM('CHECKED','COMPLETED','SENDING','UNCHECKED','UNRESOLVED') NULL,
-  `type`        ENUM('COMMENT','REVIEW') NULL,
-  `updated_at`  DATETIME(6) NULL,
-  `source_id`   BIGINT NULL,
+  `feedback_id`   BIGINT(20)   NOT NULL AUTO_INCREMENT              COMMENT '피드백 ID',
+  `external_id`   VARCHAR(255) NOT NULL UNIQUE                      COMMENT '플랫폼별 댓글 고유 ID',
+  `author_name`   VARCHAR(255) NULL                                 COMMENT '작성자명',
+  `original_text` TEXT         NULL                                 COMMENT '원문',
+  `origin_url`    VARCHAR(255) NULL                                 COMMENT '원문 링크',
+  `platform`      VARCHAR(50)  NULL                                 COMMENT '플랫폼',
+  `type`          ENUM('COMMENT','REVIEW')                          NULL COMMENT '피드백 타입',
+  `status`        ENUM('CHECKED','COMPLETED','SENDING','UNCHECKED','UNRESOLVED') NULL COMMENT '전체 진행 상태',
+  `ai_status`     ENUM('DONE','IDLE')      NULL                     COMMENT 'AI 응답 상태',
+  `ai_reply`      TEXT         NULL                                 COMMENT 'AI 응답 내용',
+  `sent_reply`    TEXT         NULL                                 COMMENT '보낸 응답 내용',
+  `source_id`     BIGINT(20)   NULL                                 COMMENT '플랫폼별 게시글 고유 ID',
+  `created_at`    DATETIME     NULL                                 COMMENT '댓글 작성일',
+  `updated_at`    DATETIME     NULL                                 COMMENT '피드백 업데이트일',
   PRIMARY KEY (`feedback_id`),
-  UNIQUE KEY `uk_customer_feedback_source` (`source_id`),
-  CONSTRAINT `fk_customer_feedback_source`
-    FOREIGN KEY (`source_id`) REFERENCES `feedback_source` (`source_id`)
-) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
+  INDEX `idx_customer_feedback_created_at` (`created_at` DESC)
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='피드백 리스트';
 
 -- 채널 성과 분석 테이블
 CREATE TABLE `date_dimension` (
@@ -460,6 +451,24 @@ CREATE TABLE `admin_user` (
   PRIMARY KEY (`id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COMMENT='고객센터 관리자 계정';
 
+-- sns_guides (콘텐츠 생성 가이드 — 플랫폼별 업로드 시간 및 멘트)
+CREATE TABLE `sns_guides` (
+  `id`            BIGINT       NOT NULL AUTO_INCREMENT,
+  `platform`      VARCHAR(30)  NOT NULL COMMENT 'instagram / facebook / naver / kakao / community',
+  `guide_details` JSON         NOT NULL COMMENT '가이드 문구 + 추천 시간 JSON 배열',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_sns_guides_platform` (`platform`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COMMENT='플랫폼별 콘텐츠 업로드 가이드';
+
+-- keywords (업종별 키워드 마스터)
+CREATE TABLE `keywords` (
+  `id`            BIGINT       NOT NULL AUTO_INCREMENT,
+  `industry_code` VARCHAR(20)  NOT NULL COMMENT 'CAFE / FOOD / BEAUTY / FASHION / STAY / SPORTS / EDU / MED / RETAIL / DEFAULT',
+  `category`      VARCHAR(50)  NOT NULL COMMENT '키워드 분류',
+  `name`          VARCHAR(100) NOT NULL COMMENT '키워드명',
+  PRIMARY KEY (`id`),
+  KEY `idx_keywords_industry` (`industry_code`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COMMENT='업종별 키워드 마스터';
 
 -- ══════════════════════════════════════════════
 -- CREATE INDEX
@@ -518,7 +527,6 @@ ALTER TABLE `strategy_recommendation_item`    ADD FOREIGN KEY (`platform_id`)   
 
 -- ══════════════════════════════════════════════
 -- INSERT seed data (최소 시드 — 플랫폼 마스터, customerCenter 기반 데이터만)
--- 채널 성과 분석 더미: 1_gather-setting.sql 에서 별도 실행
 -- ══════════════════════════════════════════════
 
 -- 플랫폼 마스터 (google 포함 5개)

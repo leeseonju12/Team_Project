@@ -21,7 +21,9 @@
   → platform_metric_monthly_summary → platform_metric_monthly_trend
   → performance_impact_analysis
   → strategy_recommendation → strategy_recommendation_item
-  → feedback_source → customer_feedback
+  → customer_feedback (수기 더미: 구글맵 / 카카오맵 / 네이버 리뷰, FK 없음)
+  → sns_guides       (FK 없음 — 플랫폼별 업로드 가이드 시드)
+  → keywords         (FK 없음 — 업종별 키워드 시드, DEFAULT는 SELECT DISTINCT로 후삽입)
 
   3월 2026 공휴일: 3/1(삼일절) — 토요일이므로 is_weekend=TRUE & is_holiday=TRUE
   3월 요일 분포: 1(일),2(월),3(화),4(수),5(목),6(금),7(토)
@@ -509,26 +511,16 @@ VALUES
  '구글 리뷰 월간 434건으로 로컬 신뢰도가 높습니다. 방문 고객 대상 QR 리뷰 유도를 지속하여 4.5점 이상 평점을 유지하세요.',
  '2026-03-31 23:59:59');
 
+-- 15-A. customer_feedback (카페 디아즈 — feedback_source 폐기, 단일 테이블로 통합)
 -- ──────────────────────────────────────────
--- 15-A. feedback_source / customer_feedback (카페 디아즈)
--- ──────────────────────────────────────────
-INSERT IGNORE INTO feedback_source
-  (source_id, author_name, created_at, original_text, platform)
-VALUES
-(1,'박서연','2026-03-08 14:22:00','체리블라썸 라떼 너무 예쁘고 맛있어요! 인스타에서 보고 바로 달려왔습니다 🌸','INSTAGRAM'),
-(2,'김민준','2026-03-15 11:38:00','주말 브런치 세트 구성이 알차네요. 가성비 최고입니다. 또 올게요!','NAVER'),
-(3,'이하은','2026-03-22 16:05:00','봄 인테리어가 너무 감성적이에요. 사진 찍기 좋아서 자주 올 것 같아요.','GOOGLE'),
-(4,'최준혁','2026-03-28 18:42:00','스콘이 맛있다고 해서 왔는데 기대 이상입니다. 카카오 쿠폰도 쓸 수 있어서 좋았어요.','KAKAO'),
-(5,'정다은','2026-03-29 13:15:00','한정 딸기 음료 마시러 일부러 왔는데 줄이 길어도 기다릴 만한 가치가 있었어요!','INSTAGRAM');
-
 INSERT IGNORE INTO customer_feedback
-  (feedback_id, source_id, TYPE, STATUS, ai_status, created_at, updated_at)
+  (external_id, author_name, original_text, platform, TYPE, STATUS, ai_status, created_at, updated_at)
 VALUES
-(1, 1,'COMMENT','COMPLETED','DONE','2026-03-08 14:22:00','2026-03-08 15:10:00'),
-(2, 2,'REVIEW', 'COMPLETED','DONE','2026-03-15 11:38:00','2026-03-15 14:00:00'),
-(3, 3,'REVIEW', 'UNRESOLVED','IDLE','2026-03-22 16:05:00','2026-03-22 16:05:00'),
-(4, 4,'COMMENT','UNRESOLVED','IDLE','2026-03-28 18:42:00','2026-03-28 18:42:00'),
-(5, 5,'COMMENT','UNRESOLVED','IDLE','2026-03-29 13:15:00','2026-03-29 13:15:00');
+('diaz-review-1','박서연','체리블라썸 라떼 너무 예쁘고 맛있어요! 인스타에서 보고 바로 달려왔습니다 🌸','INSTAGRAM','COMMENT','COMPLETED','DONE','2026-03-08 14:22:00','2026-03-08 15:10:00'),
+('diaz-review-2','김민준','주말 브런치 세트 구성이 알차네요. 가성비 최고입니다. 또 올게요!',           'NAVER',    'REVIEW', 'COMPLETED','DONE','2026-03-15 11:38:00','2026-03-15 14:00:00'),
+('diaz-review-3','이하은','봄 인테리어가 너무 감성적이에요. 사진 찍기 좋아서 자주 올 것 같아요.',   'GOOGLE',   'REVIEW', 'UNRESOLVED','IDLE','2026-03-22 16:05:00','2026-03-22 16:05:00'),
+('diaz-review-4','최준혁','스콘이 맛있다고 해서 왔는데 기대 이상입니다. 카카오 쿠폰도 쓸 수 있어서 좋았어요.','KAKAO','COMMENT','UNRESOLVED','IDLE','2026-03-28 18:42:00','2026-03-28 18:42:00'),
+('diaz-review-5','정다은','한정 딸기 음료 마시러 일부러 왔는데 줄이 길어도 기다릴 만한 가치가 있었어요!','INSTAGRAM','COMMENT','UNRESOLVED','IDLE','2026-03-29 13:15:00','2026-03-29 13:15:00');
 
 
 -- ══════════════════════════════════════════════════════
@@ -902,21 +894,14 @@ VALUES
  '2026-03-31 23:59:59');
 
 -- ──────────────────────────────────────────
--- 15-B. feedback_source / customer_feedback (카페 산정 — 소수)
+-- 15-B. customer_feedback (카페 산정 — feedback_source 폐기, 단일 테이블로 통합)
 -- ──────────────────────────────────────────
-INSERT IGNORE INTO feedback_source
-  (source_id, author_name, created_at, original_text, platform)
-VALUES
-(6,'이수진','2026-03-15 13:22:00','조용하고 편한 카페예요. 주차하기 좋아서 자주 올 것 같아요.','NAVER'),
-(7,'황재원','2026-03-22 15:40:00','동네 카페인데 분위기 괜찮네요. 커피 맛도 무난합니다.','GOOGLE'),
-(8,'김보미','2026-03-29 11:55:00','오래된 단골인데 요즘 인스타도 시작했더라고요. 응원해요!','INSTAGRAM');
-
 INSERT IGNORE INTO customer_feedback
-  (feedback_id, source_id, TYPE, STATUS, ai_status, created_at, updated_at)
+  (external_id, author_name, original_text, platform, TYPE, STATUS, ai_status, created_at, updated_at)
 VALUES
-(6, 6,'REVIEW', 'UNRESOLVED','IDLE','2026-03-15 13:22:00','2026-03-15 13:22:00'),
-(7, 7,'REVIEW', 'UNRESOLVED','IDLE','2026-03-22 15:40:00','2026-03-22 15:40:00'),
-(8, 8,'COMMENT','UNRESOLVED','IDLE','2026-03-29 11:55:00','2026-03-29 11:55:00');
+('sanjeong-review-1','이수진','조용하고 편한 카페예요. 주차하기 좋아서 자주 올 것 같아요.','NAVER',    'REVIEW', 'UNRESOLVED','IDLE','2026-03-15 13:22:00','2026-03-15 13:22:00'),
+('sanjeong-review-2','황재원','동네 카페인데 분위기 괜찮네요. 커피 맛도 무난합니다.',       'GOOGLE',   'REVIEW', 'UNRESOLVED','IDLE','2026-03-22 15:40:00','2026-03-22 15:40:00'),
+('sanjeong-review-3','김보미','오래된 단골인데 요즘 인스타도 시작했더라고요. 응원해요!',    'INSTAGRAM','COMMENT','UNRESOLVED','IDLE','2026-03-29 11:55:00','2026-03-29 11:55:00');
 
 
 SET FOREIGN_KEY_CHECKS = 1;
@@ -1196,5 +1181,191 @@ VALUES
 (8,20260422, 0, 0, 0, 3, 0, 7.30,'2026-04-22 23:59:59'),
 (8,20260423, 0, 0, 0, 4, 0, 7.50,'2026-04-23 23:59:59'),
 (8,20260424, 0, 0, 0, 4, 0, 7.80,'2026-04-24 23:59:59');
+
+
+-- ══════════════════════════════════════════════════════
+-- 16. customer_feedback 수기 더미 데이터
+--     출처: feedbacks_수기_더미데이터_0415.sql
+--     구글맵 / 카카오맵 / 네이버 지도 리뷰
+--     스키마 변경으로 feedback_source 없이 단일 테이블 직접 INSERT
+--     external_id: 원문 URL 사용 (UNIQUE 보장)
+--     네이버: URL 중복으로 author+date 조합 사용
+-- ══════════════════════════════════════════════════════
+
+-- ── 구글맵 리뷰
+INSERT IGNORE INTO customer_feedback
+  (external_id, author_name, original_text, origin_url, platform, TYPE, STATUS, ai_status, created_at, updated_at)
+VALUES
+('https://maps.app.goo.gl/a73sdqBCWzjykTEz7', 'Himummu Y',    '여기도 사람이 아주 바글바글 바닐라 에그타르트인가가 유명하다구 해서 방문한건데, 엄청 금방 sold out 되구,, 거의 2시간 더 기다려야 해서 포기하구 나왔습니다 ㅎㅎ', 'https://maps.app.goo.gl/a73sdqBCWzjykTEz7', 'GOOGLE', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-25 14:20:11', NOW()),
+('https://maps.app.goo.gl/zt1zae2MT9dgBP5G7', '김상훈',       '토요일 오후 빵이 없어요. 유성점과 비교하니 커피는 더 맛있어요. 주변 이면도로 주차했고요. 커피한잔에 데워주는 빵 조합 괜찮습니다. 분위기도 좋고요.',             'https://maps.app.goo.gl/zt1zae2MT9dgBP5G7', 'GOOGLE', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-24 16:45:32', NOW()),
+('https://maps.app.goo.gl/BWtdjCGGPK3g9PU69', '김갑환',       '너무 달아서 먹기 힘들다..',                                                                                                                                              'https://maps.app.goo.gl/BWtdjCGGPK3g9PU69', 'GOOGLE', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-02-12 11:30:00', NOW()),
+('https://maps.app.goo.gl/2kT9iTt3bmbRcjft6', '요미김',       '너무 맛있는 빵 그리고 너무 잘 어울리는 커피가 있는 곳🙃❤️…',                                                                                                            'https://maps.app.goo.gl/2kT9iTt3bmbRcjft6', 'GOOGLE', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-01-14 13:15:45', NOW()),
+('https://maps.app.goo.gl/rPTi56WgxRU4pQ4Y6', 'Chrissy',      '피스타치오 리본과 크림 브륄레 치즈 타르트가 정말 맛있어요! 안 드셔보셨다면 꼭 드셔보세요.',                                                                               'https://maps.app.goo.gl/rPTi56WgxRU4pQ4Y6', 'GOOGLE', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-12-18 10:50:22', NOW()),
+('https://maps.app.goo.gl/r8o9MeY2MTby4E9B7', 'Crane Silver',  '화장실은.. 남자여자 푯말구분은 있으나 세면대는 여자화장실칸 바로 앞이고 소변기없이 변기 하나씩 구조.ㅠ 직원친절하고 손님들이 결제에서 시간을 많이 잡아먹어 늦어짐.',  'https://maps.app.goo.gl/r8o9MeY2MTby4E9B7', 'GOOGLE', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-11-20 15:05:33', NOW()),
+('https://maps.app.goo.gl/8DwwTQPSp2peTGLt8', '윤진혁',       '',                                                                                                                                                                       'https://maps.app.goo.gl/8DwwTQPSp2peTGLt8', 'GOOGLE', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-11-12 09:22:18', NOW()),
+('https://maps.app.goo.gl/buP5u3gMw16HGTtE9', 'Adrian Seong', '꾸두뱅 베이커스 하우스는 갤러리아 백화점 타임 월드 대각선 건너편 골목안에 있으며, 둔산초등학교 뒤편에 위치한 건물 1층에 자리 잡고 있습니다.',                          'https://maps.app.goo.gl/buP5u3gMw16HGTtE9', 'GOOGLE', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-11-05 17:40:55', NOW()),
+('https://maps.app.goo.gl/vuS9ce2SkHtuvnHa6', 'PON',          '',                                                                                                                                                                       'https://maps.app.goo.gl/vuS9ce2SkHtuvnHa6', 'GOOGLE', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-10-15 12:10:40', NOW()),
+('https://maps.app.goo.gl/rYWy4W5kjqdZYpE69', '김정빈',       '사람은 붐비나 특별할 건 없다',                                                                                                                                           'https://maps.app.goo.gl/rYWy4W5kjqdZYpE69', 'GOOGLE', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-08-20 14:55:02', NOW());
+
+-- ── 카카오맵 리뷰
+INSERT IGNORE INTO customer_feedback
+  (external_id, author_name, original_text, origin_url, platform, TYPE, STATUS, ai_status, created_at, updated_at)
+VALUES
+('kakao-review-15217984', '버거빌런',                    '티라미슈는 스벅 보다도 못한데, 크림브륄레 페이스트리는 맛있었어요. 리본 크와상이랑 에그타르트는 그냥 무난하게 괜찮은데...',        'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=15217984&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-04-08 14:00:00', NOW()),
+('kakao-review-15118794', '맛대맛',                      '',                                                                                                                                    'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=15118794&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-26 11:30:00', NOW()),
+('kakao-review-15041702', '0',                           '휘낭시에 맛집이에요!마카다미아 추천 초코도 맛있어용',                                                                                 'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=15041702&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-15 15:20:00', NOW()),
+('kakao-review-15040184', '4점부터믿고가',               '',                                                                                                                                    'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=15040184&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-15 17:45:00', NOW()),
+('kakao-review-14930391', 'p0na',                        '',                                                                                                                                    'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=14930391&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-02-28 10:10:00', NOW()),
+('kakao-review-14250282', '잉',                          '맛있는 빵 많음 크림브륄레 패스츄리 강추 티라미수 데니쉬 바삭하니 크림도 맛있고 추천 !! +) 두바이는 11:30 에 나오는데...',           'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=14250282&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-02-20 12:00:00', NOW()),
+('kakao-review-14835138', '맛있었던 곳만 별점 남김',     '코코넛휘낭시에',                                                                                                                      'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=14835138&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-02-16 09:30:00', NOW()),
+('kakao-review-14474596', 'onoff',                       '코코넛휘낭시에 연어루꼴라샌드위치 마늘바게트 누네띠네 에그타르트 지금까지 먹어본 빵집 중에 제일 맛있어요 🥹...',                    'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=14474596&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-02-14 13:40:00', NOW()),
+('kakao-review-14793579', '냠',                          '망고타르트 맛있음',                                                                                                                    'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=14793579&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-02-10 16:15:00', NOW()),
+('kakao-review-14629241', '맛집저장용',                  '빵쟁이들에게 그저 천국. 빵의 퀄리티가 상당히 높다',                                                                                   'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=14629241&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-01-18 11:00:00', NOW()),
+('kakao-review-14607750', '송',                          '정말 와..👏👏👏👏👏👏 커서 빵 자를 때 으깨지며 무너질 거 같았는데 형태 유지된 상태로 파삭하게 잘림...',                              'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=14607750&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-01-16 14:50:00', NOW()),
+('kakao-review-14531374', '355/113',                     '맛있고 빵 종류도 많고 좋아요',                                                                                                        'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=14531374&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-01-04 12:25:00', NOW()),
+('kakao-review-14442304', '능이버섯',                    '',                                                                                                                                    'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=14442304&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-12-23 15:00:00', NOW()),
+('kakao-review-14330255', '나래',                        '멋진공간,맛있는빵 한가득',                                                                                                             'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=14330255&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-12-07 11:10:00', NOW()),
+('kakao-review-14330239', '이야호',                      '케이크가 맛있고 직원분들이 너무 친절해요🙂',                                                                                          'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=14330239&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-12-07 14:35:00', NOW()),
+('kakao-review-14242216', '해피삼식이',                  '휘낭시에 손가락만게 3000원?? 대단한 맛은 아닌데 휘낭시에 2점 에그타르트는 5점...',                                                   'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=14242216&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-11-24 16:20:00', NOW()),
+('kakao-review-14194379', '앵무집사',                    '토요일 3시쯤 갔더니 남은 메뉴가 많이 없고 카페 자리도 없어서...',                                                                     'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=14194379&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-11-18 15:40:00', NOW()),
+('kakao-review-14146422', 'yejin',                       '지난 4월, 대전 여행갔을때 휘낭시에 포장한거 먹었는데 정말 맛있었어요.',                                                                'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=14146422&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-11-11 10:15:00', NOW()),
+('kakao-review-14028920', '여치',                        '빵이너무 빨리매진돼서 두번가야했음...',                                                                                                'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=14028920&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-10-26 18:00:00', NOW()),
+('kakao-review-13859936', '진중리뷰어',                  '에그타르트, 보늬밤 미쳣음. 샌드위치도 브런치로 나오는 2종 베이컨 어쩌구랑 소세지 빵 먹엇는데 와우 존맛!',                           'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=13859936&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-04-01 12:00:00', NOW()),
+('kakao-review-13774039', '왈라비',                      '맛은 있긴하나 대체로 기름짐. 가성비 안좋은 동네인거 감안해도 비싼가격...',                                                            'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=13774039&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-09-23 15:30:00', NOW()),
+('kakao-review-13697387', '쿠냐',                        '가격에 비해 좀 아쉽고. 에그타르트는 제가 주말 점심시간 좀 지났을 때만 가서 그런지...',                                               'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=13697387&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-09-12 14:10:00', NOW()),
+('kakao-review-13542973', 'ㅡ',                          '맛은 있는데 포장 속도 넘넘 느려요... 회전율 말 안됨 ㅠㅠㅠ 개선 필오해보여요!',                                                       'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=13542973&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-08-23 17:20:00', NOW()),
+('kakao-review-12970324', '후기미제공 거름+나름 입맛 깐깐함', '연어 어쩌구 크로와상, 하몽 어쩌구 크로와상 샌드위치들은 진짜… 천상계 맛임…🥹👍...',                                          'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=12970324&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-08-18 11:45:00', NOW()),
+('kakao-review-13491739', '먹생먹사',                    '',                                                                                                                                    'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=13491739&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-08-17 13:00:00', NOW()),
+('kakao-review-13434636', '지면기',                      '하몽 크로와상 샌드위치랑 피스타치오 리본 강추⭐️⭐️⭐️⭐️⭐️...',                                                                     'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=13434636&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-08-10 16:30:00', NOW()),
+('kakao-review-13398540', '먕',                          '가격에 비해 아쉽다 잠봉뵈르 샌드위치 안에 땅콩버터 맛 나는 스프레드가 있는데...',                                                     'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=13398540&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-08-06 14:20:00', NOW()),
+('kakao-review-13332253', 'y_xrxx',                      '에그타르트, 솔티초코휘낭시에 맛집',                                                                                                   'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=13332253&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-07-29 11:15:00', NOW()),
+('kakao-review-13313712', '맛있어...',                   '빠삭한 휘낭시에 드디어 찾았다',                                                                                                       'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=13313712&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-07-27 15:50:00', NOW()),
+('kakao-review-13292388', 'mj',                          '',                                                                                                                                    'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=13292388&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-07-24 10:00:00', NOW()),
+('kakao-review-13272092', '🍀',                         '👍👍',                                                                                                                                'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=13272092&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-07-22 17:05:00', NOW()),
+('kakao-review-13268128', '맛난거킬러',                  '',                                                                                                                                    'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=13268128&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-07-21 14:30:00', NOW()),
+('kakao-review-13262980', '🤰',                         '라떼 맛집인듯 하몽크루아상 맛있고 치아바타 종류별로 먹어봤는데...',                                                                   'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=13262980&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-07-21 12:15:00', NOW()),
+('kakao-review-13254447', '🌻주원❣️💯🦋🍀',           '대전 빵 투어하다 유명하다고 하여 방문한 꾸드뱅베이커하우스...',                                                                        'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=13254447&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-07-19 09:40:00', NOW()),
+('kakao-review-13222951', '진짜리뷰',                    '넘 맛있어요 갈때마다 뭐먹을지 고민되고 먹는 것마다 맛있어여ㅎㅎ',                                                                     'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=13222951&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-07-15 13:55:00', NOW()),
+('kakao-review-12613956', '.',                           '사진은 홀케이크 단면 1번째방문 생크림쉬폰 조각먹음 6500...',                                                                          'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=12613956&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-07-15 16:30:00', NOW()),
+('kakao-review-13170276', 'chs',                         '여기서 먹은 빵이 계속 생각남 싼 편은 아니지만 ㅅㅈㅎ 이정도 맛이면 그냥 돈내죠',                                                    'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=13170276&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-07-08 11:20:00', NOW()),
+('kakao-review-13116813', '내뱃기',                      '맛은 괜찮은데 가격은 조금나가구 무엇보다 포장속도가 넘느리다.',                                                                       'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=13116813&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-07-01 15:45:00', NOW()),
+('kakao-review-13106809', 'zzaero',                      '베이커리류 엄청 비싸지 않고 맛도 괜찮음. 수박주스 맛있음.',                                                                           'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=13106809&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-06-29 14:10:00', NOW()),
+('kakao-review-12959580', 'Dinnny',                      '종류도 많고 베이커리류 디저트류 다 괜찮아요. 사람이 많은데 비해...',                                                                  'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=12959580&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-06-09 16:00:00', NOW()),
+('kakao-review-12814563', '룰루랄라잇힛',                '예쁘고 맛있는 빵들이 많이 있네요 ㅎ 피스타치오리본 크루와상...',                                                                     'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=12814563&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-05-21 11:25:00', NOW()),
+('kakao-review-12807834', '찐맛도리 감별사',             '검색 후 방문했는데 빵 종류도 다양하고 다 맛있어 보이고 이쁘기 까지 했어요...',                                                       'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=12807834&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-05-19 14:40:00', NOW()),
+('kakao-review-12783087', 'S:D',                         '두시 넘어서 갔더니 사진처럼 처참하다 모카빵이랑 모닝빵 정도밖에 없어서...',                                                          'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=12783087&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-05-16 17:30:00', NOW()),
+('kakao-review-12770369', '🎶',                         '대전에서 성심당 다음으로 유명하다고 해서 와봤는데 빵종류가 엄청 많아서...',                                                          'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=12770369&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-05-14 13:10:00', NOW()),
+('kakao-review-12697325', '✨️',                        '케익이나 빵종류가 다양해서 좋은데 매장 공간이 작은편이라서...',                                                                        'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=12697325&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-05-05 15:55:00', NOW()),
+('kakao-review-12556545', '빵뵹',                        '딸기타르트와 얼그레이쉬폰은 지금 먹고있고 블루베리 쉬폰은 저번주 정도에 먹었습니다...',                                              'https://m.map.kakao.com/scheme/place?id=740243959&reviewid=12556545&openpage=review', 'KAKAO', 'REVIEW', 'UNCHECKED', 'IDLE', '2025-04-16 11:40:00', NOW());
+
+-- ── 네이버 지도 리뷰 (URL 중복으로 author+date 조합을 external_id로 사용)
+INSERT IGNORE INTO customer_feedback
+  (external_id, author_name, original_text, origin_url, platform, TYPE, STATUS, ai_status, created_at, updated_at)
+VALUES
+('naver-오렌지가스레인지-20260411', '오렌지가스레인지', '알바생 교육 좀 똑바로 시키세요 빵 하나 포장하는데 10분 걸리고, 포장하는 사람도 없이 계산해서 트레이만 뒤에 주구장창 쌓아두고 회원번호 조회한다더니 그걸 금액으로 결제를 했더라고요', 'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-04-11 14:20:00', NOW()),
+('naver-vjvlapfhdd-20260409',       'vjvlapfhdd',        '',                                                                                                                                                                                                  'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-04-09 11:30:00', NOW()),
+('naver-무말랭이ISTJ-20260407',     '무말랭이ISTJ',      '바쁘신건 이해하는데... 과일 얹은 크림크로와상인데 포장은 예쁘게 조심히 잘 담으셨으면서 포장 후에 쇼핑백에 세게 던져담고 맨 밑에 눌러 담아서 과일도 다 떨어지고 크림 모양도 다 뭉개졌어요.',  'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-04-07 15:45:00', NOW()),
+('naver-나람46-20260407',           '나람46',            '다른 일이나 식당때문에 이 동네를 오더라도 절대 무조건 한번씩 들리게 되는 곳',                                                                                                                     'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-04-07 10:20:00', NOW()),
+('naver-kha1-20260402',             'kha****',           '빵이 정말 맛있어요👍👍👍',                                                                                                                                                                           'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-04-02 13:10:00', NOW()),
+('naver-mrsjindo-20260401',         'mrsjindo',          '빵이 엄청 맛있어요^^',                                                                                                                                                                               'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-04-01 11:00:00', NOW()),
+('naver-키무미소-20260401',         '키무미소',          '갓나온 말차페스츄리롤과 리본빵이 폭력적으로 맛있어요ㅠㅠ 리본빵 겉에는 바삭한 페스츄리랑 안에 피스타치오크림에 작은초코칩들이 들어있고',                                                         'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-04-01 16:30:00', NOW()),
+('naver-yon-20260331',              'yon****',           '빵이 먹을만 합니다',                                                                                                                                                                                 'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-31 12:00:00', NOW()),
+('naver-인천가요-20260331',         '인천가요',          '초코마들렌보다는 레몬마들렌이 더 맛있었어요!',                                                                                                                                                       'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-31 14:15:00', NOW()),
+('naver-도달산덕-20260329',         '도달산덕',          '오후 늦게 가서 솔드아웃된 빵이 많아서 아쉬웠지만.. 맛있었어요,, 다음엔 일찍가야지 🙂',                                                                                                           'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-29 18:05:00', NOW()),
+('naver-kha2-20260329',             'kha****',           '일찍 안가면 빵이 없음 지금까지 몇 종류 못먹어 봤지만 실패한 거 하나도 없이 다 맛있었음 에그타르트는 전문점보다 더 맛있었음👍',                                                                   'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-29 10:40:00', NOW()),
+('naver-뿌링맛조음-20260328',       '뿌링맛조음',        '에그타르트가 찐이에요!!!!! 너무 부드럽고 바닐라빈콕콕 너무 맛있고 페스츄리 파삭해요',                                                                                                           'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-28 15:20:00', NOW()),
+('naver-ckd-20260328',              'ckd****',           '케이크가 맛맀어요!',                                                                                                                                                                                 'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-28 13:10:00', NOW()),
+('naver-행복한르-20260328',         '행복한르',          '몇분 기다려서 두바이더티쵸코 득템했어요!!! 히히',                                                                                                                                                   'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-28 11:45:00', NOW()),
+('naver-소소한이웃-20260328',       '소소한 이웃',       '가끔 이용하는 빵집인데, 주말엔 사람이 바글바글~ ㅜㅜ 빵 진열대 주변으로 사람들 옷깃도 스치고, 가방도 스치고..ㅜㅜ',                                                                           'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-28 17:00:00', NOW()),
+('naver-jychrissy-20260325',        'jychrissy',         'The ribbon pistachio bread was sold out so I got the egg tart, cheese tart and salted bread which are all soooo good!',                                                                             'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-25 14:30:00', NOW()),
+('naver-인천가요-20260324',         '인천가요',          '핫플이라 그런지 평일 오전에도 사람이 많네요!',                                                                                                                                                       'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-24 10:50:00', NOW()),
+('naver-허거덩씨-20260323',         '허거덩씨',          '오늘 오후 7시 5분 계산해주신 여자 직원분. 케익주문해서 결제하는동안 포장하실때 갑자기 종이가방 접혀있는걸 저희 쪽으로 툭 던지더라고요?',                                                       'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-23 19:10:00', NOW()),
+('naver-밥찡구-20260322',           '밥찡구',            '구움과자, 건강빵, 모든 게 다 맛있어요.. 품절이 빨라서 아쉬울 뿐이에요!🥹💕',                                                                                                                     'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-22 16:20:00', NOW()),
+('naver-s-20260321',                's_****',            '오직 에그타르트만을 위해 달려간곳.. 하루에 3번나오는데 딱 나올때 기다렸다가 안에서 줄서있으면 시간맞춰서 트레이에 들고오셔서 갯수물어보시고 직접 담아주신다',                               'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-21 11:30:00', NOW()),
+('naver-뚱식가-20260321',           '뚱식가',            '리본 빵? 기대 안했는데 맛있어요! 토요일 2시쯔음 갔더니 아쉽게도 타르트는 이미 품절ㅠ',                                                                                                         'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-21 14:10:00', NOW()),
+('naver-GY85-20260321',             'GY85',              '리본은 별로. 겉도는 느끼함이 있어서 탄산을 불러요. 치즈모찌랑 휘낭시에 추천입니다.',                                                                                                             'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-21 16:00:00', NOW()),
+('naver-키무미소-20260320',         '키무미소',          '😋😋😋',                                                                                                                                                                                             'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-20 12:45:00', NOW()),
+('naver-ara-20260319',              'ara****',           '빵맛집',                                                                                                                                                                                             'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-19 15:30:00', NOW()),
+('naver-무념무상68-20260318',       '무념무상68',        '',                                                                                                                                                                                                  'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-18 10:20:00', NOW()),
+('naver-chl-20260317',              'chl****',           '평일 오후에 가니 대기 없이 바로 들어가서 빵을 구매할 수 있었어요. 빠진 빵들도 많아 아쉬웠지만 맛난 빵들이 꽤 있어서 괜찮았습니다.',                                                           'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-17 16:40:00', NOW()),
+('naver-이는성-20260316',           '이는성',            '찹쌀곶감파이랑 마롱밤파이가 너무너무 맛있었어요 둘다 겉바속촉에 한쪽은 쫀득하고 하나는 밤향이 향긋하고 고급지게 달아서 진짜로 감동적인 맛ㅠ',                                                 'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-16 16:10:00', NOW()),
+('naver-jy95968993-20260315',       'jy95968993',        '일요일 오후에 가니 빵이 없음, 장사를 안하는건가? 싶은 분위기… 둔산점은 서비스 마인드 교육이 하나도 안된듯함',                                                                                   'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-15 17:20:00', NOW()),
+('naver-지니-20260315',             '지 니',             '하나 먹고 맛있어서 또 결제하고, 또 맛있어서 총 세번이나 결제하고 먹은 빵집 … 💛',                                                                                                               'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-15 14:50:00', NOW()),
+('naver-파랑새503-20260314',        '파랑새503',         '맛이 없는게 없을 정도로 너무 맛있네요 애그타르트는 최고였어요 일찍 방문해서 아침으로 먹고 남은건 포장했어요 👍',                                                                             'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-14 09:30:00', NOW()),
+('naver-미스터화이트-20260314',     '미스터화이트',      '대전꾸드뱅 베이커스 하우스는 인생 에그타르트입니다 바닐라 플랑 에그타르트는 겹겹이 쌓인 페이스트리 결이 입안에서 바스락하게 터지는 식감이 압권입니다',                                   'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-14 12:15:00', NOW()),
+('naver-MoonShot9-20260312',        'MoonShot9',         '반석에서 유명한 꾸드뱅이 둔산에도! 간소한 생일을 보내야 하는 사람들에게 꾸드뱅 미니 케이크 만한 선택이 없어요.',                                                                             'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-12 11:40:00', NOW()),
+('naver-TtB-20260312',              'TtB',               '산책하다가 에그타르트가 맛있어보여서 들렀다. 두툼한 높이에 겹겹히 쌓인 시트지와 안에 가득찬 크림에 달달한 바닐라 향이 식욕을 돋군다.',                                                       'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-12 15:00:00', NOW()),
+('naver-여늬-20260308',             '여늬',              '주말 오후 1시여도 메인 빵들이 재고가 얼마 없어요. 에타는 비싸도 여기 맛도리',                                                                                                                   'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-08 13:20:00', NOW()),
+('naver-Bbeeyo-20260307',           'Bbeeyo',            '꾸드뱅 빵 맛있다고해서 웨이팅해서 들어갔는데 벌써 앞쪽은 다 팔렸더라구요ㅠㅠ 크림치즈바질바게트 빵이 진짜 고소하고 안에 들은 내용물이랑 너무 잘어울려서 너무 맛있었어요!',             'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-07 14:10:00', NOW()),
+('naver-하이킥-20260307',           '하이킥진짜재밌음',  '빵 포장해서 왔어요!ㅜㅜ 주말 점심에 방문했는데 매장 이용, 포장하러 손님들이 가득했어요!!',                                                                                                   'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-07 11:50:00', NOW()),
+('naver-호이호이222-20260304',      '호이호이222',       '갈때마다 에그타르트가 다나가고 없어서 빵 나오는 시간(10시30분) 맞춰서 갔어요!ㅎㅎㅎ 리본크로와상도 유명하길래 같이 먹었는데 안에 땅콩크림이 있어서 달달하고 맛있더라구요👍🏼',       'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-04 10:45:00', NOW()),
+('naver-B237-20260302',             'B237',              '에그타르트 맛있어요',                                                                                                                                                                               'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-02 15:30:00', NOW()),
+('naver-kerrypark-20260301',        'kerry park',        '집 근처인데 매번 갈때마다 사람도 너무 많고, 빵도 많이 없어서 아쉬운 부분도 많지만 ㅋㅋ 그래도 빵이 맛있어서 잘 이용하고 있습니다.',                                                       'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-01 12:40:00', NOW()),
+('naver-은5996-20260301',           '은5996',            '이럴거면 케이크 픽업예약을 왜 받아요 계산도 대기하고 포장도 대기하고 마지막 직원은 인사도 없고요',                                                                                           'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-03-01 17:00:00', NOW()),
+('naver-RohM-20260225',             'RohM',              '하루전에 예약하면 바로 구입할 수 있어서 성심당보단 꾸드뱅을 자주 이용합니다. 기념일에 자주 방문하겠습니다.',                                                                                 'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-02-25 14:10:00', NOW()),
+('naver-째째수리-20260224',         '째째수리',          '휘낭시에가 너무 먹고싶어서 다녀왔어요~ 눈오는 날에도 북적북적합니다 ㅎㅎ 꾸드뱅 빵도 구움과자도 다 맛있지만 커피가 진짜 맛있어요ㅎㅎ',                                                   'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-02-24 13:50:00', NOW()),
+('naver-s1-20260223',               's1****',            '예전부터 좋아해서 사먹는 빵집이네요 ~~ 7년째 다니는 것 같은데 가까이 생겨 좋아요 !! 신메뉴까지 구매해서 갑니다 😊',                                                                       'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-02-23 11:20:00', NOW()),
+('naver-밥찡구-20260222',           '밥찡구',            '언제나 달콤하고 맛있는 꾸드뱅 방문! 비싸도 그만큼 맛있어서 꾸준히 방문하게 돼요🥰',                                                                                                       'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-02-22 15:40:00', NOW()),
+('naver-Ella2523-20260221',         'Ella2523',          '남다른 에그타르트..⭐️ 다음에는 꾸드뱅 미니 망고케이크도 먹어보고싶어요',                                                                                                                     'https://pcmap.place.naver.com/restaurant/1280150589/review/visitor?reviewSort=recent', 'NAVER', 'REVIEW', 'UNCHECKED', 'IDLE', '2026-02-21 16:50:00', NOW());
+
+-- ══════════════════════════════════════════════════════
+-- 17. sns_guides 시드 데이터
+--     출처: 콘텐츠_생성_가이드_0420.sql
+-- ══════════════════════════════════════════════════════
+INSERT IGNORE INTO sns_guides (platform, guide_details) VALUES
+('instagram',
+ '[{"content": "평일 오전: 출근 후 짧은 여유 시간대에 맞춰 게시물을 업로드해 보세요.", "bestTime": "10:00~12:00"},
+   {"content": "평일 저녁: 퇴근 후 스크롤 피크 타임입니다. 목요일 밤은 참여도가 특히 높습니다.", "bestTime": "19:00~22:00"},
+   {"content": "주말: 오프라인 활동 전후 여유 시간대에 맞춘 콘텐츠가 효과적입니다.", "bestTime": "토 15:00 / 일 12:00~15:00"},
+   {"content": "릴스 특화: 짧은 영상 소비가 폭발적으로 일어나는 시간대를 공략하세요.", "bestTime": "11:00~14:00 / 18:00~"}]'),
+('facebook',
+ '[{"content": "평일 오전: 짧은 휴식 중 뉴스피드를 확인하는 유저들을 타겟팅하세요.", "bestTime": "09:00~12:00"},
+   {"content": "평일 저녁: 퇴근 직전과 직후, 하루를 마무리하는 피크 타임입니다.", "bestTime": "17:00 전후"},
+   {"content": "참여 최적 요일: 화요일에서 목요일 오전 시간대가 가장 반응이 좋습니다.", "bestTime": "화~목 오전"}]'),
+('naver',
+ '[{"content": "평일 오전: 점심시간 직전 검색 트래픽 유입이 가장 활발한 골든타임입니다.", "bestTime": "12:00~13:00"},
+   {"content": "평일 저녁: 이웃들이 여유롭게 피드를 열람하는 시간대에 맞춰 발행하세요.", "bestTime": "20:00~22:00"},
+   {"content": "주말: 사용자들이 정보를 심도 있게 탐색하는 여유로운 오전 시간대입니다.", "bestTime": "10:00~12:00"}]'),
+('kakao',
+ '[{"content": "평일 오전: 점심 메뉴를 고르거나 휴식 중일 때 메시지 확인률이 가장 높습니다.", "bestTime": "11:00~12:00"},
+   {"content": "평일 저녁: 하루 일과를 마치고 퇴근하는 길에 카카오톡 확인이 잦아집니다.", "bestTime": "19:00~21:00"},
+   {"content": "주말: 약속 장소로 이동하거나 휴식을 취하는 토요일 오후 시간대를 활용하세요.", "bestTime": "토 14:00~16:00"}]'),
+('community',
+ '[{"content": "평일 오전: 점심시간을 활용해 커뮤니티에 접속하는 유저가 많습니다.", "bestTime": "12:00~13:00"},
+   {"content": "평일 저녁: 커뮤니티 특유의 심야 트래픽이 집중되는 시간대를 공략하세요.", "bestTime": "21:00~23:00"},
+   {"content": "주말: 사용자들이 다양한 주제를 탐색하며 활동하는 오후 시간대입니다.", "bestTime": "14:00~18:00"}]');
+
+-- ══════════════════════════════════════════════════════
+-- 18. keywords 시드 데이터
+--     출처: 업종별_키워드_0420.sql
+--     DEFAULT: 일반 업종 INSERT 완료 후 SELECT DISTINCT로 생성
+-- ══════════════════════════════════════════════════════
+INSERT IGNORE INTO keywords (industry_code, category, name) VALUES
+('CAFE',    '기본',    '감성'),         ('CAFE',    '기본',    '가성비'),        ('CAFE',    '기본',    '신메뉴'),
+('CAFE',    '기본',    '위치'),         ('CAFE',    '기본',    '맛집'),          ('CAFE',    '기본',    '분위기'),
+('FOOD',    '기본',    '맛집'),         ('FOOD',    '기본',    '가성비'),        ('FOOD',    '기본',    '감성'),
+('FOOD',    '기본',    '신메뉴'),       ('FOOD',    '기본',    '분위기'),        ('FOOD',    '기본',    '단체모임'),
+('BEAUTY',  '서비스',  '시술'),         ('BEAUTY',  '위생',    '위생'),          ('BEAUTY',  '보안',    '프라이버시'),
+('BEAUTY',  '가격',    '비용 합리성'),  ('BEAUTY',  '전문성',  '상담 전문성'),   ('BEAUTY',  '맞춤',    '고객맞춤'),
+('BEAUTY',  '관리',    '사후 관리'),    ('BEAUTY',  '트렌드',  '트렌드 민감도'), ('BEAUTY',  '신뢰',    '평판'),
+('FASHION', '스타일',  '스타일'),       ('FASHION', '품질',    '품질'),          ('FASHION', '서비스',  '서비스'),
+('FASHION', '접근성',  '접근성'),       ('FASHION', '배송',    '배송 및 반품'),  ('FASHION', '스타일링','스타일링'),
+('FASHION', '신뢰',    '평판'),
+('STAY',    '공간',    '공간'),         ('STAY',    '위생',    '청결'),          ('STAY',    '분위기',  '분위기'),
+('STAY',    '가격',    '가성비'),       ('STAY',    '시설',    '부대시설'),      ('STAY',    '조망',    '조망권'),
+('STAY',    '보안',    '프라이버시'),   ('STAY',    '편의',    '어메니티'),      ('STAY',    '서비스',  '호스트 서비스'),
+('SPORTS',  '강의',    '티칭'),         ('SPORTS',  '위생',    '청결'),          ('SPORTS',  '분위기',  '분위기'),
+('SPORTS',  '이벤트',  '이벤트'),       ('SPORTS',  '접근성',  '접근 편의성'),   ('SPORTS',  '시설',    '설비'),
+('EDU',     '역량',    '강사진 역량'),  ('EDU',     '환경',    '학습 환경'),     ('EDU',     '커리큘럼','커리큘럼'),
+('EDU',     '가격',    '수강료'),       ('EDU',     '위치',    '통학'),          ('EDU',     '신뢰',    '신뢰도'),
+('EDU',     '정보',    '정보력'),       ('EDU',     '소통',    '학부모 소통'),   ('EDU',     '분위기',  '분위기'),
+('MED',     '전문성',  '전문성'),       ('MED',     '위생',    '청결'),          ('MED',     '신뢰',    '신뢰도'),
+('MED',     '가격',    '가성비'),       ('MED',     '위치',    '위치/시간'),     ('MED',     '상담',    '상담/구독'),
+('RETAIL',  '품질',    '품질'),         ('RETAIL',  '가격',    '가성비'),        ('RETAIL',  '배송',    '배송'),
+('RETAIL',  '위생',    '청결'),         ('RETAIL',  '이벤트',  '프로모션'),      ('RETAIL',  '신뢰',    '재고 신뢰도');
+
+-- DEFAULT: 전체 키워드 중복 제거 후 삽입
+INSERT IGNORE INTO keywords (industry_code, category, name)
+SELECT DISTINCT 'DEFAULT', '전체', name FROM keywords;
 
 SET FOREIGN_KEY_CHECKS = 1;
