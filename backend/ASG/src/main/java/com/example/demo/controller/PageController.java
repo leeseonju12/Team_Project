@@ -48,10 +48,12 @@ public class PageController {
 	@GetMapping("/channel-performance")
 	public String channelPerformancePage(HttpSession session, Model model) {
 	    Long userId = getSessionUserId(session);
-	    if (userId == null) return "redirect:/login_test";
+	    if (userId == null) return "redirect:/login";
 
 	    Long brandId = mypageService.getBrandId(userId);
 	    model.addAttribute("brandId", brandId);
+        User user = userService.findById(userId);
+        model.addAttribute("userInfo", user);
 	    return "channel-performance";
 	}
 	

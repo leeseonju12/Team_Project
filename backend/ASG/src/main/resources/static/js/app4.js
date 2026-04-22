@@ -73,28 +73,35 @@ const apiService = {
     return response.json();
   },
 
-    async publishContent(sns, text, imageFile, pexelsUrl) {
-      const formData = new FormData();
-      formData.append('platform', sns);
-      formData.append('text', text);
+  async publishContent(sns, text, filesArray, externalUrlsArray) {
+    const formData = new FormData();
+    formData.append('platform', sns);
+    formData.append('text', text);
 
-      if (imageFile) {
-        formData.append('image', imageFile);
-      } else if (pexelsUrl) {
-        formData.append('pexelsUrl', pexelsUrl);
-      }
-
-      const response = await fetch('/api/posts/publish', {
-        method: 'POST',
-        body: formData 
+    /* 로컬 파일 다중 전송 */
+    if (filesArray && filesArray.length > 0) {
+      filesArray.forEach(file => {
+        formData.append('images', file);
       });
-
-      if (!response.ok) {
-        throw new Error(`발행 서버 통신 오류: ${response.status}`);
-      }
-
-      return response.json();
     }
+
+    /* Pexels 및 히스토리 외부 URL 다중 전송 */
+    if (externalUrlsArray && externalUrlsArray.length > 0) {
+      externalUrlsArray.forEach(url => {
+        formData.append('externalUrls', url);
+      });
+    }
+
+    const response = await fetch('/api/posts/publish', {
+      method: 'POST',
+      body: formData 
+    });
+
+    if (!response.ok) {
+      throw new Error(`발행 서버 통신 오류: ${response.status}`);
+    }
+    return response.json();
+  }
   };
 
 /* --------------------------------------------------------------------------
@@ -162,6 +169,95 @@ const uiManager = {
 
 window.openEventModal = uiManager.openEventModal;
 window.closeEventModal = uiManager.closeEventModal;
+
+
+
+
+
+
+/* 플랫폼별 슬라이드 인덱스 관리 상태 */
+const carouselState = {};
+
+/* 다중 이미지 슬라이드(캐러셀) DOM 생성기 */
+function createCarouselElement(sns, imageUrls) {
+    if (!Array.isArray(imageUrls)) {
+        imageUrls = [imageUrls].filter(Boolean);
+    }
+    if (imageUrls.length === 0) return null;
+
+    carouselState[sns] = 0;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'sns-carousel-wrapper';
+    wrapper.style.cssText = 'position: relative; width: 100%; overflow: hidden; border-radius: 12px; margin-bottom: 15px; background: #f1f5f9; aspect-ratio: 1/1;';
+
+    const track = document.createElement('div');
+    track.className = 'sns-carousel-track';
+    track.style.cssText = 'display: flex; height: 100%; transition: transform 0.3s ease-in-out;';
+
+    imageUrls.forEach(url => {
+        const img = document.createElement('img');
+        img.src = url;
+        img.style.cssText = 'width: 100%; height: 100%; flex-shrink: 0; object-fit: cover;';
+        track.appendChild(img);
+    });
+
+    wrapper.appendChild(track);
+
+    /* 2장 이상일 경우 좌우 넘기기 버튼 및 인디케이터(점) 생성 */
+    if (imageUrls.length > 1) {
+        const prevBtn = document.createElement('button');
+        prevBtn.innerHTML = '&#10094;';
+        prevBtn.style.cssText = 'position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; display: none; align-items: center; justify-content: center; z-index: 2;';
+
+        const nextBtn = document.createElement('button');
+        nextBtn.innerHTML = '&#10095;';
+        nextBtn.style.cssText = 'position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 2;';
+
+        const dotsWrap = document.createElement('div');
+        dotsWrap.style.cssText = 'position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 2;';
+        
+        const dots = [];
+        imageUrls.forEach((_, idx) => {
+            const dot = document.createElement('span');
+            dot.style.cssText = `width: 6px; height: 6px; border-radius: 50%; background: ${idx === 0 ? '#fff' : 'rgba(255,255,255,0.5)'}; transition: background 0.3s;`;
+            dotsWrap.appendChild(dot);
+            dots.push(dot);
+        });
+
+        const updateCarouselUI = () => {
+            const idx = carouselState[sns];
+            track.style.transform = `translateX(-${idx * 100}%)`;
+            prevBtn.style.display = idx === 0 ? 'none' : 'flex';
+            nextBtn.style.display = idx === imageUrls.length - 1 ? 'none' : 'flex';
+            dots.forEach((dot, i) => {
+                dot.style.background = i === idx ? '#fff' : 'rgba(255,255,255,0.5)';
+            });
+        };
+
+        prevBtn.onclick = (e) => {
+            e.preventDefault();
+            if (carouselState[sns] > 0) {
+                carouselState[sns]--;
+                updateCarouselUI();
+            }
+        };
+
+        nextBtn.onclick = (e) => {
+            e.preventDefault();
+            if (carouselState[sns] < imageUrls.length - 1) {
+                carouselState[sns]++;
+                updateCarouselUI();
+            }
+        };
+
+        wrapper.appendChild(prevBtn);
+        wrapper.appendChild(nextBtn);
+        wrapper.appendChild(dotsWrap);
+    }
+
+    return wrapper;
+}
 
 /* --------------------------------------------------------------------------
    5. Helpers
@@ -293,19 +389,20 @@ function updatePlatformVisibility() {
   }
 }
 
-/* Helpers 내 animateGeneratedText 수정 */
-function animateGeneratedText(sns, text, imageUrl) {
+function animateGeneratedText(sns, text, imageUrls) {
   const textEl = document.getElementById(`text-${sns}`);
   if (!textEl) return;
 
-  /* 이미지 컨테이너 추가 로직 */
   textEl.innerHTML = '';
-  if (imageUrl) {
-    const imgHtml = `<img src="${imageUrl}" style="width:100%; border-radius:12px; margin-bottom:15px; display:block;">`;
-    textEl.innerHTML = imgHtml;
+  
+  /* 캐러셀 DOM 주입 */
+  const carouselEl = createCarouselElement(sns, imageUrls);
+  if (carouselEl) {
+    textEl.appendChild(carouselEl);
   }
 
   const contentWrap = document.createElement('div');
+  contentWrap.style.marginTop = '10px';
   textEl.appendChild(contentWrap);
 
   const cursor = document.createElement('span');
@@ -360,11 +457,12 @@ function updatePublishButtonByPlatform(post) {
          /* 백엔드가 List<SnsResult>를 반환하는 경우 */
          responseData.forEach((res) => {
            const sns = normalizePlatformKey(res.platform);
+		   const urls = res.imageUrls || (res.imageUrl ? res.imageUrl.split(',') : state.uploadedImages);
            state.generatedContent[sns] = { 
              text: res.content,
-             imageUrl: res.imageUrl || state.uploadedImageUrl 
+             imageUrl: urls
            };
-           animateGeneratedText(sns, res.content, state.generatedContent[sns].imageUrl);
+           animateGeneratedText(sns, res.content, urls);
          });
        } else {
          /* 백엔드가 Map<String, String> 등을 반환하는 경우 */
@@ -400,12 +498,13 @@ function updatePublishButtonByPlatform(post) {
      uiManager.showToast(`${PLATFORM_CONFIG[sns]?.label || sns}에 게시 중입니다. 잠시만 기다려주세요...`);
 
      try {
-       const result = await apiService.publishContent(
-         sns,
-         content.text,
-         state.uploadedFiles[0] || null,
-         pexelsUrl
-       );
+		const externalUrls = state.uploadedImages.filter(url => typeof url === 'string' && !url.startsWith('blob:'));
+		const result = await apiService.publishContent(
+		  sns,
+		  content.text,
+		  state.uploadedFiles,
+		  externalUrls
+		);
 
        if (result.status === 'success') {
          uiManager.showToast(`${PLATFORM_CONFIG[sns]?.label || sns}에 성공적으로 게시되었습니다!`);
@@ -567,51 +666,67 @@ window.syncPendingPosts = async function(isManual = false) {
 // 기존 함수명 유지 (버튼 바인딩용)
 window.loadPendingFromDB = () => window.syncPendingPosts(true);
 
-/**
- * 중앙 편집 영역에 과거 기록 로드
- */
-window.loadCenterHistory = async function() {
-  uiManager.showToast("최근 기록을 불러오는 중...");
-  
-  try {
-    const response = await fetch('/api/posts/pending');
-    if (!response.ok) throw new Error("Network response was not ok");
-    
-    let data = await response.json();
-    if (data.length === 0) return uiManager.showToast("저장된 기록이 없습니다.");
 
-    // 최신순 정렬
-    data.sort((a, b) => b.id - a.id);
+ window.loadCenterHistory = async function() {
+   uiManager.showToast("최근 기록을 불러오는 중...");
+   
+   try {
+     const response = await fetch('/api/posts/pending');
+     if (!response.ok) throw new Error("Network response was not ok");
+     
+     let data = await response.json();
+     if (data.length === 0) return uiManager.showToast("저장된 기록이 없습니다.");
 
-    state.generatedContent = {}; 
+     data.sort((a, b) => b.id - a.id);
+     state.generatedContent = {}; 
 
-    data.forEach(item => {
-      const sns = (item.platform || '').toLowerCase();
-      if (!state.generatedContent[sns]) {
-        state.generatedContent[sns] = {
-          text: item.content,
-          imageUrl: item.imageUrl,
-          hashtags: item.hashtags ? (Array.isArray(item.hashtags) ? item.hashtags : item.hashtags.split(',')) : []
-        };
-        
-        const textEl = document.getElementById(`text-${sns}`);
-        const resultDiv = document.getElementById(`result-${sns}`);
-        const emptyDiv = document.getElementById(`empty-${sns}`);
-        
-        if (textEl) textEl.innerHTML = item.content.replace(/\n/g, '<br>');
-        if (resultDiv) resultDiv.style.display = 'block';
-        if (emptyDiv) emptyDiv.style.display = 'none';
-      }
-    });
+     data.forEach(item => {
+       const sns = (item.platform || '').toLowerCase();
+       if (!state.generatedContent[sns]) {
+         // 다중 URL 파싱 로직 적용
+         const parsedUrls = item.imageUrls ? item.imageUrls : (item.imageUrl ? item.imageUrl.split(',') : []);
+         
+         state.generatedContent[sns] = {
+           text: item.content,
+           imageUrls: parsedUrls,
+           hashtags: item.hashtags ? (Array.isArray(item.hashtags) ? item.hashtags : item.hashtags.split(',')) : []
+         };
+         
+         const textEl = document.getElementById(`text-${sns}`);
+         const resultDiv = document.getElementById(`result-${sns}`);
+         const emptyDiv = document.getElementById(`empty-${sns}`);
+         
+         if (textEl) {
+             textEl.innerHTML = '';
+             
+             // 캐러셀 복원
+             const carouselEl = createCarouselElement(sns, parsedUrls);
+             if (carouselEl) textEl.appendChild(carouselEl);
+             
+             // 텍스트 복원
+             const textWrap = document.createElement('div');
+             textWrap.innerHTML = item.content.replace(/\n/g, '<br>');
+             textWrap.style.marginTop = '15px'; 
+             textEl.appendChild(textWrap);
+         }
+         
+         if (resultDiv) resultDiv.style.display = 'block';
+         if (emptyDiv) emptyDiv.style.display = 'none';
+		 if (parsedUrls.length > 0) {
+		             state.uploadedImages = [...parsedUrls];
+		             updateCenterPreviewsWithImages(parsedUrls);
+		             renderImagePreviews(); // 좌측 업로드 미리보기도 동기화
+		         }
+       }
+     });
 
-    updatePlatformVisibility();
-    uiManager.showToast("과거 기록이 중앙 영역에 로드되었습니다.");
-  } catch (err) {
-    console.error(err);
-    uiManager.showToast("기록 로드 실패");
-  }
-};
-
+     updatePlatformVisibility();
+     uiManager.showToast("과거 기록이 중앙 영역에 로드되었습니다.");
+   } catch (err) {
+     console.error(err);
+     uiManager.showToast("기록 로드 실패");
+   }
+ };
 window.removePending = function (id) {
   if (typeof CalendarManager !== 'undefined' && CalendarManager.removePending) {
     CalendarManager.removePending(id);
@@ -661,16 +776,13 @@ async function handleManualUpload(files) {
     const uploadResult = await uploadMultipleImagesToServer(files);
 
     if (uploadResult.status === 'success' && uploadResult.urls) {
-      manualUploadedUrls = uploadResult.urls;
-      
-      // 기존 기능들과의 호환성을 위해 전역 상태(state) 업데이트
-      state.uploadedImages = [...uploadResult.urls];
-      state.uploadedFiles = Array.from(files);
-      if (state.uploadedImages.length > 0) {
-        state.uploadedImageUrl = state.uploadedImages[0]; // 백엔드 호환용 첫 번째 이미지
-      }
+		
+		manualUploadedUrls.push(...uploadResult.urls);
+		state.uploadedImages.push(...uploadResult.urls);
+		state.uploadedFiles.push(...Array.from(files));
 
-      renderImagePreviews(); // 통합된 미리보기 함수 호출
+		state.uploadedImageUrl = state.uploadedImages[0]; 
+		renderImagePreviews();
       updateRetouchState();
       uiManager.showToast('이미지가 성공적으로 업로드되었습니다.');
     }
@@ -717,14 +829,18 @@ function updateRetouchState() {
 }
 
 window.removeImg = function (index) {
-  state.uploadedImages.splice(index, 1);
-  state.uploadedFiles.splice(index, 1);
-  manualUploadedUrls.splice(index, 1);
-  if (state.uploadedImages.length === 0) {
-    state.uploadedImageUrl = null;
-  } else {
-    state.uploadedImageUrl = state.uploadedImages[0];
+  const removedUrl = state.uploadedImages[index];
+  
+  /* File 객체와 1:1 매칭되는 로컬 업로드 URL인지 식별하여 분기 삭제 */
+  const manualIndex = manualUploadedUrls.indexOf(removedUrl);
+  if (manualIndex > -1) {
+    manualUploadedUrls.splice(manualIndex, 1);
+    state.uploadedFiles.splice(manualIndex, 1);
   }
+
+  state.uploadedImages.splice(index, 1);
+  state.uploadedImageUrl = state.uploadedImages.length > 0 ? state.uploadedImages[0] : null;
+
   renderImagePreviews();
   updateRetouchState();
 };
@@ -1131,21 +1247,6 @@ function executePexelsSearch(isAppend) {
         });
 }
 
-function renderPexelsResults(images) {
-    const gallery = document.getElementById('pexelsGallery');
-    
-    images.forEach(image => {
-        const img = document.createElement('img');
-        img.src = image.src.medium;
-        
-        img.onclick = function() {
-            selectPexelsImage(image.src.large2x);
-        };
-        
-        gallery.appendChild(img);
-    });
-}
-
 function selectPexelsImage(imageUrl) {
     const hiddenInput = document.getElementById('pexels-url-input');
     const localFileInput = document.getElementById('imgInput');
@@ -1293,6 +1394,76 @@ function removeUrlFromHiddenInput(url) {
     }
 }
 
+function updateCenterPreviewsWithImages(imageUrls) {
+    let urls = [];
+    if (Array.isArray(imageUrls)) urls = imageUrls;
+    else if (typeof imageUrls === 'string') urls = imageUrls.split(',');
+    
+    urls = urls.filter(Boolean);
+
+    if (urls.length === 0) {
+        clearCenterPreviews();
+        return;
+    }
+
+    // --- Instagram 목업 업데이트 ---
+    const igPlaceholder = document.getElementById('igPhotoPlaceholder');
+    const igImg = document.getElementById('igPhotoImg');
+    
+    if (igPlaceholder) igPlaceholder.style.display = 'none';
+    if (igImg) igImg.style.display = 'none'; // 기존 단일 img 태그는 숨김
+
+    const igContainer = igImg ? igImg.parentElement : null;
+    if (igContainer) {
+        // 기존에 생성해둔 캐러셀이 있다면 초기화
+        const existing = igContainer.querySelector('.sns-carousel-wrapper');
+        if (existing) existing.remove();
+
+        // 새 캐러셀 주입
+        const carousel = createCarouselElement('center-ig', urls);
+        if (carousel) igContainer.appendChild(carousel);
+    }
+
+    // --- Facebook / Kakao 목업 업데이트 ---
+    const fbWrap = document.getElementById('fbsMediaWrap');
+    if (fbWrap) {
+        fbWrap.innerHTML = '';
+        const fbCarousel = createCarouselElement('center-fb', urls);
+        if (fbCarousel) fbWrap.appendChild(fbCarousel);
+    }
+
+    const kkWrap = document.getElementById('kksMediaSection');
+    if (kkWrap) {
+        kkWrap.innerHTML = '';
+        const kkCarousel = createCarouselElement('center-kk', urls);
+        if (kkCarousel) kkWrap.appendChild(kkCarousel);
+    }
+}
+
+function clearCenterPreviews() {
+    const igImg = document.getElementById('igPhotoImg');
+    const igPlaceholder = document.getElementById('igPhotoPlaceholder');
+    if(igImg && igPlaceholder) { 
+        igImg.style.display = 'none'; 
+        igImg.src = ''; 
+        igPlaceholder.style.display = 'flex'; 
+    }
+
+    const blogImg = document.getElementById('blogArtImg');
+    const blogPlaceholder = document.getElementById('blogArtImgPlaceholder');
+    if(blogImg && blogPlaceholder) { 
+        blogImg.style.display = 'none'; 
+        blogImg.src = ''; 
+        blogPlaceholder.style.display = 'flex'; 
+    }
+
+    const fbWrap = document.getElementById('fbsMediaWrap');
+    if(fbWrap) fbWrap.innerHTML = '';
+
+    const kkWrap = document.getElementById('kksMediaSection');
+    if(kkWrap) kkWrap.innerHTML = '';
+}
+
 /* Event binding for Search Button and Enter Key */
 document.addEventListener('DOMContentLoaded', function() {
     const btnSearchPexels = document.getElementById('btnSearchPexels');
@@ -1389,71 +1560,32 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
-
-/* * Handles the selection of an image from the Pexels modal.
- * Updates the hidden input state and dynamically renders the preview.
- */
 function selectPexelsImage(imageUrl) {
     const hiddenInput = document.getElementById('pexels-url-input');
-    const localFileInput = document.getElementById('imgInput');
-    const previewContainer = document.getElementById('imgPreviews');
-
-    /* 1. Update state */
+    
     if (hiddenInput) {
-        hiddenInput.value = imageUrl;
+        const currentUrls = hiddenInput.value ? hiddenInput.value.split(',') : [];
+        currentUrls.push(imageUrl);
+        hiddenInput.value = currentUrls.join(',');
     }
 
-    /* 2. Enforce mutual exclusivity by clearing local file inputs */
-    if (localFileInput) {
-        localFileInput.value = '';
+    if (typeof state !== 'undefined') {
+        state.uploadedImages.push(imageUrl);
+        state.uploadedImageUrl = state.uploadedImages[0];
     }
 
-    /* 3. Render preview */
-    previewContainer.innerHTML = ''; 
+    /* DOM 직접 조작 대신 기존에 정의된 통합 렌더링 함수 재사용 */
+    renderImagePreviews();
 
-    const previewWrapper = document.createElement('div');
-    previewWrapper.style.position = 'relative';
-    previewWrapper.style.display = 'inline-block';
-    previewWrapper.style.width = '100px'; 
-    previewWrapper.style.height = '100px';
-    previewWrapper.style.marginRight = '10px';
-
-    const imgElement = document.createElement('img');
-    imgElement.src = imageUrl;
-    imgElement.style.width = '100%';
-    imgElement.style.height = '100%';
-    imgElement.style.objectFit = 'cover';
-    imgElement.style.borderRadius = '8px';
-
-    const removeBtn = document.createElement('button');
-    removeBtn.innerText = '✕';
-    removeBtn.style.position = 'absolute';
-    removeBtn.style.top = '4px';
-    removeBtn.style.right = '4px';
-    removeBtn.style.background = 'rgba(0,0,0,0.5)';
-    removeBtn.style.color = '#fff';
-    removeBtn.style.border = 'none';
-    removeBtn.style.borderRadius = '50%';
-    removeBtn.style.width = '20px';
-    removeBtn.style.height = '20px';
-    removeBtn.style.fontSize = '10px';
-    removeBtn.style.cursor = 'pointer';
-
-    /* Clear state and UI on remove */
-    removeBtn.onclick = function() {
-        hiddenInput.value = '';
-        previewContainer.innerHTML = '';
-    };
-
-    previewWrapper.appendChild(imgElement);
-    previewWrapper.appendChild(removeBtn);
-    previewContainer.appendChild(previewWrapper);
-
-    /* 4. Close the modal */
+    if (typeof updateCenterPreviewsWithImageUrl === 'function') {
+        updateCenterPreviewsWithImages(state.uploadedImages);
+    }
+    if (typeof updateRetouchState === 'function') {
+        updateRetouchState();
+    }
+    
     const modal = document.getElementById('pexelsModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
+    if (modal) modal.style.display = 'none';
 }
 
 

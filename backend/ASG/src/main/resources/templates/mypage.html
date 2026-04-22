@@ -764,7 +764,7 @@ em {
       <span style="font-size:11px;color:var(--text3);">총 <strong id="historyCount">5</strong>건</span>
     </div>
     <div class="card-body" style="padding:0;">
-  <div id="historyList"></div>  <!-- ← 이것만 남기고 내부 아이템 전부 삭제 -->
+  <div id="historyList"></div>
 
     </div>
   </div>
@@ -1625,6 +1625,12 @@ loadContentHistory();
     <div id="historyModalBody"></div>
   </div>
 </div>
+  
+    	<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  
+     <link rel="stylesheet" href="/css/chat-widget.css">
+    <script src="/js/chat-widget.js"></script>
   
 </body>
 </html>
