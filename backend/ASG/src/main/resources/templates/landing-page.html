@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>소셜다모아 — 모든 SNS 채널을 한 곳에서</title>
+  <title>All Social Gather</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&display=swap" rel="stylesheet"/>
   <style>
     :root {
@@ -269,7 +269,7 @@ em {
 <!-- ─── Navigation ─── -->
 <nav id="mainNav">
   <div class="nav-inner">
-    <a href="#" class="logo">
+  <a th:href="@{/}" class="logo">
           <img th:src="@{/image/logo_asg.png}" style="width:30px; height:auto;" alt="로고 이미지" />
           <img th:src="@{/image/asg.png}" style="width:160px; height:auto;" alt="로고 이미지" />
     </a>
@@ -331,7 +331,8 @@ em {
           <div class="hero-stat-label">콘텐츠 1개 생성</div>
         </div>
       </div>
-    </div><!-- /hero-text -->
+    </div>
+    <!-- /hero-text -->
 
     <!-- Dashboard Mockup (우측 컬럼) -->
     <div class="hero-visual">

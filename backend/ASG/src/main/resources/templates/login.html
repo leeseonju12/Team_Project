@@ -4,10 +4,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>소셜다모아 — 로그인</title>
+  <title>ASG - 로그인</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;1,700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,900;1,900&display=swap" rel="stylesheet">
   <style>
     *,
     *::before,
@@ -264,11 +264,11 @@
     }
 
     .page-heading h1 {
-      font-family: 'Fraunces', serif;
-      font-size: 30px;
-      font-weight: 700;
-      line-height: 1.2;
-      letter-spacing: -.5px;
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(24px, 3vw, 40px);
+  	  font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.5px;
       color: var(--text);
       margin-bottom: 8px;
     }
@@ -517,8 +517,8 @@
     }
 
     .ip-headline {
-      font-family: 'Fraunces', serif;
-      font-size: 32px;
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(20px, 2.5vw, 32px);
       font-weight: 700;
       line-height: 1.2;
       color: var(--ip-headline-color);
@@ -626,9 +626,9 @@
 
   <!-- ── Header ── -->
   <header>
-    <a href="/" class="logo">
-      <div class="logo-mark">S</div>
-      <span class="logo-name">소셜다모아</span>
+    <a th:href="@{/}" class="logo">
+          <img th:src="@{/image/logo_asg.png}" style="width:30px; height:auto;" alt="로고 이미지" />
+          <img th:src="@{/image/asg.png}" style="width:160px; height:auto;" alt="로고 이미지" />
     </a>
     <a href="/signup" class="header-signup-link">계정이 없으신가요? <strong>회원가입 →</strong></a>
   </header>

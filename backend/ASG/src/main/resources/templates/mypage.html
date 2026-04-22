@@ -65,7 +65,7 @@
     .section.active{display:block;}
 
     .section-header{margin-bottom:22px;}
-    .section-header h2{font-family:'Playfair Display',serif;font-size:clamp(18px,2vw,24px);font-weight:700;letter-spacing:-.3px;}
+    .section-header h2{font-size:clamp(16px, 1.8vw, 20px);font-weight:700;letter-spacing:-.3px;}
     .section-header h2 em{font-style:italic;background:linear-gradient(135deg,var(--teal),var(--indigo));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
     .section-header p{margin-top:5px;font-size:13px;color:var(--text2);line-height:1.6;}
 
@@ -486,7 +486,7 @@ em {
       <!-- ════ 3-1 회원정보 ════ -->
       <div class="section active" id="sec-member">
         <div class="section-header">
-          <h2>회원 <em>정보</em></h2>
+          <h2>회원 정보</h2>
           <p>기본 계정 정보를 확인하고 수정합니다.</p>
         </div>
         <div class="card">
@@ -559,7 +559,7 @@ em {
       <!-- ════ 3-2 가게 정보 ════ -->
 <div class="section" id="sec-shop">
   <div class="section-header">
-    <h2>가게 <em>정보</em></h2>
+    <h2>가게 정보</h2>
     <p>가게 기본 정보와 영업시간을 수정합니다.</p>
   </div>
   <div class="card">
@@ -653,7 +653,7 @@ em {
       <!-- ════ 3-3 콘텐츠 개인 설정 ════ -->
       <div class="section" id="sec-content">
         <div class="section-header">
-          <h2>콘텐츠 <em>개인 설정</em></h2>
+          <h2>콘텐츠 개인 설정</h2>
           <p>콘텐츠 생성 시 적용되는 스타일·양식 기본값을 설정합니다.</p>
         </div>
         <div class="default-mode-wrap">
@@ -768,7 +768,7 @@ em {
       <!-- ════ 콘텐츠 히스토리 ════ -->
 <div class="section" id="sec-history">
   <div class="section-header">
-    <h2>콘텐츠 <em>히스토리</em></h2>
+    <h2>콘텐츠 히스토리</h2>
     <p>발행된 콘텐츠 내역을 확인합니다.</p>
   </div>
 
@@ -802,7 +802,7 @@ em {
       <!-- ════ 3-4 SNS 계정 연동 관리 ════ -->
       <div class="section" id="sec-sns">
         <div class="section-header">
-          <h2>SNS 계정 <em>연동 관리</em></h2>
+          <h2>SNS 계정 연동 관리</h2>
           <p>연동된 계정 상태를 확인하고 추가·재연동·해제할 수 있습니다.</p>
         </div>
         <div class="card">
@@ -820,7 +820,7 @@ em {
       <div class="section" id="sec-inquiry">
       <input type="hidden" id="currentUserEmail" th:value="${userInfo.email}" />
         <div class="section-header">
-          <h2>문의 <em>내역</em></h2>
+          <h2>문의 내역</h2>
           <p>접수한 문의 목록과 답변 상태를 확인합니다.</p>
         </div>
         <div class="inquiry-summary">
