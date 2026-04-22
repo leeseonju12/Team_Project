@@ -202,22 +202,40 @@ header {
   padding: 36px 0 28px;
 }
 
+/* 1. h1과 em 모두에 프리젠테이션 폰트 적용 */
+.page-title h1, 
+.page-title h1 em {
+  /* 등록하신 @font-face 명칭 사용 */
+  font-family: 'Presentation', sans-serif;
+  font-style: normal; 
+}
+
 .page-title h1 {
-  font-family: 'DM Serif Display', serif;
-  font-size: clamp(28px, 3.5vw, 40px);
-  font-weight: 400;
-  line-height: 1.12;
-  letter-spacing: -0.5px;
+  /* 한 단계 더 키운 반응형 크기 적용 */
+  font-size: clamp(26px, 3.5vw, 40px);
+  
+  /* 프리젠테이션 5Medium 수준으로 설정 */
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.03em; /* 고딕 계열은 자간을 더 조여야 세련되어 보입니다 */
+  
+  /* 배경 그라데이션 및 호환성 설정 */
   background: linear-gradient(135deg, #0F172A 28%, #475569 100%);
   -webkit-background-clip: text;
+  background-clip: text; /* 표준 속성 추가 */
   -webkit-text-fill-color: transparent;
 }
 
+/* 2. '지능형' 부분 (em) 강조 설정 */
 .page-title h1 em {
-  font-style: italic;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  /* 프리젠테이션 8ExtraBold 혹은 9Black 수준으로 강조 */
+  font-weight: 400; 
+  
+  /* 부모의 그라데이션 속성을 그대로 상속 */
+  background: inherit;
+  -webkit-background-clip: inherit;
+  background-clip: inherit;
+  -webkit-text-fill-color: inherit;
 }
 
 .page-title p {
