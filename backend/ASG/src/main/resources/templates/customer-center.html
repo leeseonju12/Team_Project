@@ -1608,6 +1608,12 @@
     });
 
  // URL 파라미터 확인 후 탭 결정
+// 변경 후
+(async () => {
+	bindFaqTypeTabs();  // ← 추가
+	
+    await Promise.all([loadFaqs(), loadNotices()]);
+
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab');
     if (tabParam === 'inquiry') {
@@ -1615,6 +1621,7 @@
     } else {
         switchView('faq');
     }
+})();
     
 </script>
 </body>
