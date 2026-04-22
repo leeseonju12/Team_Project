@@ -7,11 +7,15 @@ public record ChannelPerformanceSummaryDto(
         Long brandPlatformId,
         String platformCode,
         String platformName,
-        int totalViews,
         int totalLikes,
         int totalComments,
         int totalShares,
+        int totalReviews,
         int followerGrowth,
-        double engagementRate
-) {
-}
+        double engagementRate,
+        int prevLikes,
+        int prevComments,
+        int prevShares,
+        int prevReviews,
+        int prevFollowerGrowth
+) {}

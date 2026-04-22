@@ -1,6 +1,7 @@
 package com.example.demo.security;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
@@ -19,6 +20,11 @@ public class PrincipalDetails implements OAuth2User {
     public PrincipalDetails(User user, Map<String, Object> attributes) {
         this.user = user;
         this.attributes = attributes;
+    }
+
+    public PrincipalDetails(User user) {
+        this.user = user;
+        this.attributes = Collections.emptyMap();
     }
 
     @Override

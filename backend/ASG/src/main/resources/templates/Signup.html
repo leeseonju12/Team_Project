@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 
 <head>
   <meta charset="UTF-8" />
@@ -645,6 +645,9 @@ em {
 </head>
 
 <body>
+<script th:inline="javascript">
+  const socialLoginRequired = /*[[${socialLoginRequired}]]*/ true;
+</script>
   <div class="top-stripe"></div>
 
   <!-- Toast -->
@@ -719,7 +722,8 @@ em {
         <!-- ══════════════════════════════════════
              SCREEN 0: 계정 생성 (로그인)
         ══════════════════════════════════════ -->
-        <div class="screen active" id="screen0">
+        <div th:if="${socialLoginRequired}">
+  		  <div class="screen active" id="screen0">
           <div class="page-heading">
             <h1>빠르고 간편하게<br /><em>시작하세요</em></h1>
             <p>소셜 계정으로 간편하게 가입하거나, 직접 정보를 입력해주세요.</p>
@@ -755,12 +759,14 @@ em {
             </button>
           </div>
         </div>
+        </div>
 
 
         <!-- ══════════════════════════════════════
              SCREEN 1: 필수 약관 동의 (신규)
         ══════════════════════════════════════ -->
-        <div class="screen" id="screen1">
+        <div th:if="${!socialLoginRequired}">
+  		  <div class="screen active" id="screen1">
           <div class="nav-row">
             <button type="button" class="back-btn" onclick="goPrev(1)">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
@@ -1143,11 +1149,11 @@ em {
           </div>
 
           <button type="button" class="btn btn-primary" onclick="finishSettings()">설정 저장하고 대시보드로 →</button>
-        </div>
-
-      </div>
+        </div> <!-- screen4 끝 -->
+      </div> <!-- th:if="${!socialLoginRequired}" 끝 -->
     </main>
   </div>
+  
 
   <script>
     /* ══════════════════════════════════════════
@@ -1165,40 +1171,66 @@ em {
        Progress Bar (4 steps: 0=계정, 1=약관, 2=가게, 3=완료)
     ══════════════════════════════════════════ */
     function updateProgress(stepIdx) {
-      const items = ['pb0','pb1','pb2','pb3'];
-      const connectors = ['pbc0','pbc1','pbc2'];
-      items.forEach((id, i) => {
-        const el = document.getElementById(id);
-        const numEl = document.getElementById('pbn' + i);
-        el.classList.remove('active','done');
-        if (i < stepIdx) {
-          el.classList.add('done');
-          numEl.textContent = '✓';
-        } else if (i === stepIdx) {
-          el.classList.add('active');
-          numEl.textContent = i + 1;
-        } else {
-          numEl.textContent = i + 1;
-        }
-      });
-      connectors.forEach((id, i) => {
-        document.getElementById(id).classList.toggle('done', i < stepIdx);
-      });
-      document.getElementById('progressBarWrap').style.display = 'flex';
-    }
+    	  const items = ['pb0','pb1','pb2','pb3'];
+    	  const connectors = ['pbc0','pbc1','pbc2'];
+
+    	  items.forEach((id, i) => {
+    	    const el = document.getElementById(id);
+    	    const numEl = document.getElementById('pbn' + i);
+
+    	    if (!el || !numEl) return;
+
+    	    el.classList.remove('active','done');
+
+    	    if (i < stepIdx) {
+    	      el.classList.add('done');
+    	      numEl.textContent = '✓';
+    	    } else if (i === stepIdx) {
+    	      el.classList.add('active');
+    	      numEl.textContent = i + 1;
+    	    } else {
+    	      numEl.textContent = i + 1;
+    	    }
+    	  });
+
+    	  connectors.forEach((id, i) => {
+    	    const connector = document.getElementById(id);
+    	    if (!connector) return;
+    	    connector.classList.toggle('done', i < stepIdx);
+    	  });
+
+    	  const wrap = document.getElementById('progressBarWrap');
+    	  if (wrap) {
+    	    wrap.style.display = 'flex';
+    	  }
+    	}
 
     /* ══════════════════════════════════════════
        Screen switcher
     ══════════════════════════════════════════ */
     function setScreen(id) {
-      document.querySelector('.screen.active').classList.remove('active');
-      document.getElementById(id).classList.add('active');
-      const hide = (id === 'screen3' || id === 'screen4');
-      const wrap = document.getElementById('progressBarWrap');
-      wrap.style.display = hide ? 'none' : 'flex';
-      wrap.classList.toggle('screen0-spacing', id === 'screen0');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    	  const currentActive = document.querySelector('.screen.active');
+    	  if (currentActive) {
+    	    currentActive.classList.remove('active');
+    	  }
+
+    	  const target = document.getElementById(id);
+    	  if (!target) {
+    	    console.warn(`[setScreen] 대상 화면 없음: ${id}`);
+    	    return;
+    	  }
+
+    	  target.classList.add('active');
+
+    	  const wrap = document.getElementById('progressBarWrap');
+    	  if (wrap) {
+    	    const hide = (id === 'screen3' || id === 'screen4');
+    	    wrap.style.display = hide ? 'none' : 'flex';
+    	    wrap.classList.toggle('screen0-spacing', id === 'screen0');
+    	  }
+
+    	  window.scrollTo({ top: 0, behavior: 'smooth' });
+    	}
 
     /* ══════════════════════════════════════════
        Navigation helpers
@@ -1506,23 +1538,31 @@ em {
        Biz hours builder
     ══════════════════════════════════════════ */
     (function buildBizHours() {
-      const days = ['월','화','수','목','금','토','일'];
-      const container = document.getElementById('bizHours');
-      days.forEach((d, i) => {
-        const isWeekend = i >= 5;
-        const row = document.createElement('div');
-        row.className = 'biz-hour-row';
-        row.innerHTML = `
-          <span class="biz-day">${d}</span>
-          <button class="biz-toggle ${isWeekend?'':'on'}" onclick="toggleDay(this,${i})" id="toggle${i}"></button>
-          <div class="biz-time ${isWeekend?'disabled':''}" id="timeWrap${i}">
-            ${isWeekend
-              ? '<span class="biz-closed">휴무</span>'
-              : `<input type="time" value="09:00"><span>~</span><input type="time" value="21:00">`}
-          </div>`;
-        container.appendChild(row);
-      });
-    })();
+    	  const container = document.getElementById('bizHours');
+
+    	  // screen2가 렌더링되지 않은 상태면 그냥 종료
+    	  if (!container) {
+    	    console.log('[buildBizHours] #bizHours 없음 - 화면이 비로그인 분기로 렌더링된 상태일 수 있음');
+    	    return;
+    	  }
+
+    	  const days = ['월','화','수','목','금','토','일'];
+
+    	  days.forEach((d, i) => {
+    	    const isWeekend = i >= 5;
+    	    const row = document.createElement('div');
+    	    row.className = 'biz-hour-row';
+    	    row.innerHTML = `
+    	      <span class="biz-day">${d}</span>
+    	      <button class="biz-toggle ${isWeekend ? '' : 'on'}" onclick="toggleDay(this,${i})" id="toggle${i}"></button>
+    	      <div class="biz-time ${isWeekend ? 'disabled' : ''}" id="timeWrap${i}">
+    	        ${isWeekend
+    	          ? '<span class="biz-closed">휴무</span>'
+    	          : `<input type="time" value="09:00"><span>~</span><input type="time" value="21:00">`}
+    	      </div>`;
+    	    container.appendChild(row);
+    	  });
+    	})();
 
     function toggleDay(btn, i) {
       btn.classList.toggle('on');

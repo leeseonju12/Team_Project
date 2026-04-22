@@ -32,9 +32,14 @@ public class ChannelPerformanceController {
         if (userId == null) return ResponseEntity.status(401).body("로그인이 필요합니다.");
 
         Long brandId = mypageService.getBrandId(userId);
-        LocalDate endDate = (to == null) ? LocalDate.now() : to;
+        LocalDate endDate   = (to   == null) ? LocalDate.now() : to;
         LocalDate startDate = (from == null) ? endDate.minusDays(30) : from;
 
-        return ResponseEntity.ok(channelPerformanceService.getDashboard(brandId, startDate, endDate));
-    }
+        // 이전 기간 계산 (현재 기간과 동일한 길이)
+        long periodDays = startDate.until(endDate).getDays() + 1;
+        LocalDate prevEndDate   = startDate.minusDays(1);
+        LocalDate prevStartDate = prevEndDate.minusDays(periodDays - 1);
+
+        return ResponseEntity.ok(channelPerformanceService.getDashboard(brandId, startDate, endDate, prevStartDate, prevEndDate));
+}
 }

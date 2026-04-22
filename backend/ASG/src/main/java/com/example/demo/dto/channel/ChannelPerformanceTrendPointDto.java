@@ -5,9 +5,9 @@ import lombok.Builder;
 @Builder
 public record ChannelPerformanceTrendPointDto(
         int dateKey,
-        int views,
         int likes,
         int comments,
-        int shares
+        int shares,
+        int reviews
 ) {
 }

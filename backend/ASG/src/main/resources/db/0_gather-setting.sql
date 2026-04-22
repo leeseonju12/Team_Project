@@ -62,6 +62,20 @@ CREATE TABLE `users` (
   UNIQUE KEY `uq_users_provider` (`provider`, `provider_id`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
 
+-- refresh_token (JWT 인증용)
+CREATE TABLE `refresh_token` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `token` VARCHAR(500) NOT NULL,
+  `user_id` BIGINT NOT NULL,
+  `expires_at` DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_refresh_token` (`token`),
+  KEY `idx_refresh_user` (`user_id`),
+  CONSTRAINT `fk_refresh_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+    ON DELETE CASCADE
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4;
+
 -- business_hours
 CREATE TABLE `business_hours` (
   `id`          BIGINT     NOT NULL AUTO_INCREMENT,
@@ -224,7 +238,6 @@ CREATE TABLE `post_metric_daily` (
   `post_metric_daily_id` BIGINT   NOT NULL AUTO_INCREMENT,
   `post_id`              BIGINT   NOT NULL,
   `date_key`             INT      NOT NULL,
-  `view_count`           INT      NOT NULL DEFAULT 0,
   `like_count`           INT      NOT NULL DEFAULT 0,
   `comment_count`        INT      NOT NULL DEFAULT 0,
   `share_count`          INT      NOT NULL DEFAULT 0,
@@ -240,7 +253,6 @@ CREATE TABLE `platform_metric_daily` (
   `platform_metric_daily_id` BIGINT        NOT NULL AUTO_INCREMENT,
   `brand_platform_id`        BIGINT        NOT NULL,
   `date_key`                 INT           NOT NULL,
-  `total_views`              INT           NOT NULL DEFAULT 0,
   `total_likes`              INT           NOT NULL DEFAULT 0,
   `total_comments`           INT           NOT NULL DEFAULT 0,
   `total_shares`             INT           NOT NULL DEFAULT 0,
@@ -256,7 +268,6 @@ CREATE TABLE `platform_hourly_metric` (
   `brand_platform_id` BIGINT   NOT NULL,
   `date_key`          INT      NOT NULL,
   `hour_of_day`       TINYINT  NOT NULL,
-  `view_count`        INT      NOT NULL DEFAULT 0,
   `like_count`        INT      NOT NULL DEFAULT 0,
   `comment_count`     INT      NOT NULL DEFAULT 0,
   `share_count`       INT      NOT NULL DEFAULT 0,
@@ -302,18 +313,12 @@ CREATE TABLE `platform_metric_monthly_summary` (
   `month_no`            TINYINT       NOT NULL,
   `start_date_key`      INT           NOT NULL,
   `end_date_key`        INT           NOT NULL,
-  `total_views`         INT           NOT NULL DEFAULT 0,
   `total_likes`         INT           NOT NULL DEFAULT 0,
   `total_comments`      INT           NOT NULL DEFAULT 0,
   `total_shares`        INT           NOT NULL DEFAULT 0,
   `total_reviews`       INT           NOT NULL DEFAULT 0,
   `follower_growth`     INT           NOT NULL DEFAULT 0,
   `engagement_score`    DECIMAL(10,2) NOT NULL DEFAULT 0,
-  `avg_daily_views`     DECIMAL(12,2) NOT NULL DEFAULT 0,
-  `weekend_views`       INT           NOT NULL DEFAULT 0,
-  `weekday_views`       INT           NOT NULL DEFAULT 0,
-  `holiday_views`       INT           NOT NULL DEFAULT 0,
-  `weekend_ratio`       DECIMAL(5,2)  NOT NULL DEFAULT 0,
   `channel_share_ratio` DECIMAL(5,2)  NOT NULL DEFAULT 0,
   `created_at`          DATETIME      NOT NULL,
   `updated_at`          DATETIME      NOT NULL,
@@ -326,18 +331,12 @@ CREATE TABLE `platform_metric_yearly_summary` (
   `year_no`             INT           NOT NULL,
   `start_date_key`      INT           NOT NULL,
   `end_date_key`        INT           NOT NULL,
-  `total_views`         INT           NOT NULL DEFAULT 0,
   `total_likes`         INT           NOT NULL DEFAULT 0,
   `total_comments`      INT           NOT NULL DEFAULT 0,
   `total_shares`        INT           NOT NULL DEFAULT 0,
   `total_reviews`       INT           NOT NULL DEFAULT 0,
   `follower_growth`     INT           NOT NULL DEFAULT 0,
   `engagement_score`    DECIMAL(10,2) NOT NULL DEFAULT 0,
-  `avg_monthly_views`   DECIMAL(12,2) NOT NULL DEFAULT 0,
-  `weekend_views`       INT           NOT NULL DEFAULT 0,
-  `weekday_views`       INT           NOT NULL DEFAULT 0,
-  `holiday_views`       INT           NOT NULL DEFAULT 0,
-  `weekend_ratio`       DECIMAL(5,2)  NOT NULL DEFAULT 0,
   `channel_share_ratio` DECIMAL(5,2)  NOT NULL DEFAULT 0,
   `created_at`          DATETIME      NOT NULL,
   `updated_at`          DATETIME      NOT NULL,
@@ -349,7 +348,6 @@ CREATE TABLE `platform_metric_monthly_trend` (
   `brand_platform_id` BIGINT   NOT NULL,
   `year_no`           INT      NOT NULL,
   `month_no`          TINYINT  NOT NULL,
-  `views`             INT      NOT NULL DEFAULT 0,
   `likes`             INT      NOT NULL DEFAULT 0,
   `comments`          INT      NOT NULL DEFAULT 0,
   `shares`            INT      NOT NULL DEFAULT 0,
@@ -362,7 +360,6 @@ CREATE TABLE `platform_metric_yearly_trend` (
   `yearly_trend_id`   BIGINT   NOT NULL AUTO_INCREMENT,
   `brand_platform_id` BIGINT   NOT NULL,
   `year_no`           INT      NOT NULL,
-  `views`             INT      NOT NULL DEFAULT 0,
   `likes`             INT      NOT NULL DEFAULT 0,
   `comments`          INT      NOT NULL DEFAULT 0,
   `shares`            INT      NOT NULL DEFAULT 0,

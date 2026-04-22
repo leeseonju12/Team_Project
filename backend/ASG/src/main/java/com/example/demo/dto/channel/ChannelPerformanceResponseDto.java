@@ -1,6 +1,6 @@
 package com.example.demo.dto.channel;
-import java.util.List;
 
+import java.util.List;
 import lombok.Builder;
 
 @Builder
@@ -11,6 +11,7 @@ public record ChannelPerformanceResponseDto(
         List<ChannelPerformanceSummaryDto> summaries,
         List<ChannelPerformanceTrendPointDto> trends,
         List<ChannelTopPostDto> topPosts,
-        ChannelPerformanceInsightDto insight
+        ChannelPerformanceInsightDto insight,
+        ReviewTrendDto reviewTrend
 ) {
 }

@@ -52,8 +52,8 @@ public class PageController {
 
 	    Long brandId = mypageService.getBrandId(userId);
 	    model.addAttribute("brandId", brandId);
-        User user = userService.findById(userId);
-        model.addAttribute("userInfo", user);
+	    model.addAttribute("userInfo", mypageService.getUserInfo(userId));
+
 	    return "channel-performance";
 	}
 	
