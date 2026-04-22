@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.example.demo.domain.enums.IndustryType;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.dto.ContentRequest;
 import com.example.demo.dto.SnsResult;
@@ -100,7 +101,11 @@ public class ContentController {
             try {
                 User user = userService.findById(userId);
                 if (user != null && user.getBusinessCategory() != null) {
-                    model.addAttribute("businessCategory", user.getBusinessCategory());
+                    
+                    // ✅ 수정 포인트: User의 한글 문자열을 Enum 코드로 변환해서 넘김
+                    String categoryCode = IndustryType.fromDescription(user.getBusinessCategory()).name();
+                    model.addAttribute("businessCategory", categoryCode);
+                    
                 }
             } catch (Exception e) {
                 log.warn("businessCategory 조회 실패. userId={}", userId, e);
