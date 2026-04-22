@@ -3,7 +3,8 @@ package com.example.demo.controller;
 import com.example.demo.dto.channel.PlatformKeywordResponseDto;
 import com.example.demo.service.PlatformKeywordService;
 import com.example.demo.service.myPage.MypageService;
-import jakarta.servlet.http.HttpSession;
+ import org.springframework.security.core.annotation.AuthenticationPrincipal;
+ import com.example.demo.security.PrincipalDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,9 +18,9 @@ public class PlatformKeywordController {
     private final MypageService mypageService;
 
     @GetMapping("/keywords")
-    public ResponseEntity<?> getKeywords(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) return ResponseEntity.status(401).body("로그인이 필요합니다.");
+     public ResponseEntity<?> getKeywords(@AuthenticationPrincipal PrincipalDetails principalDetails) {
+         if (principalDetails == null) return ResponseEntity.status(401).body("로그인이 필요합니다.");
+         Long userId = principalDetails.getUser().getId();
         Long brandId = mypageService.getBrandId(userId);
         return ResponseEntity.ok(platformKeywordService.getKeywords(brandId));
     }

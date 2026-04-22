@@ -1,11 +1,13 @@
 package com.example.demo.entity.myPage;
 
 import jakarta.persistence.*;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import com.example.demo.domain.enums.IndustryType;
+import com.example.demo.domain.enums.IndustryTypeConverter;
 import com.example.demo.domain.user.entity.User;
 
 import java.time.LocalDateTime;
@@ -31,7 +33,7 @@ public class Brand {
     @Column(name = "service_name", length = 100)
     private String serviceName;
     
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = IndustryTypeConverter.class)
     @Column(name = "industry_type", length = 50)
     private IndustryType industryType;
 

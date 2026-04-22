@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>소셜다모아 — 리뷰/댓글 AI 답변 관리</title>
+  <title>ASG - 리뷰/댓글 AI 답변 관리</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet" />
 <style>
     /*
@@ -114,6 +114,18 @@
   background: rgba(71, 85, 105, 0.20);
   border-radius: 999px;
 }
+
+	     /* 모든 이탤릭 강조 텍스트에 숨구멍(패딩)을 미리 뚫어놓기 */
+	em {
+	  font-style: italic;
+	  padding-right: 0.15em; /* inline 상태에서도 오른쪽 패딩은 먹힙니다! */
+	  margin-right: -0.15em;
+	  
+	  /* 그라데이션 잘림 방지를 위한 추가 팁 
+	  줄바꿈이 일어날 때, 잘린 각각의 조각들에 테두리나 패딩을 똑같이 다시 적용*/
+	  box-decoration-break: clone;
+	  -webkit-box-decoration-break: clone;
+	}
     
 
     body {
