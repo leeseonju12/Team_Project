@@ -105,6 +105,7 @@ public class ContentSettings {
  
     /**
      * 온보딩 입력값으로 생성
+     * 입력 없이 대시보드로 이동했을 시 기본상태
      */
     public static ContentSettings createFromOnboarding(
             User user,
@@ -121,6 +122,7 @@ public class ContentSettings {
                 .tone(tone != null ? tone : "기본")
                 .emojiLevel(emojiLevel != null ? emojiLevel : "적당히")
                 .targetLength(targetLength != null ? targetLength : 300)
+                .useDefaultMode(false)   // ← 이 한 줄 추가
                 .build();
     }
  
