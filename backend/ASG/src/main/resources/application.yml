@@ -23,7 +23,7 @@ spring:
 
   sql:
     init:
-      mode: never # 앱 실행 시 data.sql을 항상 실행하여 더미 데이터 세팅
+      mode: always # 앱 실행 시 data.sql을 항상 실행하여 더미 데이터 세팅
       schema-locations:
         - optional:classpath*:db/gather-full-init.sql
         - optional:classpath*:gather-full-init.sql
@@ -42,14 +42,3 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 30MB
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: test@gmail.com #kimkongpp1223@gmail.com
-    password: dummykey #ceotogcykrgyxuzu
-    properties:
-      mail:
-        smtp:
-          auth: true
-          tarttls:
-            enable: true

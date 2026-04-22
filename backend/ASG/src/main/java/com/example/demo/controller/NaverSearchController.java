@@ -3,7 +3,8 @@ package com.example.demo.controller;
 import com.example.demo.dto.channel.NaverSearchResponseDto;
 import com.example.demo.service.NaverSearchService;
 import com.example.demo.service.myPage.MypageService;
-import jakarta.servlet.http.HttpSession;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.example.demo.security.PrincipalDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -25,15 +26,17 @@ public class NaverSearchController {
      */
     @GetMapping
     public ResponseEntity<?> getDashboard(
-            HttpSession session,
+
+           @AuthenticationPrincipal PrincipalDetails principalDetails,
             @RequestParam(defaultValue = "month") String period,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) return ResponseEntity.status(401).body("로그인이 필요합니다.");
+
+       if (principalDetails == null) return ResponseEntity.status(401).body("로그인이 필요합니다.");
+       Long userId = principalDetails.getUser().getId();
 
         Long brandId = mypageService.getBrandId(userId);
         LocalDate endDate   = (to   == null) ? LocalDate.now()       : to;

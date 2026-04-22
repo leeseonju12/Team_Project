@@ -3,7 +3,8 @@ package com.example.demo.controller;
 import com.example.demo.dto.channel.MindmapSearchResponseDto;
 import com.example.demo.service.MindmapSearchService;
 import com.example.demo.service.myPage.MypageService;
-import jakarta.servlet.http.HttpSession;
+ import org.springframework.security.core.annotation.AuthenticationPrincipal;
+ import com.example.demo.security.PrincipalDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,9 +23,9 @@ public class MindmapController {
      * brandId는 세션에서 자동 조회
      */
     @GetMapping
-    public ResponseEntity<?> getRelatedKeywords(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) return ResponseEntity.status(401).body("로그인이 필요합니다.");
+     public ResponseEntity<?> getRelatedKeywords(@AuthenticationPrincipal PrincipalDetails principalDetails) {
+         if (principalDetails == null) return ResponseEntity.status(401).body("로그인이 필요합니다.");
+         Long userId = principalDetails.getUser().getId();
         Long brandId = mypageService.getBrandId(userId);
         return ResponseEntity.ok(mindmapService.getRelatedKeywords(brandId));
     }
@@ -34,9 +35,9 @@ public class MindmapController {
      * POST /api/mindmap/refresh
      */
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshRelatedKeywords(HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) return ResponseEntity.status(401).body("로그인이 필요합니다.");
+     public ResponseEntity<?> refreshRelatedKeywords(@AuthenticationPrincipal PrincipalDetails principalDetails) {
+         if (principalDetails == null) return ResponseEntity.status(401).body("로그인이 필요합니다.");
+         Long userId = principalDetails.getUser().getId();
         Long brandId = mypageService.getBrandId(userId);
         return ResponseEntity.ok(mindmapService.refreshRelatedKeywords(brandId));
     }
