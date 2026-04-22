@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.example.demo.domain.ContentSettings;
+import com.example.demo.domain.enums.IndustryType;
 import com.example.demo.domain.user.entity.BusinessHours;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.dto.SignupRequest;
@@ -82,7 +83,7 @@ public class UserService {
 		Brand brand = new Brand();
 		brand.setUser(user);
 		brand.setBrandName(dto.getCompanyName());
-		brand.setIndustryType(dto.getBusinessCategory());
+		brand.setIndustryType(IndustryType.fromDescription(dto.getBusinessCategory()));
 		brand.setAddress(stripZipCode(dto.getRoadAddrPart1()));
 		brand.setLocationName(dto.getLocationName());
 		brandRepository.save(brand);

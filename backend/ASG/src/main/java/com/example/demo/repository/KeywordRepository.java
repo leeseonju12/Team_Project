@@ -9,4 +9,6 @@ import java.util.List;
 
 public interface KeywordRepository extends JpaRepository<Keyword, Long> {
     List<Keyword> findByIndustryCode(String industryCode);
+    
+    List<Keyword> findByIndustryCodeIn(List<String> industryCodes);
 }

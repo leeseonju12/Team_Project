@@ -1087,28 +1087,6 @@ async function loadInitialContentSettings() {
     }
 }
 
-function renderKeywords(keywords) {
-    const keywordGroup = document.getElementById('keywordGroup');
-    if (!keywordGroup) return;
-
-    // 데이터가 없거나 배열이 비어있는 경우 빈 화면 방지 (Fallback UI)
-    if (!keywords || keywords.length === 0) {
-        keywordGroup.innerHTML = `
-            <div style="width:100%; padding:10px; font-size:12px; color:#64748b; text-align:center;">
-                현재 업종에 등록된 추천 키워드가 없습니다.
-            </div>
-            `;
-        return;
-    }
-
-    // 정상적으로 데이터가 있을 경우 동적 렌더링
-    keywordGroup.innerHTML = keywords.map((kw, index) => `
-        <div class="keyword-item">
-            <input type="checkbox" id="kw-${index}" value="${kw.keywordName}">
-            <label class="keyword-label" for="kw-${index}">${kw.keywordName}</label>
-        </div>
-    `).join('');
-}
 
 function updateSnsGuides(guides) {
     const platformMap = {
@@ -1615,3 +1593,62 @@ function renderPexelsResults(images) {
      await initializeDashboard();
    });
 
+   
+   document.addEventListener("DOMContentLoaded", async function() {
+       // 1. 숨겨둔 내 브랜드 업종 코드를 가져옵니다. (예: 'CAFE')
+       const hiddenInput = document.getElementById("myIndustryCode");
+       const myIndustryCode = hiddenInput ? hiddenInput.value : null;
+
+       // 업종 코드가 존재하면 바로 키워드를 불러옵니다.
+       if (myIndustryCode) {
+           await fetchAndRenderKeywords(myIndustryCode);
+       }
+
+       async function fetchAndRenderKeywords(industryCode) {
+           const keywordGroup = document.getElementById('keywordGroup');
+           if (!keywordGroup) return;
+
+           try {
+               // 로딩 상태 UI (기존 Fallback UI 스타일 적용)
+               keywordGroup.innerHTML = `
+                   <div style="width:100%; padding:10px; font-size:12px; color:#64748b; text-align:center;">
+                       키워드 데이터를 불러오는 중...
+                   </div>
+               `;
+
+               // 백엔드 API 호출
+               const response = await fetch(`/api/keywords?industryCode=${industryCode}`);
+               if (!response.ok) throw new Error("네트워크 응답 에러");
+               
+               const keywords = await response.json();
+
+               // 2. 데이터가 없거나 배열이 비어있는 경우 (작성하신 Fallback UI)
+               if (!keywords || keywords.length === 0) {
+                   keywordGroup.innerHTML = `
+                       <div style="width:100%; padding:10px; font-size:12px; color:#64748b; text-align:center;">
+                           현재 업종에 등록된 추천 키워드가 없습니다.
+                       </div>
+                   `;
+                   return;
+               }
+
+               // 3. 정상적으로 데이터가 있을 경우 동적 렌더링 (작성하신 HTML 구조 적용)
+               // 💡 주의: 체크박스 폼 전송을 위해 name="keywords" 속성을 추가했습니다.
+               keywordGroup.innerHTML = keywords.map((kw, index) => `
+                   <div class="keyword-item">
+                       <input type="checkbox" name="keywords" id="kw-${index}" value="${kw.name}">
+                       <label class="keyword-label" for="kw-${index}">${kw.name}</label>
+                   </div>
+               `).join('');
+
+           } catch (error) {
+               console.error("키워드 로드 실패:", error);
+               // 에러 발생 시 UI
+               keywordGroup.innerHTML = `
+                   <div style="width:100%; padding:10px; font-size:12px; color:red; text-align:center;">
+                       키워드를 불러오는데 실패했습니다.
+                   </div>
+               `;
+           }
+       }
+   });

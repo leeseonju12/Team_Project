@@ -11,6 +11,7 @@ import com.example.demo.entity.myPage.BrandPlatform;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.example.demo.domain.ContentSettings;
+import com.example.demo.domain.enums.IndustryType;
 import com.example.demo.repository.myPage.BrandOperationProfileRepository;
 import com.example.demo.repository.myPage.BrandPlatformRepository;
 import com.example.demo.repository.myPage.BrandRepository;
@@ -78,7 +79,7 @@ public class MypageService {
 
 		brand.setBrandName(request.getBrandName());
 		brand.setServiceName(request.getServiceName());
-		brand.setIndustryType(request.getIndustryType());
+		brand.setIndustryType(IndustryType.fromDescription(request.getIndustryType()));
 
 		User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 		// ❌ 제거: user.updateAddress(request.getAddress(), request.getLocationName());

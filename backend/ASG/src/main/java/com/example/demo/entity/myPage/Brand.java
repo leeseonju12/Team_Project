@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import com.example.demo.domain.enums.IndustryType;
 import com.example.demo.domain.user.entity.User;
 
 import java.time.LocalDateTime;
@@ -28,9 +30,10 @@ public class Brand {
 
     @Column(name = "service_name", length = 100)
     private String serviceName;
-
+    
+    @Enumerated(EnumType.STRING)
     @Column(name = "industry_type", length = 50)
-    private String industryType;
+    private IndustryType industryType;
 
     @Column(name = "location_name", length = 150)
     private String locationName;

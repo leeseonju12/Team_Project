@@ -408,6 +408,8 @@
               <textarea id="extraInfo" placeholder="가격, 이벤트, 특징, 할인 기간 등을 자유롭게 작성하세요."></textarea>
             </div>
             
+<input type="hidden" id="myIndustryCode" value="CAFE"> 
+
 <div class="field">
   <label>키워드 <span class="required">*</span></label>
   <div class="keyword-grid" id="keywordGroup">
@@ -415,7 +417,7 @@
   </div>
   <div class="field-footer">
     <span class="field-hint">최소 1개 이상 선택</span>
-    <span class="validation-msg" id="keywordValidation">키워드를 1개 이상 선택해 주세요.</span>
+    <span class="validation-msg" id="keywordValidation" style="display:none; color:red;">키워드를 1개 이상 선택해 주세요.</span>
   </div>
 </div>
             <div class="field">

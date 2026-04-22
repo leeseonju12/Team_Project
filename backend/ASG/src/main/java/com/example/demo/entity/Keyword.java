@@ -18,7 +18,7 @@ public class Keyword {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 50)
+    @Column(name = "industry_code", nullable = false, length = 50)
     private String industryCode;
 
     @Column(length = 50)

@@ -27,7 +27,7 @@ public class BrandInfoResponse {
         this.brandId          = brand.getBrandId();
         this.brandName        = brand.getBrandName();
         this.serviceName      = brand.getServiceName();
-        this.industryType     = brand.getIndustryType();
+        this.industryType     = brand.getIndustryType() != null ? brand.getIndustryType().getDescription() : null;
         this.locationName     = brand.getLocationName();
         this.address          = brand.getAddress();
         this.phone            = brand.getPhone();
