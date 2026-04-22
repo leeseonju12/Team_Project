@@ -1,14 +1,12 @@
 package com.example.demo.security;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
-import com.example.demo.domain.user.entity.RefreshToken;
 import com.example.demo.domain.user.entity.User;
 import com.example.demo.domain.user.entity.UserStatus;
 import com.example.demo.security.jwt.JwtTokenProvider;
@@ -35,16 +33,13 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private boolean cookieSecure;
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-                                        Authentication authentication) throws IOException, ServletException {
+    public void onAuthenticationSuccess(HttpServletRequest request,
+                                        HttpServletResponse response,
+                                        Authentication authentication)
+            throws IOException, ServletException {
 
         PrincipalDetails principal = (PrincipalDetails) authentication.getPrincipal();
         User user = principal.getUser();
-
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            session.removeAttribute("entryPoint");
-        }
 
         String accessToken = jwtTokenProvider.createAccessToken(
                 user.getId(),
@@ -68,11 +63,32 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         refreshCookie.setMaxAge((int) (refreshExpirationMs / 1000));
         response.addCookie(refreshCookie);
 
+        // accessToken도 쿠키로 쓸 경우
+        Cookie accessCookie = new Cookie("access_token", accessToken);
+        accessCookie.setHttpOnly(true);
+        accessCookie.setSecure(cookieSecure);
+        accessCookie.setPath("/");
+        accessCookie.setMaxAge(60 * 30); // 예: 30분
+        response.addCookie(accessCookie);
 
-        if (user.getStatus() == UserStatus.ACTIVE) {
-            response.sendRedirect("/mypage");
-        } else {
+        if (user.getStatus() != UserStatus.ACTIVE) {
             response.sendRedirect("/signup?social_login=success");
+            return;
         }
+
+        String redirectUrl = "/mypage";
+
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            String entryPoint = (String) session.getAttribute("entryPoint");
+
+            if (entryPoint != null && !entryPoint.isBlank()) {
+                redirectUrl = entryPoint;
+            }
+
+            session.removeAttribute("entryPoint");
+        }
+
+        response.sendRedirect(redirectUrl);
     }
 }

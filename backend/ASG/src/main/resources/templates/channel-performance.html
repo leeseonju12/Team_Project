@@ -1104,29 +1104,6 @@ em {
 <!-- 서버에서 전달된 brandId (Thymeleaf → JS 바인딩용) -->
 <input type="hidden" id="serverBrandId" th:value="${brandId}">
 
-<<<<<<< HEAD
-=======
-  <div class="top-stripe"></div>
-
-  <header>
-    <a href="#" class="logo">
-        <div class="logo-mark">S</div>
-        <span class="logo-name">소셜다모아</span>
-        <span class="logo-sub">All Social Gather</span>
-      </a>
-    <nav class="nav-pills">
-      <a href="content-generate" class="nav-pill">✏️ 콘텐츠 생성</a>
-      <a href="feedback.html" class="nav-pill">💬 리뷰 관리</a>
-      <a href="channel-performance" class="nav-pill active">📊 성과 분석</a>
-      <a href="mypage" class="nav-pill">👤 마이페이지</a>
-    </nav>
-    <div class="header-user">
-      <div class="user-avatar" th:text="${userInfo.name != null ? userInfo.name.substring(0,1) : '?'}"></div>
-        <span class="user-name" th:text="${userInfo.name + ' 님'}"></span>
-      </div>
-  </header>
->>>>>>> c123c352e490e7a0a851f8e338f89aa3d96d8f26
-
   <div class="hero">
     <div class="hero-inner">
       <div class="hero-text">
@@ -1371,6 +1348,21 @@ em {
   </div>
 
   <script th:inline="none">
+  document.addEventListener('DOMContentLoaded', async () => {
+	  try {
+	    const response = await fetch('/api/channel-performance');
+	    if (!response.ok) {
+	      throw new Error('API 호출 실패: ' + response.status);
+	    }
+
+	    const data = await response.json();
+	    console.log(data);
+	    // 화면 렌더링 로직
+	  } catch (error) {
+	    console.error(error);
+	  }
+	});
+  
 //PLATFORMS는 API 응답(summaries)에서 동적으로 채워짐
   const PLATFORM_COLOR_MAP = {
     instagram: '#E1306C',
