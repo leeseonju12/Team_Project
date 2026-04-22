@@ -1293,7 +1293,7 @@ function showSection(id, el) {
   window.toggleInqForm = function(open) {
     if (!open) return;
     const email = document.getElementById('currentUserEmail')?.value || '';
-    const url = '/customer-center.html?tab=inquiry' + (email ? '&email=' + encodeURIComponent(email) : '');
+    const url = '/customer-center?tab=inquiry' + (email ? '&email=' + encodeURIComponent(email) : '');
     window.location.href = url;
   };
 

@@ -80,4 +80,15 @@ public class PageController {
         model.addAttribute("userInfo", userService.findById(userId));
         return "temp3";
     }
+    
+    @GetMapping("/admin")
+    public String adminPage(@AuthenticationPrincipal PrincipalDetails principalDetails) {
+        if (principalDetails == null) return "redirect:/login";
+        return "admin";
+    }
+
+    @GetMapping("/customer-center")
+    public String customerCenterPage() {
+        return "customer-center";
+    }
 }
