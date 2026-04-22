@@ -690,39 +690,38 @@ em {
           <div class="card-body">
 
             <!-- 말투 -->
-            <div style="margin-bottom:22px;">
-              <label style="margin-bottom:10px;">✍️ 말투 스타일</label>
-              <div class="tone-grid" id="cToneGrid">
-                <div class="tone-card selected" data-tone="default" onclick="selectTone(this)"><div class="tc-emoji">💬</div><div class="tc-name">기본</div></div>
-                <div class="tone-card" data-tone="friendly" onclick="selectTone(this)"><div class="tc-emoji">😊</div><div class="tc-name">친근</div></div>
-                <div class="tone-card" data-tone="clean" onclick="selectTone(this)"><div class="tc-emoji">✨</div><div class="tc-name">깔끔</div></div>
-                <div class="tone-card" data-tone="formal" onclick="selectTone(this)"><div class="tc-emoji">🎁</div><div class="tc-name">격식</div></div>
-                <div class="tone-card" data-tone="trendy" onclick="selectTone(this)"><div class="tc-emoji">🔥</div><div class="tc-name">트렌디</div></div>
-              </div>
-            </div>
+<div style="margin-bottom:22px;">
+  <label style="margin-bottom:10px;">✍️ 말투 스타일</label>
+  <div class="tone-grid" id="cToneGrid">
+    <div class="tone-card selected" data-tone="default" onclick="selectTone(this)"><div class="tc-emoji">📝</div><div class="tc-name">기본</div></div>
+    <div class="tone-card" data-tone="friendly" onclick="selectTone(this)"><div class="tc-emoji">😊</div><div class="tc-name">친근</div></div>
+    <div class="tone-card" data-tone="clean" onclick="selectTone(this)"><div class="tc-emoji">✨</div><div class="tc-name">깔끔</div></div>
+    <div class="tone-card" data-tone="formal" onclick="selectTone(this)"><div class="tc-emoji">🎩</div><div class="tc-name">격식</div></div>
+    <div class="tone-card" data-tone="trendy" onclick="selectTone(this)"><div class="tc-emoji">🔥</div><div class="tc-name">트렌디</div></div>
+  </div>
+</div>
 
-            <!-- 이모지 -->
-            <div style="margin-bottom:22px;">
-              <label style="margin-bottom:10px;">😀 이모지 사용량</label>
-              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" id="cEmojiGrid">
-                <div class="tone-card" data-emoji="few" onclick="selectEmoji(this)"><div class="tc-emoji">🙂</div><div class="tc-name">적게</div></div>
-                <div class="tone-card selected" data-emoji="moderate" onclick="selectEmoji(this)"><div class="tc-emoji">😄</div><div class="tc-name">적당히</div></div>
-                <div class="tone-card" data-emoji="many" onclick="selectEmoji(this)"><div class="tc-emoji">🎉</div><div class="tc-name">많이</div></div>
-              </div>
-            </div>
+<div style="margin-bottom:22px;">
+  <label style="margin-bottom:10px;">😀 이모지 사용량</label>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" id="cEmojiGrid">
+    <div class="tone-card" data-emoji="low" onclick="selectEmoji(this)"><div class="tc-emoji">🙂</div><div class="tc-name">적게</div></div>
+    <div class="tone-card selected" data-emoji="mid" onclick="selectEmoji(this)"><div class="tc-emoji">😄</div><div class="tc-name">적당히</div></div>
+    <div class="tone-card" data-emoji="high" onclick="selectEmoji(this)"><div class="tc-emoji">🎉</div><div class="tc-name">많이</div></div>
+  </div>
+</div>
 
             <!-- 글자수 슬라이더 -->
-            <div>
-              <label style="margin-bottom:4px;">📏 글자 수 제한</label>
-              <div class="slider-wrap" style="margin-top:10px;">
-                <input type="range" id="c_charlen" min="100" max="500" step="50" value="500"
-                  oninput="document.getElementById('cCharLenVal').textContent=this.value+'자'" />
-                <div class="slider-val" id="cCharLenVal">500자</div>
-              </div>
-              <div class="slider-label-row">
-                <span>100자</span><span>200자</span><span>300자</span><span>400자</span><span>500자</span>
-              </div>
-            </div>
+<div>
+  <label style="margin-bottom:4px;">📏 글자 수 제한</label>
+  <div class="slider-wrap" style="margin-top:10px;">
+    <input type="range" id="c_charlen" min="100" max="500" step="50" value="150"
+      oninput="document.getElementById('cCharLenVal').textContent=this.value+'자'" />
+    <div class="slider-val" id="cCharLenVal">150자</div>
+  </div>
+  <div class="slider-label-row">
+    <span>100자</span><span>200자</span><span>300자</span><span>400자</span><span>500자</span>
+  </div>
+</div>
 
             <div class="save-row">
               <button class="btn-save" onclick="saveContentStyle(this)"><span class="spin"></span>저장하기</button>
@@ -746,13 +745,17 @@ em {
     <div class="sns-icon" style="background:#03C75A;">📝</div>
     <span class="sns-label">네이버 블로그</span><div class="check-circle on"></div>
   </div>
-  <div class="sns-check-item" data-sns="kakao" onclick="toggleSnsDefault(this)">
+<div class="sns-check-item" data-sns="kakao" onclick="toggleSnsDefault(this)">
     <div class="sns-icon" style="background:#F9C000;">💬</div>
-    <span class="sns-label">카카오채널</span><div class="check-circle"></div>
+    <span class="sns-label">카카오</span><div class="check-circle"></div>
   </div>
   <div class="sns-check-item" data-sns="facebook" onclick="toggleSnsDefault(this)">
     <div class="sns-icon" style="background:#1877F2;">👍</div>
     <span class="sns-label">Facebook</span><div class="check-circle"></div>
+  </div>
+  <div class="sns-check-item" data-sns="community" onclick="toggleSnsDefault(this)">
+    <div class="sns-icon" style="background:#6366F1;">🟣</div>
+    <span class="sns-label">커뮤니티</span><div class="check-circle"></div>
   </div>
 </div>
             <div class="save-row">
