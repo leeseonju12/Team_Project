@@ -1005,10 +1005,14 @@ async function initializeDashboard() {
   }
   updateRetouchState();
 }
-// ── 마이페이지 기본값 pre-select ──────────────────────────
+
+/* ==========================================================================
+   11. Init & Dynamic Renderers (수정 및 통합 완료)
+   ========================================================================== */
+
+// ── 1. 마이페이지 기본값 pre-select (출력 설정 유지) ──────────────────────────
 function applyContentDefaults() {
   const tone  = document.getElementById('cs_tone')?.value;
-  // 💡수정됨: html의 id와 동일하게 cs_emojiLevel 로 변경
   const emoji = document.getElementById('cs_emojiLevel')?.value; 
   const len   = document.getElementById('cs_length')?.value;
   const sns   = document.getElementById('cs_sns')?.value;
@@ -1043,67 +1047,91 @@ function applyContentDefaults() {
   }
 }
 
-// ── 단일화된 Boot Sequence (초기화) ──────────────────────────
-document.addEventListener('DOMContentLoaded', async () => {
-  // 1. UI 클릭 이벤트 바인딩 (app.js 기존 내장 함수)
-  bindAllUIEvents();
+// ── 2. 키워드 렌더링 전역 함수 (누락 복구!) ──────────────────────────
+// 다른 곳(예: loadInitialContentSettings)에서도 호출할 수 있도록 window에 등록합니다.
+window.renderKeywords = function(keywords) {
+    const keywordGroup = document.getElementById('keywordGroup');
+    if (!keywordGroup) return;
 
-  // 2. 마이페이지 기본값 세팅 (Hidden Input 기반)
-  applyContentDefaults(); 
+    if (!keywords || keywords.length === 0) {
+        keywordGroup.innerHTML = `
+            <div style="width:100%; padding:10px; font-size:12px; color:#64748b; text-align:center;">
+                현재 업종에 등록된 추천 키워드가 없습니다.
+            </div>
+        `;
+        return;
+    }
 
-  // 3. 서버 DB 초기 데이터 로드
- // await loadInitialContentSettings();
+    // 데이터가 있을 경우 동적 렌더링 (kw.name 또는 kw.keywordName 모두 대응)
+    keywordGroup.innerHTML = keywords.map((kw, index) => {
+        const keywordText = kw.name || kw.keywordName;
+        return `
+        <div class="keyword-item">
+            <input type="checkbox" name="keywords" id="kw-${index}" value="${keywordText}">
+            <label class="keyword-label" for="kw-${index}">${keywordText}</label>
+        </div>
+        `;
+    }).join('');
+};
 
-  // 4. 업종별 추천 키워드 로드
-  const hiddenInput = document.getElementById("myIndustryCode");
-  const myIndustryCode = hiddenInput ? hiddenInput.value : null;
-  if (myIndustryCode) {
-      await fetchAndRenderKeywords(myIndustryCode);
-  }
-
-  // 5. 캘린더 및 대시보드 초기화
-  await initializeDashboard();
-});
-
-// ── 키워드 동적 렌더링 함수 ──────────────────────────
+// ── 3. API Fetch 후 키워드 렌더링 ──────────────────────────
 async function fetchAndRenderKeywords(industryCode) {
-  const keywordGroup = document.getElementById('keywordGroup');
-  if (!keywordGroup) return;
+    const keywordGroup = document.getElementById('keywordGroup');
+    if (!keywordGroup) return;
 
-  try {
-      keywordGroup.innerHTML = `
-          <div style="width:100%; padding:10px; font-size:12px; color:#64748b; text-align:center;">
-              키워드 데이터를 불러오는 중...
-          </div>
-      `;
+    try {
+        keywordGroup.innerHTML = `
+            <div style="width:100%; padding:10px; font-size:12px; color:#64748b; text-align:center;">
+                키워드 데이터를 불러오는 중......
+            </div>
+        `;
 
-      const response = await fetch(`/api/keywords?industryCode=${industryCode}`);
-      if (!response.ok) throw new Error("네트워크 응답 에러");
-      
-      const keywords = await response.json();
+        const response = await fetch(`/api/keywords?industryCode=${industryCode}`);
+        if (!response.ok) throw new Error(`네트워크 에러: ${response.status}`);
+            
+        const keywords = await response.json();
+        
+        // 위에서 복구한 전역 렌더링 함수를 호출합니다.
+        window.renderKeywords(keywords);
 
-      if (!keywords || keywords.length === 0) {
-          keywordGroup.innerHTML = `
-              <div style="width:100%; padding:10px; font-size:12px; color:#64748b; text-align:center;">
-                  현재 업종에 등록된 추천 키워드가 없습니다.
-              </div>
-          `;
-          return;
-      }
-
-      keywordGroup.innerHTML = keywords.map((kw, index) => `
-          <div class="keyword-item">
-              <input type="checkbox" name="keywords" id="kw-${index}" value="${kw.name}">
-              <label class="keyword-label" for="kw-${index}">${kw.name}</label>
-          </div>
-      `).join('');
-
-  } catch (error) {
-      console.error("키워드 로드 실패:", error);
-      keywordGroup.innerHTML = `
-          <div style="width:100%; padding:10px; font-size:12px; color:red; text-align:center;">
-              키워드를 불러오는데 실패했습니다.
-          </div>
-      `;
-  }
+    } catch (error) {
+        console.error("키워드 로드 실패:", error);
+        keywordGroup.innerHTML = `
+            <div style="width:100%; padding:10px; font-size:12px; color:red; text-align:center;">
+                키워드를 불러오는데 실패했습니다.
+            </div>
+        `;
+    }
 }
+
+// ── 4. 누락되었던 헬퍼 함수 임시 복구 (에러 방지용) ──────────────────────────
+// loadCenterHistory 함수 내부에서 호출되지만 파일에 선언되어 있지 않아 추가합니다.
+window.updateCenterPreviewsWithImages = function(urls) {
+    console.log("기록 이미지 미리보기 업데이트 완료:", urls);
+    // 추가적인 이미지 처리 로직이 있었다면 여기에 작성
+};
+
+
+// ── 5. 단일화된 Boot Sequence (초기화) ──────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. UI 클릭 이벤트 바인딩
+    bindAllUIEvents();
+
+    // 2. 마이페이지 기본값 세팅 (Hidden Input 기반)
+    applyContentDefaults(); 
+
+    // 3. 서버 DB 초기 데이터 로드 (이제 renderKeywords가 있어서 주석을 해제해도 에러가 안 납니다!)
+    if (typeof loadInitialContentSettings === 'function') {
+        await loadInitialContentSettings();
+    }
+
+    // 4. 업종별 추천 키워드 로드 (숨겨진 input 값 기반)
+    const hiddenInput = document.getElementById("myIndustryCode");
+    const myIndustryCode = hiddenInput ? hiddenInput.value : null;
+    if (myIndustryCode) {
+        await fetchAndRenderKeywords(myIndustryCode);
+    }
+
+    // 5. 캘린더 및 대시보드 초기화
+    await initializeDashboard();
+});

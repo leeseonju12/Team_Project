@@ -27,7 +27,7 @@ public class GeminiApiClient {
     private final ObjectMapper objectMapper = new ObjectMapper(); // 얘도
 
     public String requestToGemini(String prompt) {
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + geminiApiKey;
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=" + geminiApiKey;
 
     	
         // 1. 헤더 설정

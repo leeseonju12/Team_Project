@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ASG - 채널 성과 분석</title>
+  <title>소셜다모아 — 채널 성과 분석</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
@@ -43,27 +43,6 @@
       --gm: #EA4335;
       --kk: #F9C000;
     }
-    
-    @font-face {
-    font-family: 'Presentation';
-    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2404@1.0/Freesentation-4Regular.woff2') format('woff2');
-    font-weight: 500;
-    font-display: swap;
-	  }
-	  @font-face {
-	    font-family: 'Presentation';
-	    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2404@1.0/Freesentation-7Bold.woff2') format('woff2');
-	    font-weight: 700;
-	    font-display: swap;
-	  }
-	  @font-face {
-	    font-family: 'Presentation';
-	    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2404@1.0/Freesentation-9Black.woff2') format('woff2');
-	    font-weight: 900;
-	    font-display: swap;
-	  }
-
-    
 
     *,
     *::before,
@@ -162,22 +141,18 @@
     }
 
     .hero-text h1 {
-      font-family: 'Presentation', sans-serif;
-      font-size: clamp(26px, 3.5vw, 40px);
-      font-weight: 500;
-      letter-spacing: -0.02em;
-      line-height: 1.3;
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(22px, 2.8vw, 32px);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -.5px;
     }
 
     .hero-text h1 em {
-      font-style: normal;
-	  font-weight: 700; /* 조금 더 두껍게 강조 */
-	  background: linear-gradient(135deg, var(--teal), var(--indigo));
-	  -webkit-background-clip: text;
-	  -webkit-text-fill-color: transparent;
-	  background-clip: text;
-	  box-decoration-break: clone;
-	  -webkit-box-decoration-break: clone;
+      font-style: italic;
+      background: linear-gradient(135deg, var(--teal), var(--indigo));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .hero-text p {
@@ -1129,6 +1104,7 @@ em {
 <!-- 서버에서 전달된 brandId (Thymeleaf → JS 바인딩용) -->
 <input type="hidden" id="serverBrandId" th:value="${brandId}">
 
+
   <div class="hero">
     <div class="hero-inner">
       <div class="hero-text">
@@ -1373,21 +1349,6 @@ em {
   </div>
 
   <script th:inline="none">
-  document.addEventListener('DOMContentLoaded', async () => {
-	  try {
-	    const response = await fetch('/api/channel-performance');
-	    if (!response.ok) {
-	      throw new Error('API 호출 실패: ' + response.status);
-	    }
-
-	    const data = await response.json();
-	    console.log(data);
-	    // 화면 렌더링 로직
-	  } catch (error) {
-	    console.error(error);
-	  }
-	});
-  
 //PLATFORMS는 API 응답(summaries)에서 동적으로 채워짐
   const PLATFORM_COLOR_MAP = {
     instagram: '#E1306C',

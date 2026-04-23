@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ASG - AI 콘텐츠 생성</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
@@ -382,9 +382,10 @@
   <div class="wrapper">
 
     <div class="page-title">
-      <h1>모든 채널을 한 번에, <br><em>지능형</em> 마케팅 자동화</h1>
+      <h1><em>지능형</em> 마케팅 자동화<br>모든 채널을 한 번에</h1>
       <p>커뮤니티 데이터 기반 톤앤매너 자동 변환 · 플랫폼별 실시간 미리보기 · 드래그 앤 드롭 스케줄링</p>
 	  <div class="header-right">
+	    <div class="header-badge">AI 자동화 활성</div>
 	  </div>
     </div>
 
@@ -408,11 +409,10 @@
             </div>
             
 <input type="hidden" id="myIndustryCode" th:value="${businessCategory}">
-
 <div class="field">
   <label>키워드 <span class="required">*</span></label>
   <div class="keyword-grid" id="keywordGroup">
-    <span style="font-size:12px; color:#94a3b8;">키워드 데이터를 불러오는 중...</span>
+    <span style="font-size:12px; color:#94a3b8;">키워드 데이터를 불러오는 중...,</span>
   </div>
   <div class="field-footer">
     <span class="field-hint">최소 1개 이상 선택</span>
@@ -455,7 +455,7 @@
             <div class="field">
               <label>게시 SNS</label>
               <div class="chip-group" id="snsChips">
-                <div class="chip chip-ig" data-sns="instagram">🔴 Instagram</div>
+                <div class="chip chip-ig active" data-sns="instagram">🔴 Instagram</div>
                 <div class="chip chip-fb" data-sns="facebook">🔵 Facebook</div>
                 <div class="chip chip-nv" data-sns="naver">🟢 네이버 블로그</div>
                 <div class="chip chip-kk" data-sns="kakao">🟡 카카오</div>
@@ -477,7 +477,7 @@
                 <div class="tone-item" data-tone="formal">
                   <div class="icon">🎩</div>격식
                 </div>
-                <div class="tone-item" data-tone="trendy">
+                <div class="tone-item active" data-tone="trendy">
                   <div class="icon">🔥</div>트렌디
                 </div>
               </div>
@@ -488,7 +488,7 @@
                 <div class="slider-item" data-emoji="low">
                   <div class="icon">🙂</div>적게
                 </div>
-                <div class="slider-item" data-emoji="mid">
+                <div class="slider-item active" data-emoji="mid">
                   <div class="icon">😄</div>적당히
                 </div>
                 <div class="slider-item" data-emoji="high">
@@ -500,7 +500,7 @@
               <label>글자 수 제한</label>
               <div class="range-wrap">
                 <input type="range" id="lengthRange" min="100" max="500" step="50" value="150">
-                <span class="range-val" id="rangeVal">150자</span>
+                <span class="range-val" id="rangeVal">300자</span>
               </div>
             </div>
             <div class="gen-progress-bar" id="genProgressBar">

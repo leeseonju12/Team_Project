@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
 import com.example.demo.dto.ContentInitResponse;
@@ -114,31 +116,46 @@ public class ContentApiController {
     public Map<String, Object> publishToSns(
             @RequestParam("platform") String platform,
             @RequestParam("text") String text,
+            @RequestParam(value = "externalUrls", required = false) String externalUrls,
             @RequestParam(value = "image", required = false) MultipartFile imageFile,
             @RequestParam(value = "pexelsUrl", required = false) String pexelsUrl) {
+        
         try {
             System.out.println("[Operator: 서희] SNS Publishing via Cloudinary Direct - Platform: " + platform);
-            String realImageUrl = null;
-
-            /* * Rationale: 
-             * 다운로드 래퍼 클래스를 제거하고, CloudinaryService의 오버로딩된 메서드를 직접 호출하여
-             * 중간 병목(Middle Bottleneck)을 제거합니다.
+            
+            /*
+             * Rationale: 
+             * 디버그 로그를 통해 프론트엔드가 'externalUrls' 키를 사용하여 클라우디너리 URL을
+             * 전달하고 있음을 확인했습니다. RequestParam 매핑을 이에 맞춰 수정하여 데이터를 수신합니다.
              */
-            if (imageFile != null && !imageFile.isEmpty()) {
-                realImageUrl = cloudinaryService.uploadImage(imageFile);
-            } else if (StringUtils.hasText(pexelsUrl)) {
-                // Cloudinary로 직접 URL 전달
-                realImageUrl = cloudinaryService.uploadImageFromUrl(pexelsUrl);
+            String realImageUrl = externalUrls;
+
+            /*
+             * Rationale: 
+             * externalUrls가 null이거나 빈 문자열인 경우에만 차선책으로 
+             * 직접 파일 업로드 또는 Pexels URL 파싱 로직을 실행하도록 분기합니다.
+             */
+            if (!org.springframework.util.StringUtils.hasText(realImageUrl)) {
+                if (imageFile != null && !imageFile.isEmpty()) {
+                    realImageUrl = cloudinaryService.uploadImage(imageFile);
+                } else if (org.springframework.util.StringUtils.hasText(pexelsUrl)) {
+                    realImageUrl = cloudinaryService.uploadImageFromUrl(pexelsUrl);
+                }
+            }
+
+            /*
+             * Rationale: 
+             * 플랫폼별 API 호출 전 최종적으로 유효한 이미지 URL이 확보되었는지 검증합니다.
+             * 여기서 통과하면 Facebook, Instagram API에서 발생하는 이미지 누락 예외를 방지할 수 있습니다.
+             */
+            if (!org.springframework.util.StringUtils.hasText(realImageUrl)) {
+                throw new IllegalArgumentException("이미지 처리에 실패했습니다. 업로드 파라미터가 누락되었거나 필수 이미지가 없습니다.");
             }
 
             if ("instagram".equalsIgnoreCase(platform)) {
-                if (realImageUrl == null)
-                    throw new RuntimeException("인스타그램은 이미지가 필수입니다.");
                 instagramService.publishPost(realImageUrl, text);
                 return Map.of("status", "success", "message", "Instagram 게시 완료!");
             } else if ("facebook".equalsIgnoreCase(platform)) {
-                if (realImageUrl == null)
-                    throw new RuntimeException("페이스북 /photos API는 이미지가 필수입니다.");
                 facebookService.publishPost(realImageUrl, text);
                 return Map.of("status", "success", "message", "Facebook 게시 완료!");
             }

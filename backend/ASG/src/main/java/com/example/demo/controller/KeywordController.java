@@ -20,7 +20,7 @@ public class KeywordController {
     private final KeywordRepository keywordRepository;
 
     @GetMapping
-    public ResponseEntity<List<Keyword>> getKeywordsByIndustry(@RequestParam String industryCode) {
+    public ResponseEntity<List<Keyword>> getKeywordsByIndustry(@RequestParam(name = "industryCode") String industryCode) {
 
         List<Keyword> keywords = keywordRepository.findByIndustryCode(industryCode);
         return ResponseEntity.ok(keywords);

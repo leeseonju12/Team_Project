@@ -703,18 +703,24 @@ em {
 
 <div style="margin-bottom:22px;">
   <label style="margin-bottom:10px;">😀 이모지 사용량</label>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" id="cEmojiGrid">
-    <div class="tone-card" data-emoji="low" onclick="selectEmoji(this)"><div class="tc-emoji">🙂</div><div class="tc-name">적게</div></div>
-    <div class="tone-card selected" data-emoji="mid" onclick="selectEmoji(this)"><div class="tc-emoji">😄</div><div class="tc-name">적당히</div></div>
-    <div class="tone-card" data-emoji="high" onclick="selectEmoji(this)"><div class="tc-emoji">🎉</div><div class="tc-name">많이</div></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" id="cEmojiGrid">
+  <div class="tone-card" data-emoji="few" onclick="selectEmoji(this)">
+    <div class="tc-emoji">🙂</div><div class="tc-name">적게</div>
   </div>
+  <div class="tone-card selected" data-emoji="moderate" onclick="selectEmoji(this)">
+    <div class="tc-emoji">😄</div><div class="tc-name">적당히</div>
+  </div>
+  <div class="tone-card" data-emoji="many" onclick="selectEmoji(this)">
+    <div class="tc-emoji">🎉</div><div class="tc-name">많이</div>
+  </div>
+</div>
 </div>
 
             <!-- 글자수 슬라이더 -->
 <div>
   <label style="margin-bottom:4px;">📏 글자 수 제한</label>
   <div class="slider-wrap" style="margin-top:10px;">
-    <input type="range" id="c_charlen" min="100" max="500" step="50" value="150"
+    <input type="range" id="c_charlen" min="100" max="500" step="50" value="300"
       oninput="document.getElementById('cCharLenVal').textContent=this.value+'자'" />
     <div class="slider-val" id="cCharLenVal">150자</div>
   </div>
@@ -1507,16 +1513,33 @@ function showSection(id, el) {
     return sel ? (EMOJI_KO_MAP[sel.dataset.emoji] || '적당히') : '적당히';
   }
   
-  // 기본 SNS 세팅 함수 추가 (현재 미구현)
+  /* ═══ 콘텐츠 설정 저장 함수 수정 ═══ */
   async function saveContentSettings(btn, label) {
-  const selected = Array.from(
-    document.querySelectorAll('#snsDefaultGrid .sns-check-item.checked')
-  ).map(el => el.dataset.sns).join(',');
+    // 1. 각 입력 요소 및 선택 상태로부터 데이터 수집
+    const selectedSns = Array.from(
+      document.querySelectorAll('#snsDefaultGrid .sns-check-item.checked')
+    ).map(el => el.dataset.sns).join(',');
 
-  await postContentSettings(btn, label, {
-    preferredSns: selected
-  });
-}
+    const toneValue = getSelectedTone();
+    const emojiValue = getSelectedEmoji();
+    const targetLengthValue = document.getElementById('c_charlen').value;
+    const introValue = document.getElementById('c_intro').value;
+    const outroValue = document.getElementById('c_outro').value;
+
+    // 2. 서버 DTO 구조에 맞게 데이터 객체 생성
+    // loadContentSettings에서 'emojiLevel' 키를 사용하므로 저장 시에도 동일한 키를 사용함
+    const bodyData = {
+      tone: toneValue,
+      emojiLevel: emojiValue,
+      targetLength: targetLengthValue,
+      preferredSns: selectedSns,
+      introTemplate: introValue,
+      outroTemplate: outroValue
+    };
+
+    // 3. 공통 POST 함수 호출
+    await postContentSettings(btn, label, bodyData);
+  }
 
   // 공통 POST 함수
   async function postContentSettings(btn, label, body) {
