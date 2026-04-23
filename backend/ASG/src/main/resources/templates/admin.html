@@ -892,35 +892,41 @@
         return String(text).split(',').map(v => v.trim()).filter(Boolean);
     }
 
-    // ✅ 변경: localStorage -> sessionStorage
-    function getAdminToken() {
-        return sessionStorage.getItem('adminToken') || '';
+ // 변경 후
+    function getAccessTokenFromCookie() {
+        const match = document.cookie.split('; ')
+            .find(row => row.startsWith('admin_access_token='));
+        return match ? match.split('=')[1] : null;
     }
 
     async function fetchWithAdmin(url, options = {}) {
-        const token = getAdminToken();
+        const token = getAccessTokenFromCookie();
+        if (!token) {
+            alert('로그인이 필요합니다.');
+            window.location.href = '/login';
+            return;
+        }
 
-        const headers = Object.assign({}, options.headers || {}, {
-            'admin-token': token,
-            'Authorization': token ? `Bearer ${token}` : ''
+        const res = await fetch(url, {
+            ...options,
+            headers: {
+                ...(options.headers || {}),
+                'Authorization': 'Bearer ' + token
+            }
         });
 
-        const response = await fetch(url, Object.assign({}, options, { headers }));
-        const raw = await response.text();
-
-        let data = raw;
-        try {
-            data = raw ? JSON.parse(raw) : null;
-        } catch (_) {
-            data = raw;
+        if (res.status === 401 || res.status === 403) {
+            alert('접근 권한이 없습니다.');
+            window.location.href = '/login';
+            return;
         }
 
-        if (!response.ok) {
-            const bodyText = typeof data === 'string' ? data : JSON.stringify(data);
-            throw new Error(`status=${response.status}\nbody=${bodyText}`);
+        if (!res.ok) {
+            const text = await res.text();
+            throw new Error(text || res.statusText);
         }
 
-        return data;
+        return res.json();
     }
 
     function switchTab(tab) {
@@ -1655,21 +1661,17 @@
         ]);
     }
 
+ // 변경 후
     document.addEventListener('DOMContentLoaded', async function () {
-        // ✅ 변경: localStorage -> sessionStorage
-        const token = sessionStorage.getItem('adminToken');
-
-        if (token) {
-            hideLogin();
-            await bootstrapAdmin();
-        } else {
-            showLogin();
+        const token = getAccessTokenFromCookie();
+        if (!token) {
+            window.location.href = '/login';
+            return;
         }
-
-        document.getElementById('adminPw').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') adminLogin();
-        });
+        await bootstrapAdmin();
     });
+    
+    
 </script>
 </body>
 </html>

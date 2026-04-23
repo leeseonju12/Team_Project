@@ -75,17 +75,31 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             response.sendRedirect("/signup?social_login=success");
             return;
         }
+        
+        // ↓ 여기에 추가 (ACTIVE 계정만 발급)
+        if ("ROLE_ADMIN".equals(user.getRole())) {
+            Cookie adminAccessCookie = new Cookie("admin_access_token", accessToken);
+            adminAccessCookie.setHttpOnly(false);
+            adminAccessCookie.setSecure(cookieSecure);
+            adminAccessCookie.setPath("/admin");
+            adminAccessCookie.setMaxAge(60 * 30);
+            response.addCookie(adminAccessCookie);
+        }
+
+     // 변경 후
+        if ("ROLE_ADMIN".equals(user.getRole())) {
+            response.sendRedirect("/admin");
+            return;
+        }
 
         String redirectUrl = "/mypage";
 
         HttpSession session = request.getSession(false);
         if (session != null) {
             String entryPoint = (String) session.getAttribute("entryPoint");
-
             if (entryPoint != null && !entryPoint.isBlank()) {
                 redirectUrl = entryPoint;
             }
-
             session.removeAttribute("entryPoint");
         }
 
