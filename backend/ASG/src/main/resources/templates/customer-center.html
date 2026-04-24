@@ -1106,7 +1106,6 @@
     <section class="panel">
         <div class="panel-header">
             <div class="panel-header-left">
-                <div class="panel-icon" id="panelIcon">❓</div>
                 <h2 id="panelTitle">자주 묻는 질문</h2>
             </div>
         </div>
@@ -1373,17 +1372,14 @@
         if (view === 'faq') {
             faqSection.classList.remove('hidden');
             panelTitle.textContent = '자주 묻는 질문';
-            panelIcon.textContent = '❓';
             renderFaqs();
         } else if (view === 'notice') {
             noticeSection.classList.remove('hidden');
             panelTitle.textContent = '공지사항';
-            panelIcon.textContent = '📢';
             renderNotices();
         } else {
             inquirySection.classList.remove('hidden');
             panelTitle.textContent = '문의하기';
-            panelIcon.textContent = '✉️';
         }
     }
 
