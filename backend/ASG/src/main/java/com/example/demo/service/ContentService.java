@@ -112,7 +112,7 @@ public class ContentService {
 	@Transactional
 	public List<SnsResult> generateAllSnsContent(ContentRequest request) {
 
-		String industry = "카페 혹은 음식점";
+		String industry = "카페 / 베이커리, 소셜다모아 카페";
 
 		String prompt = String.format("Role: %s Marketer. Task: Promo post. Lang: Korean.\n"
 				+ "Menu/Item: %s\nPlatforms: %s\nExtra: %s\nKeywords: %s\nTone: %s\nEmoji: %s\nMaxLen: %d chars.\n"
@@ -123,6 +123,7 @@ public class ContentService {
 				request.getTones(), request.getEmojiLevel(), request.getMaxLength());
 
 		String rawJsonContent = geminiClient.requestToGemini(prompt);
+		System.out.println("원시프롬프트:"+rawJsonContent);
 		List<SnsResult> results = parseAndEnrichResults(rawJsonContent, request.getImageUrl());
 
 		for (SnsResult res : results) {
