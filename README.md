@@ -5,7 +5,7 @@
 
 <td width="40%" align="center" valign="middle">
 
-<img width="280" alt="image (3)" src="https://github.com/user-attachments/assets/1019216c-972b-419d-a2ee-fcc3945be36a" />
+<img width="140" alt="image (3)" src="https://github.com/user-attachments/assets/1019216c-972b-419d-a2ee-fcc3945be36a" />
 
 </td>
 
