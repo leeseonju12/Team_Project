@@ -2,17 +2,19 @@
 
 <table border="0" cellspacing="0" cellpadding="0">
 <tr>
-<td width="40%" align="left">
 
-<img width="488" height="570" alt="image (3)" src="https://github.com/user-attachments/assets/1019216c-972b-419d-a2ee-fcc3945be36a" />
+<td width="40%" align="center" valign="middle">
+
+<img width="280" alt="image (3)" src="https://github.com/user-attachments/assets/1019216c-972b-419d-a2ee-fcc3945be36a" />
 
 </td>
 
 <td width="60%" align="center" valign="middle">
 
-<img width="794" height="76" alt="image (2)" src="https://github.com/user-attachments/assets/cf6a91af-a994-488b-912e-5d51b1b63062" />
+<img width="700" alt="image (2)" src="https://github.com/user-attachments/assets/cf6a91af-a994-488b-912e-5d51b1b63062" />
 
 </td>
+
 </tr>
 </table>
 
